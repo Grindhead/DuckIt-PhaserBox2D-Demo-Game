@@ -58,7 +58,7 @@ Develop a Mario-inspired platformer featuring a duck protagonist that uses physi
   - `platform-left`: Left end.
   - `platform-middle`: Repeatable middle (extends platform length).
   - `platform-right`: Right end.
-- **Structure:** Bookended by `platform-left` and `platform-right`, with `platform-middle` repeated as needed.
+- **Structure:** Bookended by `platform-left` and `platform-right`, with `platform-middle` repeated as needed. Tiles should overlap each other by 1 pixel on the left.
 - **Positioning:** Reflects player's max jump height (3x duck height); accounts for crate height when present.
 
 ### 2.4 Crates
