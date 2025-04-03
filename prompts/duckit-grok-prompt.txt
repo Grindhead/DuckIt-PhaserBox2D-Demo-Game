@@ -1,0 +1,13 @@
+Write a detailed plan/spec for a game that uses Phaser Box2D. The game is called DuckIt. It should be a platformer that uses physics to enable a character to jump around and interact with the environment.
+
+There are platforms made up of left, right, and center tiles.
+
+The player is a duck with Idle, dead, fall, jump, and run animations. The player should enter the fall state after the jump animation finishes or the player falls off a platform. The player should enter the run animation when running on a platform or enter an idle state.
+
+There are blocks that the player can push around the screen. The player must move the blocks to access new parts of the level.
+
+There are enemies in the shape of a ball which can move left and right and up and down and will kill the player if it touches them. Enemies cannot move through platforms.
+
+The user should use the keyboard to control the player using the arrow keys, with the up arrow being jump.
+
+Ask me questions to help fill out any missing information in how the game should be made. Do not create the implementation; concentrate on creating the project specification.

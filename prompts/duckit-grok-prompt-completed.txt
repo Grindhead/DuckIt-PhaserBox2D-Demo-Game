@@ -1,0 +1,35 @@
+This is a completed prompt for Grok that defines the project requirements. We use it to generate a PRD ( Project Requirements Document ) that the AI can use to create the context we need to create the project.
+
+Write a detailed plan/spec for a game called DuckIt that uses Phaser Box2D (found in src/PhaserBox2D.js). It should be a platformer like Mario, utilizing physics for character movement (jumping, interaction).
+
+Platforms are constructed using platform-left, platform-right, and platform-middle tiles. The platform-middle asset can be repeated to create platforms of variable lengths. Each platform must be enclosed by platform-left and platform-right tiles.
+
+The player character is a duck with the following animations: Idle (duck-idle-0001 to duck-idle-0010), Dead (duck-dead-0001 to duck-dead-0010), Fall (duck-fall-0001 to duck-fall-0010), Jump (duck-jump-0001 to duck-jump-0012), and Run (duck-run-0001 to duck-run-0014). The player enters the fall state after the jump animation completes or when falling off a platform with positive Y velocity. The player enters the run state when moving on a platform, otherwise, they enter the idle state. The player can jump 3 times their own height.
+
+There are two types of crates: crate-big and crate-small (found in the crate folder). They have no animations and can be pushed by the player. Their physics mass ratio should be 2:1 (big:small). Level design puzzles should involve pushing crates to reach higher areas. Crates should never fall off the platform they are on and should never exist on a platform with an enemy.
+
+There is one enemy type: a ball (enemy asset in the enemy folder). It kills the player on contact. Enemies patrol a platform horizontally, reversing direction upon reaching the end. They move at 80% of the player's speed. They cannot move through platforms, and the player should be able to jump over them. There is only 1 enemy type.
+
+Controls use the arrow keys (Up for jump). Death occurs from falling off the bottom of the screen or touching an enemy. If the player dies, display the start.png image; pressing this resets the level and all entities to their initial state and position. Levels should be procedurally generated upon starting the game. Platform positioning must consider the player's maximum jump height (including potential jumps from crates) to ensure accessibility. Levels must always be completable with a medium difficulty level and include at least two crate-pushing puzzles. The level width is 10000 pixels. The player starts on the left side of the screen. The finish entity is located at the end of the furthest right platform, which must always be accessible. The camera follows the player with subtle easing. There is no checkpoint system.
+
+The finish entity is a Box2D sensor. It has three states: finish-idle (static default frame), finish-activated (plays once, finish-activated-0001 to finish-activated-0019, when the player touches it, disabling player control), and finish-active (loops continuously, finish-active-0001 to finish-active-0018, after finish-activated completes). After the finish-active animation plays through once, the level is complete; display the start.png image, and pressing it resets the level.
+
+Coins are Box2D sensors. The coin-idle animation (0001-0023) loops until the player touches the coin. When collected, the coin-collect animation (coin-collect-0001 to coin-collect-0008) plays once, and the coin is removed. There are 100 coins per level, placed 30px above random platforms, evenly spread, with only one coin per tile within a platform. Display the collected coin count in the top right corner. There is no bonus or reward for collecting all coins.
+
+The technical setup uses Phaser with Box2D physics and Vite as the build tool. Assets were created with Texture Packer (Phaser format); assets.png and assets.json are in the public folder. Source assets are in the assets folder (all PNGs). The IDE is Cursor. The canvas should be responsive to screen size.
+
+For mobile devices, display on-screen controls (hide on desktop). Use the direction-button asset (ui folder), rotating the default left orientation for other directions. Position left/right buttons bottom-left and the jump button bottom-right.
+
+The asset folder structure is:
+assets/
+  coin/ (coin-collect/, coin-idle/)
+  finish/ (finish-activated/, finish-active/, finish-idle/)
+  platforms/
+  player/ (dead/, fall/, idle/, jump/, run/)
+  ui/
+  crate/
+  enemy/
+
+There are no sounds.
+
+Write this specification in the format of a PRD using Markdown (.md).
