@@ -32,4 +32,6 @@ assets/
 
 There are no sounds.
 
+There is only 1 level.
+
 Write this specification in the format of a PRD using Markdown (.md).
