@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { UI } from "../lib/constants";
+import { UI } from "@constants";
 
 export default class CoinCounter {
   scene: Phaser.Scene;

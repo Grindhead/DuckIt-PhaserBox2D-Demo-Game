@@ -2,7 +2,7 @@ import * as Phaser from "phaser";
 import BootScene from "./scenes/BootScene";
 import PreloaderScene from "./scenes/PreloaderScene";
 import GameScene from "./scenes/GameScene";
-import { RENDERER } from "./lib/constants";
+import { RENDERER } from "@constants";
 
 // Define type for GameConfig
 type GameConfig = Phaser.Types.Core.GameConfig;

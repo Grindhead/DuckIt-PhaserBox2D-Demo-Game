@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { SCENES } from "../lib/constants";
+import { SCENES } from "@constants";
 
 export default class BootScene extends Phaser.Scene {
   constructor() {

@@ -8,15 +8,15 @@ import {
   b2Vec2,
   pxmVec2,
   b2World_Step,
-} from "../lib/PhaserBox2D.js";
-import { PHYSICS, WORLD, SCENES } from "../lib/constants.js";
-import { gameState } from "../lib/gameState.js";
-import Player from "../entities/Player.js";
-import DeathSensor from "../entities/DeathSensor.js";
-import CoinCounter from "../ui/CoinCounter.js";
-import MobileControls from "../ui/MobileControls.js";
-import GameStartScreen from "../ui/GameStartScreen.js";
-import GameOverOverlay from "../ui/GameOverOverlay.js";
+} from "@PhaserBox2D";
+import { PHYSICS, WORLD, SCENES } from "@constants";
+import { gameState } from "@gameState";
+import Player from "../entities/Player";
+import DeathSensor from "../entities/DeathSensor";
+import CoinCounter from "../ui/CoinCounter";
+import MobileControls from "../ui/MobileControls";
+import GameStartScreen from "../ui/GameStartScreen";
+import GameOverOverlay from "../ui/GameOverOverlay";
 
 export default class GameScene extends Phaser.Scene {
   player!: Player;

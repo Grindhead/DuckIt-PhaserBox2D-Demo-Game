@@ -5,8 +5,8 @@
     "module": "ESNext",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
-
-    /* Bundler mode */
+    "forceConsistentCasingInFileNames": true,
+    /* Classic Node resolution */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
@@ -23,14 +23,21 @@
     /* Custom Type Paths */
     "baseUrl": ".",
     "paths": {
-      "@box2d/*": ["./types/*"] // Map @box2d/ to ./types/
+      "@PhaserBox2D": ["./src/lib/PhaserBox2D.js"],
+      "@constants": ["./src/lib/constants.ts"],
+      "@gameState": ["./src/lib/gameState.ts"]
     },
-    "typeRoots": ["./node_modules/@types", "./types"], // Include both standard types and our custom types
+    "typeRoots": ["./node_modules/@types", "./types"], // Keep types root for potentially other types
 
     /* Allow JS for PhaserBox2D.js */
     "allowJs": true,
     "checkJs": false // Don't type-check the JS file itself, just allow importing it
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "types/**/*.d.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "types/**/*.d.ts",
+    "vite.config.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

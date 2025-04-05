@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { UI, ASSETS } from "../lib/constants";
+import { UI, ASSETS } from "@constants";
 
 // Define interface for control state
 interface MobileControlState {

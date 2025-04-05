@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { ASSETS } from "../lib/constants";
+import { ASSETS } from "@constants";
 
 export default class GameStartScreen {
   scene: Phaser.Scene;

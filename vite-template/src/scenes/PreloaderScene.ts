@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { SCENES, ASSETS, ANIMATION } from "../lib/constants";
+import { SCENES, ASSETS, ANIMATION } from "@constants";
 
 export default class PreloaderScene extends Phaser.Scene {
   constructor() {
