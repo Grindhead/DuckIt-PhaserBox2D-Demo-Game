@@ -1,11 +1,11 @@
 import * as Phaser from "phaser";
 import { ASSETS } from "@constants";
 import GameScene from "../scenes/GameScene";
+import { gameState } from "../lib/gameState";
 
 export default class GameStartScreen {
   scene: GameScene;
   overlay: Phaser.GameObjects.Image | null = null;
-  isGameOverFlag: boolean = false;
 
   constructor(scene: GameScene) {
     this.scene = scene;
@@ -27,7 +27,7 @@ export default class GameStartScreen {
       .setVisible(false);
 
     this.overlay.on("pointerdown", () => {
-      if (this.isGameOverFlag) {
+      if (gameState.isGameOver) {
         if (typeof this.scene.scene?.restart === "function") {
           this.scene.scene.restart();
         } else {
@@ -44,8 +44,7 @@ export default class GameStartScreen {
     });
   }
 
-  show(isGameOver: boolean = false) {
-    this.isGameOverFlag = isGameOver;
+  show() {
     if (this.overlay) {
       this.overlay.setVisible(true);
     }
