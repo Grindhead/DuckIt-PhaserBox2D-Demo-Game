@@ -6,6 +6,11 @@
  * and runs the game loop (physics updates, player updates).
  */
 import * as Phaser from "phaser";
+
+import { PHYSICS, WORLD, SCENES } from "@constants";
+import DeathSensor from "@entities/DeathSensor";
+import Player from "@entities/Player";
+import { gameState } from "@gameState";
 import {
   CreateBoxPolygon,
   CreateWorld,
@@ -15,14 +20,10 @@ import {
   pxmVec2,
   b2World_Step,
 } from "@PhaserBox2D";
-import { PHYSICS, WORLD, SCENES } from "@constants";
-import { gameState } from "@gameState";
-import Player from "@entities/Player";
-import DeathSensor from "@entities/DeathSensor";
 import CoinCounter from "@ui/CoinCounter";
-import MobileControls from "@ui/MobileControls";
-import GameStartScreen from "@ui/GameStartScreen";
 import GameOverOverlay from "@ui/GameOverOverlay";
+import GameStartScreen from "@ui/GameStartScreen";
+import MobileControls from "@ui/MobileControls";
 
 export default class GameScene extends Phaser.Scene {
   player!: Player;

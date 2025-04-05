@@ -6,6 +6,9 @@
  * animation playback corresponding to the state, and reset functionality.
  */
 import * as Phaser from "phaser";
+
+import { PHYSICS, ASSETS } from "@constants";
+import { gameState } from "@gameState";
 import {
   AddSpriteToWorld,
   SpriteToBox,
@@ -17,8 +20,6 @@ import {
   b2Body_SetLinearVelocity,
   b2Body_SetTransform,
 } from "@PhaserBox2D";
-import { PHYSICS, ASSETS } from "@constants";
-import { gameState } from "@gameState";
 
 interface PlayerState {
   isJumping: boolean;

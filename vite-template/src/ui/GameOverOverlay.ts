@@ -5,6 +5,7 @@
  * prompting them to restart.
  */
 import * as Phaser from "phaser";
+
 import { ASSETS } from "@constants";
 import GameScene from "@scenes/GameScene";
 

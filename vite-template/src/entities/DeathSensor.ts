@@ -6,6 +6,9 @@
  * Implemented as a static Box2D sensor body.
  */
 import * as Phaser from "phaser";
+
+import { PHYSICS, WORLD } from "@constants";
+import { gameState } from "@gameState";
 import {
   AddSpriteToWorld,
   SpriteToBox,
@@ -14,8 +17,6 @@ import {
   pxmVec2,
   b2Body_SetTransform,
 } from "@PhaserBox2D";
-import { PHYSICS, WORLD } from "@constants";
-import { gameState } from "@gameState";
 
 interface InitialConfig {
   x: number;

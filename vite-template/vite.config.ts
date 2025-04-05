@@ -10,17 +10,6 @@ export default defineConfig({
       "@entities": path.resolve(__dirname, "src/entities"),
       "@scenes": path.resolve(__dirname, "src/scenes"),
       "@ui": path.resolve(__dirname, "src/ui"),
-      // Add other aliases from tsconfig.json here if needed in the future
-      // Example:
-      // '@': path.resolve(__dirname, './src'),
     },
   },
-  // Optional: Configure server options if needed
-  // server: {
-  //   port: 3000,
-  // },
-  // Optional: Configure build options if needed
-  // build: {
-  //   outDir: 'dist',
-  // },
 });

@@ -1,5 +1,6 @@
 import globals from "globals";
 import pluginJs from "@eslint/js";
+// import pluginJs from "@eslint/js/src/index.js";
 import tseslint from "typescript-eslint";
 import pluginImport from "eslint-plugin-import";
 // import airbnb from 'eslint-config-airbnb-base'; // Airbnb doesn't directly support flat config yet
@@ -51,6 +52,13 @@ export default [
     },
   },
   {
-    ignores: ["dist/", "node_modules/", "vite.config.ts", "eslint.config.js"],
+    ignores: [
+      "dist/",
+      "node_modules/",
+      "vite.config.ts",
+      "eslint.config.js",
+      "@PhaserBox2D.js",
+      "src/lib/PhaserBox2D.js", // Ignore generated JS file
+    ],
   },
 ];

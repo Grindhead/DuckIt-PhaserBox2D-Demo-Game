@@ -4,6 +4,7 @@
  * Creates and updates a text object in the top-right corner of the screen.
  */
 import * as Phaser from "phaser";
+
 import { UI } from "@constants";
 
 export default class CoinCounter {

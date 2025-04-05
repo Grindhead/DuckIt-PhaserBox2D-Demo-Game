@@ -5,9 +5,10 @@
  * to initiate the game start or restart after a game over.
  */
 import * as Phaser from "phaser";
+
 import { ASSETS } from "@constants";
-import GameScene from "@scenes/GameScene";
 import { gameState } from "@gameState";
+import GameScene from "@scenes/GameScene";
 
 export default class GameStartScreen {
   scene: GameScene;
@@ -32,22 +33,16 @@ export default class GameStartScreen {
       .setInteractive()
       .setVisible(false);
 
-    this.overlay.on("pointerdown", () => {
-      if (gameState.isGameOver) {
-        if (typeof this.scene.scene?.restart === "function") {
+    if (this.overlay) {
+      this.overlay.on("pointerdown", () => {
+        if (gameState.isGameOver) {
           this.scene.scene.restart();
         } else {
-          console.error("Scene does not have a scene.restart method!");
-        }
-      } else {
-        this.hide();
-        if (typeof this.scene.startGame === "function") {
+          this.hide();
           this.scene.startGame();
-        } else {
-          console.error("Scene does not have a startGame method!");
         }
-      }
-    });
+      });
+    }
   }
 
   show() {

@@ -6,6 +6,7 @@
  * and then transitions to the GameScene.
  */
 import * as Phaser from "phaser";
+
 import { SCENES, ASSETS, ANIMATION } from "@constants";
 
 export default class PreloaderScene extends Phaser.Scene {
