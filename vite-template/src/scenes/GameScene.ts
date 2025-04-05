@@ -50,7 +50,7 @@ export default class GameScene extends Phaser.Scene {
     this.generateLevel();
     this.setupInput();
 
-    this.startScreen.show(false);
+    this.startScreen.show();
   }
 
   createUI() {
@@ -129,7 +129,7 @@ export default class GameScene extends Phaser.Scene {
       this.gameOverOverlay.hide();
     }
     if (this.startScreen) {
-      this.startScreen.show(false);
+      this.startScreen.show();
     }
   }
 }
