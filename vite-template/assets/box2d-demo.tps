@@ -141,7 +141,7 @@
             <string></string>
         </struct>
         <key>autoAliasEnabled</key>
-        <true/>
+        <false/>
         <key>trimSpriteNames</key>
         <false/>
         <key>prependSmartFolderName</key>
@@ -232,7 +232,7 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">crate-big.png</key>
+            <key type="filename">crate/crate-big.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0,0</point_f>
@@ -247,7 +247,7 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">crate-small.png</key>
+            <key type="filename">crate/crate-small.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0,0</point_f>
@@ -262,7 +262,8 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">enemy.png</key>
+            <key type="filename">enemy/enemy.png</key>
+            <key type="filename">ui/direction-button.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0,0</point_f>
@@ -274,6 +275,58 @@
                 <rect>24,24,47,47</rect>
                 <key>scale9Paddings</key>
                 <rect>24,24,47,47</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">finish/finish-activated/finish-activated-0001.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0002.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0003.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0004.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0005.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0006.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0007.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0008.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0009.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0010.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0011.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0012.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0013.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0014.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0015.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0016.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0017.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0018.png</key>
+            <key type="filename">finish/finish-activated/finish-activated-0019.png</key>
+            <key type="filename">finish/finish-active/finish-active-0001.png</key>
+            <key type="filename">finish/finish-active/finish-active-0002.png</key>
+            <key type="filename">finish/finish-active/finish-active-0003.png</key>
+            <key type="filename">finish/finish-active/finish-active-0004.png</key>
+            <key type="filename">finish/finish-active/finish-active-0005.png</key>
+            <key type="filename">finish/finish-active/finish-active-0006.png</key>
+            <key type="filename">finish/finish-active/finish-active-0007.png</key>
+            <key type="filename">finish/finish-active/finish-active-0008.png</key>
+            <key type="filename">finish/finish-active/finish-active-0009.png</key>
+            <key type="filename">finish/finish-active/finish-active-0010.png</key>
+            <key type="filename">finish/finish-active/finish-active-0011.png</key>
+            <key type="filename">finish/finish-active/finish-active-0012.png</key>
+            <key type="filename">finish/finish-active/finish-active-0013.png</key>
+            <key type="filename">finish/finish-active/finish-active-0014.png</key>
+            <key type="filename">finish/finish-active/finish-active-0015.png</key>
+            <key type="filename">finish/finish-active/finish-active-0016.png</key>
+            <key type="filename">finish/finish-active/finish-active-0017.png</key>
+            <key type="filename">finish/finish-active/finish-active-0018.png</key>
+            <key type="filename">finish/finish-idle/finish-idle.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0,0</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>25,31,50,63</rect>
+                <key>scale9Paddings</key>
+                <rect>25,31,50,63</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
@@ -431,6 +484,21 @@
                 <rect>15,17,30,35</rect>
                 <key>scale9Paddings</key>
                 <rect>15,17,30,35</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">ui/start.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0,0</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>70,10,139,19</rect>
+                <key>scale9Paddings</key>
+                <rect>70,10,139,19</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
