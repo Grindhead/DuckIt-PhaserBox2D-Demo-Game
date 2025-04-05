@@ -6,7 +6,7 @@
  */
 import * as Phaser from "phaser";
 import { ASSETS } from "@constants";
-import GameScene from "../scenes/GameScene";
+import GameScene from "@scenes/GameScene";
 
 export default class GameOverOverlay {
   scene: GameScene;

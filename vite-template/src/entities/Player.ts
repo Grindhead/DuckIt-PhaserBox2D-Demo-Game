@@ -16,10 +16,9 @@ import {
   b2Body_GetLinearVelocity,
   b2Body_SetLinearVelocity,
   b2Body_SetTransform,
-} from "../lib/PhaserBox2D.js";
-import { PHYSICS, ASSETS } from "../lib/constants.js";
-import { gameState } from "../lib/gameState";
-import { b2BodyDef } from "../../../types/include/types_h";
+} from "@PhaserBox2D";
+import { PHYSICS, ASSETS } from "@constants";
+import { gameState } from "@gameState";
 
 interface PlayerState {
   isJumping: boolean;
@@ -86,7 +85,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
   }
 
   initPhysics() {
-    const bodyDef: b2BodyDef = {
+    const bodyDef = {
       ...b2DefaultBodyDef(),
       type: DYNAMIC,
       fixedRotation: true,

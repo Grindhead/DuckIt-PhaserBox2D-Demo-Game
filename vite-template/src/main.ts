@@ -5,9 +5,9 @@
  * scaling mode, and instantiates the game.
  */
 import * as Phaser from "phaser";
-import BootScene from "./scenes/BootScene";
-import PreloaderScene from "./scenes/PreloaderScene";
-import GameScene from "./scenes/GameScene";
+import BootScene from "@scenes/BootScene";
+import PreloaderScene from "@scenes/PreloaderScene";
+import GameScene from "@scenes/GameScene";
 import { RENDERER } from "@constants";
 
 // Define type for GameConfig

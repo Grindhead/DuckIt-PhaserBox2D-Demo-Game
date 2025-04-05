@@ -6,8 +6,8 @@
  */
 import * as Phaser from "phaser";
 import { ASSETS } from "@constants";
-import GameScene from "../scenes/GameScene";
-import { gameState } from "../lib/gameState";
+import GameScene from "@scenes/GameScene";
+import { gameState } from "@gameState";
 
 export default class GameStartScreen {
   scene: GameScene;

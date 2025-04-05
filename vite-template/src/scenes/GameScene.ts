@@ -17,12 +17,12 @@ import {
 } from "@PhaserBox2D";
 import { PHYSICS, WORLD, SCENES } from "@constants";
 import { gameState } from "@gameState";
-import Player from "../entities/Player";
-import DeathSensor from "../entities/DeathSensor";
-import CoinCounter from "../ui/CoinCounter";
-import MobileControls from "../ui/MobileControls";
-import GameStartScreen from "../ui/GameStartScreen";
-import GameOverOverlay from "../ui/GameOverOverlay";
+import Player from "@entities/Player";
+import DeathSensor from "@entities/DeathSensor";
+import CoinCounter from "@ui/CoinCounter";
+import MobileControls from "@ui/MobileControls";
+import GameStartScreen from "@ui/GameStartScreen";
+import GameOverOverlay from "@ui/GameOverOverlay";
 
 export default class GameScene extends Phaser.Scene {
   player!: Player;

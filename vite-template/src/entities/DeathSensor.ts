@@ -13,10 +13,9 @@ import {
   b2DefaultBodyDef,
   pxmVec2,
   b2Body_SetTransform,
-} from "../lib/PhaserBox2D.js";
-import { PHYSICS, WORLD } from "../lib/constants.js";
-import { gameState } from "../lib/gameState";
-import { b2BodyDef } from "../../../types/include/types_h";
+} from "@PhaserBox2D";
+import { PHYSICS, WORLD } from "@constants";
+import { gameState } from "@gameState";
 
 interface InitialConfig {
   x: number;
@@ -63,7 +62,7 @@ export default class DeathSensor extends Phaser.GameObjects.Rectangle {
   }
 
   createSensor() {
-    const bodyDef: b2BodyDef = {
+    const bodyDef = {
       ...b2DefaultBodyDef(),
       type: STATIC,
       position: pxmVec2(this.x, this.y),
