@@ -25,7 +25,10 @@
     "paths": {
       "@PhaserBox2D": ["./src/lib/PhaserBox2D.js"],
       "@constants": ["./src/lib/constants.ts"],
-      "@gameState": ["./src/lib/gameState.ts"]
+      "@gameState": ["./src/lib/gameState.ts"],
+      "@entities": ["./src/entities"],
+      "@scenes": ["./src/scenes"],
+      "@ui": ["./src/ui"]
     },
     "typeRoots": ["./node_modules/@types", "./types"], // Keep types root for potentially other types
 
