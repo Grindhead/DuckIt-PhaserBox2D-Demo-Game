@@ -69,7 +69,7 @@ export const PHYSICS = {
     /** Bounce coefficient (irrelevant) */
     RESTITUTION: 0.0,
   },
-};
+} as const;
 
 /**
  * Game world dimensions and boundaries
@@ -83,7 +83,7 @@ export const WORLD = {
   HEIGHT: 4000,
   /** Y position of death sensor (below world height) */
   DEATH_SENSOR_Y: 4400,
-};
+} as const;
 
 /**
  * Game render dimensions and boundaries
@@ -95,7 +95,7 @@ export const RENDERER = {
   WIDTH: 1180,
   /** Height in pixels */
   HEIGHT: 820,
-};
+} as const;
 
 /**
  * Animation configuration
@@ -107,7 +107,7 @@ export const ANIMATION = {
   FRAME_RATE: 30,
   /** Camera smoothing factor (0-1, lower = smoother) */
   CAMERA_LERP: 0.1,
-};
+} as const;
 
 /**
  * Asset configuration for sprites and animations
@@ -236,7 +236,7 @@ export const ASSETS = {
     /** Mobile direction control button sprite key */
     DIRECTION_BUTTON: "ui/direction-button.png",
   },
-};
+} as const;
 
 /**
  * Scene identifiers
@@ -250,7 +250,7 @@ export const SCENES = {
   PRELOADER: "PreloaderScene",
   /** Main game scene */
   GAME: "GameScene",
-};
+} as const;
 
 /**
  * UI element configuration
@@ -281,4 +281,4 @@ export const UI = {
     /** Base button size in pixels */
     BUTTON_SIZE: 64,
   },
-};
+} as const;

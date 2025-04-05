@@ -2,7 +2,6 @@ import * as Phaser from "phaser";
 import {
   CreateBoxPolygon,
   CreateWorld,
-  b2DestroyWorld,
   STATIC,
   b2DefaultBodyDef,
   b2Vec2,
@@ -125,29 +124,12 @@ export default class GameScene extends Phaser.Scene {
     gameState.reset();
     this.player.reset();
     this.coinCounter.updateCount(0);
-    if (this.gameOverOverlay) this.gameOverOverlay.destroy();
-    if (this.startScreen) this.startScreen.destroy();
-    this.startScreen = new GameStartScreen(this);
-    this.startScreen.show(false);
-  }
 
-  shutdown() {
-    if (this.player) {
-      this.player.destroy();
+    if (this.gameOverOverlay) {
+      this.gameOverOverlay.hide();
     }
-    if (this.deathSensor) {
-      this.deathSensor.destroy();
+    if (this.startScreen) {
+      this.startScreen.show(false);
     }
-
-    if (this.coinCounter) this.coinCounter.destroy();
-    if (this.mobileControls) this.mobileControls.destroy();
-    if (this.startScreen) this.startScreen.destroy();
-    if (this.gameOverOverlay) this.gameOverOverlay.destroy();
-
-    if (gameState.worldId) {
-      b2DestroyWorld(gameState.worldId);
-      gameState.worldId = null;
-    }
-    gameState.reset();
   }
 }

@@ -1,18 +1,20 @@
 import * as Phaser from "phaser";
 import { ASSETS } from "@constants";
+import GameScene from "../scenes/GameScene";
 
 export default class GameStartScreen {
-  scene: Phaser.Scene;
+  scene: GameScene;
   overlay: Phaser.GameObjects.Image | null = null;
+  isGameOverFlag: boolean = false;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: GameScene) {
     this.scene = scene;
+    this.createOverlay();
   }
 
-  show(isGameOver: boolean = false) {
-    if (this.overlay) {
-      this.overlay.destroy();
-    }
+  createOverlay() {
+    if (this.overlay) return;
+
     this.overlay = this.scene.add
       .image(
         this.scene.cameras.main.centerX,
@@ -21,24 +23,38 @@ export default class GameStartScreen {
         ASSETS.UI.START
       )
       .setScrollFactor(0)
-      .setInteractive();
+      .setInteractive()
+      .setVisible(false);
 
     this.overlay.on("pointerdown", () => {
-      if (isGameOver) {
-        if (typeof (this.scene as any).scene?.restart === "function") {
-          (this.scene as any).scene.restart();
+      if (this.isGameOverFlag) {
+        if (typeof this.scene.scene?.restart === "function") {
+          this.scene.scene.restart();
         } else {
           console.error("Scene does not have a scene.restart method!");
         }
       } else {
-        this.destroy();
-        if (typeof (this.scene as any).startGame === "function") {
-          (this.scene as any).startGame();
+        this.hide();
+        if (typeof this.scene.startGame === "function") {
+          this.scene.startGame();
         } else {
           console.error("Scene does not have a startGame method!");
         }
       }
     });
+  }
+
+  show(isGameOver: boolean = false) {
+    this.isGameOverFlag = isGameOver;
+    if (this.overlay) {
+      this.overlay.setVisible(true);
+    }
+  }
+
+  hide() {
+    if (this.overlay) {
+      this.overlay.setVisible(false);
+    }
   }
 
   destroy() {

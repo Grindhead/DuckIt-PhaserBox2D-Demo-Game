@@ -11,7 +11,7 @@ import {
   b2Body_SetTransform,
 } from "../lib/PhaserBox2D.js";
 import { PHYSICS, ASSETS } from "../lib/constants.js";
-import { gameState } from "../lib/gameState.js";
+import { gameState } from "../lib/gameState";
 import { b2BodyDef } from "../../../types/include/types_h";
 
 interface PlayerState {

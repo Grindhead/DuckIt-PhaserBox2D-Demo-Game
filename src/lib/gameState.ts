@@ -7,13 +7,10 @@
  * State Flow:
  * INITIALIZING -> READY -> PLAYING -> (PAUSED) -> GAME_OVER -> READY
  *
- * @module gameState
  */
 
 /**
  * Enumeration of possible game states
- * @readonly
- * @enum {string}
  */
 export const GameStates = {
   /** Initial state when game is loading */
@@ -31,9 +28,6 @@ export const GameStates = {
 /**
  * Defines valid state transitions for the FSM
  * Each state maps to an array of valid next states
- * @private
- * @readonly
- * @type {Object.<string, string[]>}
  */
 const StateTransitions = {
   [GameStates.INITIALIZING]: [GameStates.READY],
@@ -45,20 +39,17 @@ const StateTransitions = {
 
 /**
  * GameState class implementing both Singleton pattern and Finite State Machine
- * @class
  */
 class GameState {
-  // Declare static instance property for Singleton
   private static instance: GameState;
 
-  // Declare instance properties
-  private currentState!: (typeof GameStates)[keyof typeof GameStates];
+  private currentState: (typeof GameStates)[keyof typeof GameStates] =
+    GameStates.INITIALIZING;
   public worldId: any | null = null; // Use any for Box2D ID
-  private coins!: number; // Add definite assignment
+  private coins: number = 0;
 
   /**
    * Creates or returns the singleton instance of GameState
-   * @constructor
    */
   constructor() {
     if (GameState.instance) {
@@ -70,10 +61,8 @@ class GameState {
 
   /**
    * Gets the singleton instance of GameState
-   * @static
-   * @returns {GameState} The singleton instance
    */
-  static getInstance() {
+  static getInstance(): GameState {
     if (!GameState.instance) {
       GameState.instance = new GameState();
     }
@@ -83,7 +72,7 @@ class GameState {
   /**
    * Resets the game state to initial values
    */
-  reset() {
+  reset(): void {
     this.currentState = GameStates.INITIALIZING;
     this.worldId = null;
     this.coins = 0;
@@ -91,8 +80,6 @@ class GameState {
 
   /**
    * Handles state transitions in the FSM
-   * @param {GameStates} newState - The state to transition to
-   * @returns {boolean} Whether the transition was successful
    */
   transition(newState: (typeof GameStates)[keyof typeof GameStates]): boolean {
     const validTransitions =
@@ -113,10 +100,10 @@ class GameState {
 
   /**
    * Executes actions when entering a new state
-   * @private
-   * @param {GameStates} state - The state being entered
    */
-  _executeEntryActions(state: (typeof GameStates)[keyof typeof GameStates]) {
+  private _executeEntryActions(
+    state: (typeof GameStates)[keyof typeof GameStates]
+  ): void {
     switch (state) {
       case GameStates.READY:
         // Reset game-specific state but keep worldId
@@ -133,10 +120,10 @@ class GameState {
 
   /**
    * Executes actions when exiting a state
-   * @private
-   * @param {GameStates} state - The state being exited
    */
-  _executeExitActions(state: (typeof GameStates)[keyof typeof GameStates]) {
+  private _executeExitActions(
+    state: (typeof GameStates)[keyof typeof GameStates]
+  ): void {
     switch (state) {
       case GameStates.PLAYING:
         // Any cleanup needed when leaving playing state
@@ -146,49 +133,43 @@ class GameState {
 
   /**
    * Checks if game is in INITIALIZING state
-   * @returns {boolean}
    */
-  get isInitializing() {
+  get isInitializing(): boolean {
     return this.currentState === GameStates.INITIALIZING;
   }
 
   /**
    * Checks if game is in READY state
-   * @returns {boolean}
    */
-  get isReady() {
+  get isReady(): boolean {
     return this.currentState === GameStates.READY;
   }
 
   /**
    * Checks if game is in PLAYING state
-   * @returns {boolean}
    */
-  get isPlaying() {
+  get isPlaying(): boolean {
     return this.currentState === GameStates.PLAYING;
   }
 
   /**
    * Checks if game is in PAUSED state
-   * @returns {boolean}
    */
-  get isPaused() {
+  get isPaused(): boolean {
     return this.currentState === GameStates.PAUSED;
   }
 
   /**
    * Checks if game is in GAME_OVER state
-   * @returns {boolean}
    */
-  get isGameOver() {
+  get isGameOver(): boolean {
     return this.currentState === GameStates.GAME_OVER;
   }
 
   /**
    * Sets the Box2D world ID and transitions from INITIALIZING to READY if applicable
-   * @param {any} id - The Box2D world ID
    */
-  setWorldId(id: any) {
+  setWorldId(id: any): void {
     this.worldId = id;
     if (this.isInitializing) {
       this.transition(GameStates.READY);
@@ -197,41 +178,36 @@ class GameState {
 
   /**
    * Starts the game by transitioning to PLAYING state
-   * @returns {boolean} Whether the transition was successful
    */
-  startGame() {
+  startGame(): boolean {
     return this.transition(GameStates.PLAYING);
   }
 
   /**
    * Pauses the game by transitioning to PAUSED state
-   * @returns {boolean} Whether the transition was successful
    */
-  pauseGame() {
+  pauseGame(): boolean {
     return this.transition(GameStates.PAUSED);
   }
 
   /**
    * Resumes the game by transitioning back to PLAYING state
-   * @returns {boolean} Whether the transition was successful
    */
-  resumeGame() {
+  resumeGame(): boolean {
     return this.transition(GameStates.PLAYING);
   }
 
   /**
    * Ends the game by transitioning to GAME_OVER state
-   * @returns {boolean} Whether the transition was successful
    */
-  endGame() {
+  endGame(): boolean {
     return this.transition(GameStates.GAME_OVER);
   }
 
   /**
    * Restarts the game by transitioning from GAME_OVER to READY state
-   * @returns {boolean} Whether the transition was successful
    */
-  restartGame() {
+  restartGame(): boolean {
     if (this.isGameOver) {
       return this.transition(GameStates.READY);
     }
@@ -240,9 +216,8 @@ class GameState {
 
   /**
    * Adds a coin to the player's collection (only in PLAYING state)
-   * @returns {boolean} Whether the coin was successfully added
    */
-  addCoin() {
+  addCoin(): boolean {
     if (this.isPlaying) {
       this.coins++;
       return true;
@@ -252,9 +227,8 @@ class GameState {
 
   /**
    * Gets the current coin count
-   * @returns {number} The number of coins collected
    */
-  getCoins() {
+  getCoins(): number {
     return this.coins;
   }
 }
@@ -266,6 +240,5 @@ export const gameState = GameState.getInstance();
 
 /**
  * Convenience function to reset the game state
- * @function
  */
-export const resetGameState = () => gameState.reset();
+export const resetGameState = (): void => gameState.reset();
