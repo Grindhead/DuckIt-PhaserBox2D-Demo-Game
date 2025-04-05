@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    // Target modern browsers
+    "target": "es2016",
+    // Use modern module system
+    "module": "esnext",
+    "moduleResolution": "node",
+
+    // Phaser specific types
+    "typeRoots": [
+      "./node_modules/phaser/types",
+      "../types" // Adjusted path relative to vite-template
+    ],
+    "types": ["phaser", "main"],
+
+    // Enable strict type checking
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    // Allow importing .js files (for PhaserBox2D.js)
+    "allowJs": true,
+    "checkJs": false,
+
+    // Project structure
+    "rootDir": "./src",
+    "baseUrl": "./", // Base is now vite-template
+
+    // Include DOM libraries
+    "lib": ["es6", "dom", "dom.iterable", "scripthost"],
+
+    // Specify files to include
+    "include": [
+      "src/**/*",
+      "../types/**/*" // Adjusted path relative to vite-template
+    ],
+    // Specify files/folders to exclude
+    "exclude": ["node_modules", "dist"]
+  }
+}

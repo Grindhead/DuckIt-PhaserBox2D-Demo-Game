@@ -7,7 +7,7 @@ import {
   pxmVec2,
   DestroyBody,
   b2Body_SetTransform,
-} from "../PhaserBox2D.js";
+} from "../lib/PhaserBox2D.js";
 import { PHYSICS } from "../lib/constants";
 import { gameState } from "../lib/gameState";
 

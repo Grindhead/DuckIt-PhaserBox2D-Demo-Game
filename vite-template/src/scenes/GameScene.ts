@@ -4,23 +4,19 @@ import {
   CreateWorld,
   DestroyWorld,
   STATIC,
-  SetWorldScale,
-  UpdateWorldSprites,
-  WorldStep,
   b2DefaultBodyDef,
-  b2DefaultWorldDef,
   b2Vec2,
   pxmVec2,
   StepWorld,
-} from "../PhaserBox2D.js";
-import { PHYSICS, WORLD, ANIMATION, SCENES, ASSETS } from "../lib/constants";
-import { gameState, GameStates } from "../lib/gameState";
+} from "../lib/PhaserBox2D.js";
+import { PHYSICS, WORLD, SCENES, ASSETS } from "../lib/constants.js";
+import { gameState, GameStates } from "../lib/gameState.js";
 import Player from "../entities/Player.js";
-import DeathSensor from "../entities/DeathSensor";
-import CoinCounter from "../ui/CoinCounter";
-import MobileControls from "../ui/MobileControls";
-import GameStartScreen from "../ui/GameStartScreen";
-import GameOverOverlay from "../ui/GameOverOverlay";
+import DeathSensor from "../entities/DeathSensor.js";
+import CoinCounter from "../ui/CoinCounter.js";
+import MobileControls from "../ui/MobileControls.js";
+import GameStartScreen from "../ui/GameStartScreen.js";
+import GameOverOverlay from "../ui/GameOverOverlay.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -30,7 +26,7 @@ export default class GameScene extends Phaser.Scene {
   create() {
     // Create Box2D world
     const world = CreateWorld();
-    gameState = GameState.getInstance();
+
     gameState.setWorldId(world.worldId);
 
     // Create background

@@ -4,46 +4,45 @@
 
 - Project definition and requirements are documented in `vite-template/documents/prd.md`.
 - Initial memory bank structure and content created.
+- Significant progress on JavaScript implementation within `vite-template/src`, including scenes, entities, and core logic (exact features implemented need verification).
+- TypeScript environment setup (`vite-template/tsconfig.json`, dependencies installed).
+- Custom Box2D type definitions available in `types` directory.
 
-## 2. What's Left to Build
+## 2. What's Left to Build / Current Task
 
-- The entire game implementation, including:
-  - Project setup (Vite, Phaser, Box2D integration).
-  - Scene implementation (`Boot`, `Preloader`, `Game`).
-  - Asset loading and animation definition.
-  - Procedural level generation logic.
-  - Player character implementation (movement, physics, states, animations).
-  - Platform creation and tiling.
-  - Crate implementation (physics, interaction).
-  - Enemy implementation (patrolling behavior, physics).
-  - Coin implementation (collection, counter).
-  - Finish entity implementation (states, interaction).
-  - Death conditions (enemy collision, falling off-screen).
-  - Input handling (keyboard, mobile controls).
-  - UI implementation (coin counter, start/reset overlay).
-  - Camera implementation (following player).
-  - Responsiveness implementation.
+- **Current Task:** Transition the existing JavaScript codebase in `vite-template/src` to TypeScript.
+  - Rename `.js` files to `.ts`.
+  - Add types to the codebase.
+  - Ensure compatibility and fix type errors.
+  - Update build scripts.
+- Complete any remaining features outlined in the PRD and the original to-do list below (status needs verification against current codebase).
+- Testing and polishing.
 
 ## 3. Current Status
 
-- **Phase:** Project Initialization.
-- **Description:** The project is at the very beginning. Requirements are defined, and the initial project structure and setup are the immediate next steps.
+- **Phase:** Implementation & Refactoring (TypeScript Transition).
+- **Description:** The project has a partially implemented JavaScript codebase. The immediate focus is converting this codebase to TypeScript for improved maintainability and type safety before proceeding with further feature development or completion.
 
 ## 4. Known Issues / Blockers
 
-- None at this time.
+- Potential type errors during the TypeScript conversion process.
+- Need to verify the exact extent of implemented features in the existing JS code.
 
 ## 5. Evolution of Project Decisions
 
-- The project direction is currently solely defined by the initial `prd.md`. No changes or deviations have occurred.
+- Decision made to transition the existing JavaScript code to TypeScript before completing all features.
+- Utilizing bundled Phaser types and provided custom Box2D types.
 
-## 6. Comprehensive and Modular To-Do List
+## 6. Comprehensive and Modular To-Do List (Original - Status Needs Verification)
+
+_This list reflects the original plan. Items may be partially or fully completed in the existing JavaScript code._
 
 1. Project Setup & Environment
 
    - Initialize Vite project structure and install Phaser.
    - Integrate Box2D via "src/PhaserBox2D.js".
    - Confirm basic file organization (assets, scenes, memory bank).
+   - Setup TypeScript environment.
 
 2. Scenes & Asset Preloading
 
@@ -96,7 +95,15 @@
    - Validate no performance bottlenecks (keep at 60fps).
    - Refine collisions, edge cases (multiple enemies, intense crate usage).
 
-10. Final Integration
+10. **TypeScript Transition (Current Focus)**
+
+    - Rename all `.js` in `vite-template/src` to `.ts`.
+    - Add types incrementally.
+    - Verify imports (especially `PhaserBox2D.js`).
+    - Update build scripts in `vite-template/package.json`.
+    - Test thoroughly.
+
+11. Final Integration
 
 - Review PRD requirements to confirm full feature coverage.
 - Update the memory bank with any additional findings or patterns discovered.

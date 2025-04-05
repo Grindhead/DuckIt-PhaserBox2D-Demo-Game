@@ -9,7 +9,7 @@ import {
   b2Body_GetLinearVelocity,
   b2Body_SetLinearVelocity,
   b2Body_SetTransform,
-} from "../PhaserBox2D.js";
+} from "../lib/PhaserBox2D.js";
 import { PHYSICS, ASSETS } from "../lib/constants.js";
 import { gameState, GameStates } from "../lib/gameState.js";
 
