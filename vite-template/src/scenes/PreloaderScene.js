@@ -1,8 +1,9 @@
 import * as Phaser from "phaser";
+import { SCENES, ASSETS, ANIMATION } from "../lib/constants";
 
 export default class PreloaderScene extends Phaser.Scene {
   constructor() {
-    super({ key: "PreloaderScene" });
+    super({ key: SCENES.PRELOADER });
   }
 
   preload() {
@@ -36,7 +37,7 @@ export default class PreloaderScene extends Phaser.Scene {
     });
 
     // Load texture atlas from the correct location
-    this.load.atlas("assets", "/assets.png", "/assets.json");
+    this.load.atlas(ASSETS.ATLAS, "/assets.png", "/assets.json");
   }
 
   create() {
@@ -44,122 +45,122 @@ export default class PreloaderScene extends Phaser.Scene {
     this.createAnimations();
 
     // Start the game scene
-    this.scene.start("GameScene");
+    this.scene.start(SCENES.GAME);
   }
 
   createAnimations() {
     // Duck animations
     this.anims.create({
-      key: "duck-idle",
-      frames: this.anims.generateFrameNames("assets", {
+      key: ASSETS.PLAYER.IDLE.KEY,
+      frames: this.anims.generateFrameNames(ASSETS.ATLAS, {
         prefix: "player/idle/duck-idle-",
         start: 1,
-        end: 10,
+        end: ASSETS.PLAYER.IDLE.FRAME_COUNT,
         zeroPad: 4,
         suffix: ".png",
       }),
-      frameRate: 30,
+      frameRate: ANIMATION.FRAME_RATE,
       repeat: -1,
     });
 
     this.anims.create({
-      key: "duck-dead",
-      frames: this.anims.generateFrameNames("assets", {
-        prefix: "player/dead/duck-dead-",
+      key: ASSETS.PLAYER.DEAD.KEY,
+      frames: this.anims.generateFrameNames(ASSETS.ATLAS, {
+        prefix: ASSETS.PLAYER.DEAD.FRAME_PREFIX,
         start: 1,
-        end: 10,
+        end: ASSETS.PLAYER.DEAD.FRAME_COUNT,
         zeroPad: 4,
         suffix: ".png",
       }),
-      frameRate: 30,
+      frameRate: ANIMATION.FRAME_RATE,
     });
 
     this.anims.create({
-      key: "duck-fall",
-      frames: this.anims.generateFrameNames("assets", {
-        prefix: "player/fall/duck-fall-",
+      key: ASSETS.PLAYER.FALL.KEY,
+      frames: this.anims.generateFrameNames(ASSETS.ATLAS, {
+        prefix: ASSETS.PLAYER.FALL.FRAME_PREFIX,
         start: 1,
-        end: 10,
+        end: ASSETS.PLAYER.FALL.FRAME_COUNT,
         zeroPad: 4,
         suffix: ".png",
       }),
-      frameRate: 30,
+      frameRate: ANIMATION.FRAME_RATE,
     });
 
     this.anims.create({
-      key: "duck-jump",
-      frames: this.anims.generateFrameNames("assets", {
-        prefix: "player/jump/duck-jump-",
+      key: ASSETS.PLAYER.JUMP.KEY,
+      frames: this.anims.generateFrameNames(ASSETS.ATLAS, {
+        prefix: ASSETS.PLAYER.JUMP.FRAME_PREFIX,
         start: 1,
-        end: 12,
+        end: ASSETS.PLAYER.JUMP.FRAME_COUNT,
         zeroPad: 4,
         suffix: ".png",
       }),
-      frameRate: 30,
+      frameRate: ANIMATION.FRAME_RATE,
     });
 
     this.anims.create({
-      key: "duck-run",
-      frames: this.anims.generateFrameNames("assets", {
-        prefix: "player/run/duck-run-",
+      key: ASSETS.PLAYER.RUN.KEY,
+      frames: this.anims.generateFrameNames(ASSETS.ATLAS, {
+        prefix: ASSETS.PLAYER.RUN.FRAME_PREFIX,
         start: 1,
-        end: 14,
+        end: ASSETS.PLAYER.RUN.FRAME_COUNT,
         zeroPad: 4,
         suffix: ".png",
       }),
-      frameRate: 30,
+      frameRate: ANIMATION.FRAME_RATE,
       repeat: -1,
     });
 
     // Coin animations
     this.anims.create({
-      key: "coin-idle",
-      frames: this.anims.generateFrameNames("assets", {
-        prefix: "coin/coin-idle/coin-idle-",
+      key: ASSETS.COIN.IDLE.KEY,
+      frames: this.anims.generateFrameNames(ASSETS.ATLAS, {
+        prefix: ASSETS.COIN.IDLE.FRAME_PREFIX,
         start: 1,
-        end: 23,
+        end: ASSETS.COIN.IDLE.FRAME_COUNT,
         zeroPad: 4,
         suffix: ".png",
       }),
-      frameRate: 30,
+      frameRate: ANIMATION.FRAME_RATE,
       repeat: -1,
     });
 
     this.anims.create({
-      key: "coin-collect",
-      frames: this.anims.generateFrameNames("assets", {
-        prefix: "coin/coin-collect/coin-collect-",
+      key: ASSETS.COIN.COLLECT.KEY,
+      frames: this.anims.generateFrameNames(ASSETS.ATLAS, {
+        prefix: ASSETS.COIN.COLLECT.FRAME_PREFIX,
         start: 1,
-        end: 8,
+        end: ASSETS.COIN.COLLECT.FRAME_COUNT,
         zeroPad: 4,
         suffix: ".png",
       }),
-      frameRate: 30,
+      frameRate: ANIMATION.FRAME_RATE,
     });
 
     // Finish animations
     this.anims.create({
-      key: "finish-activated",
-      frames: this.anims.generateFrameNames("assets", {
-        prefix: "finish/finish-activated/finish-activated-",
+      key: ASSETS.FINISH.ACTIVATED.KEY,
+      frames: this.anims.generateFrameNames(ASSETS.ATLAS, {
+        prefix: ASSETS.FINISH.ACTIVATED.FRAME_PREFIX,
         start: 1,
-        end: 19,
+        end: ASSETS.FINISH.ACTIVATED.FRAME_COUNT,
         zeroPad: 4,
         suffix: ".png",
       }),
-      frameRate: 30,
+      frameRate: ANIMATION.FRAME_RATE,
     });
 
     this.anims.create({
-      key: "finish-active",
-      frames: this.anims.generateFrameNames("assets", {
-        prefix: "finish/finish-active/finish-active-",
+      key: ASSETS.FINISH.ACTIVE.KEY,
+      frames: this.anims.generateFrameNames(ASSETS.ATLAS, {
+        prefix: ASSETS.FINISH.ACTIVE.FRAME_PREFIX,
         start: 1,
-        end: 18,
+        end: ASSETS.FINISH.ACTIVE.FRAME_COUNT,
         zeroPad: 4,
         suffix: ".png",
       }),
-      frameRate: 30,
+      frameRate: ANIMATION.FRAME_RATE,
       repeat: -1,
     });
   }
