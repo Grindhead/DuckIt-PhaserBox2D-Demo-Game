@@ -1,3 +1,10 @@
+/**
+ * @file PreloaderScene.ts
+ * @description Handles loading of all game assets (texture atlas) before the game starts.
+ * Displays a loading progress bar and percentage text.
+ * Once loading is complete, it defines all necessary sprite animations
+ * and then transitions to the GameScene.
+ */
 import * as Phaser from "phaser";
 import { SCENES, ASSETS, ANIMATION } from "@constants";
 

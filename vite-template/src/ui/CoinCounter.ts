@@ -1,3 +1,8 @@
+/**
+ * @file CoinCounter.ts
+ * @description Manages the display of the player's collected coin count.
+ * Creates and updates a text object in the top-right corner of the screen.
+ */
 import * as Phaser from "phaser";
 import { UI } from "@constants";
 

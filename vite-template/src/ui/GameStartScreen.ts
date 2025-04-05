@@ -1,3 +1,9 @@
+/**
+ * @file GameStartScreen.ts
+ * @description Manages the initial start screen overlay.
+ * This screen is displayed when the game first loads and allows the player
+ * to initiate the game start or restart after a game over.
+ */
 import * as Phaser from "phaser";
 import { ASSETS } from "@constants";
 import GameScene from "../scenes/GameScene";

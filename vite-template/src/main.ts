@@ -1,3 +1,9 @@
+/**
+ * @file main.ts
+ * @description This is the main entry point for the Phaser game.
+ * It sets up the Phaser game configuration, including scenes, renderer settings,
+ * scaling mode, and instantiates the game.
+ */
 import * as Phaser from "phaser";
 import BootScene from "./scenes/BootScene";
 import PreloaderScene from "./scenes/PreloaderScene";

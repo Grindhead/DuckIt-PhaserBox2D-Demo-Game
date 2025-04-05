@@ -1,3 +1,9 @@
+/**
+ * @file MobileControls.ts
+ * @description Creates and manages on-screen touch controls for mobile devices.
+ * Displays left, right, and jump buttons if the game detects touch input.
+ * Tracks the state of these buttons (pressed or not).
+ */
 import * as Phaser from "phaser";
 import { UI, ASSETS } from "@constants";
 

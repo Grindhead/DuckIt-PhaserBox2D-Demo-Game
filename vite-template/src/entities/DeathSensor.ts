@@ -1,3 +1,10 @@
+/**
+ * @file DeathSensor.ts
+ * @description Represents an invisible sensor area at the bottom of the game world.
+ * If the player collides with this sensor (i.e., falls off the world),
+ * it triggers the player's death sequence.
+ * Implemented as a static Box2D sensor body.
+ */
 import * as Phaser from "phaser";
 import {
   AddSpriteToWorld,

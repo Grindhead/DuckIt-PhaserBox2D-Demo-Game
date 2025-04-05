@@ -1,3 +1,9 @@
+/**
+ * @file GameOverOverlay.ts
+ * @description Manages the game over overlay screen.
+ * This screen is displayed when the player dies or completes the level,
+ * prompting them to restart.
+ */
 import * as Phaser from "phaser";
 import { ASSETS } from "@constants";
 import GameScene from "../scenes/GameScene";

@@ -1,3 +1,10 @@
+/**
+ * @file Player.ts
+ * @description Represents the player character (duck) in the game.
+ * Handles player sprite creation, physics integration (using Box2D via PhaserBox2D),
+ * movement control (left, right, jump) based on input, state management (idle, run, jump, fall, dead),
+ * animation playback corresponding to the state, and reset functionality.
+ */
 import * as Phaser from "phaser";
 import {
   AddSpriteToWorld,

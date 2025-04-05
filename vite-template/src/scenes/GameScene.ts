@@ -1,3 +1,10 @@
+/**
+ * @file GameScene.ts
+ * @description The main scene where the gameplay takes place.
+ * It initializes the Box2D physics world, creates the player, level elements (platforms, etc.),
+ * UI components (coin counter, overlays, mobile controls), handles input, manages game state,
+ * and runs the game loop (physics updates, player updates).
+ */
 import * as Phaser from "phaser";
 import {
   CreateBoxPolygon,
