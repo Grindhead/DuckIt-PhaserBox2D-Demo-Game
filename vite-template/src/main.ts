@@ -2,17 +2,18 @@ import * as Phaser from "phaser";
 import BootScene from "./scenes/BootScene";
 import PreloaderScene from "./scenes/PreloaderScene";
 import GameScene from "./scenes/GameScene";
-import { WORLD } from "./lib/constants";
+import { RENDERER } from "./lib/constants";
 
-const config = {
+// Define type for GameConfig
+type GameConfig = Phaser.Types.Core.GameConfig;
+
+const config: GameConfig = {
   type: Phaser.AUTO,
   parent: "app",
-  width: WORLD.WIDTH,
-  height: WORLD.HEIGHT,
+  width: RENDERER.WIDTH,
+  height: RENDERER.HEIGHT,
   backgroundColor: "#2d2d2d",
-  physics: {
-    default: false, // We'll use Box2D via PhaserBox2D.js
-  },
+  // Remove the physics property as we are using external Box2D
   scene: [BootScene, PreloaderScene, GameScene],
   scale: {
     mode: Phaser.Scale.RESIZE,
@@ -20,4 +21,5 @@ const config = {
   },
 };
 
-const game = new Phaser.Game(config);
+// Create the game instance, but don't assign to unused variable
+new Phaser.Game(config);

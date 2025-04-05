@@ -53,6 +53,22 @@ export const PHYSICS = {
     /** Surface friction coefficient */
     FRICTION: 0.5,
   },
+
+  /** Death sensor properties */
+  DEATH_SENSOR: {
+    /** Y position based on WORLD constant */
+    // Y: defined dynamically using WORLD.DEATH_SENSOR_Y
+    /** Width based on WORLD constant */
+    // WIDTH: defined dynamically using WORLD.WIDTH
+    /** Height in pixels */
+    HEIGHT: 10, // Arbitrary small height for the sensor box
+    /** Mass density (irrelevant for sensor, but needed for Box2D) */
+    DENSITY: 0.0,
+    /** Surface friction coefficient (irrelevant) */
+    FRICTION: 0.0,
+    /** Bounce coefficient (irrelevant) */
+    RESTITUTION: 0.0,
+  },
 };
 
 /**
@@ -67,6 +83,18 @@ export const WORLD = {
   HEIGHT: 4000,
   /** Y position of death sensor (below world height) */
   DEATH_SENSOR_Y: 4400,
+};
+
+/**
+ * Game render dimensions and boundaries
+ * @readonly
+ * @enum {Object}
+ */
+export const RENDERER = {
+  /** Width in pixels */
+  WIDTH: 1180,
+  /** Height in pixels */
+  HEIGHT: 820,
 };
 
 /**

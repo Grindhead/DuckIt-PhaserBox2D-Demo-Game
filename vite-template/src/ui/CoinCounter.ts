@@ -1,7 +1,12 @@
+import * as Phaser from "phaser";
 import { UI } from "../lib/constants";
 
 export default class CoinCounter {
-  constructor(scene) {
+  scene: Phaser.Scene;
+  coins: number;
+  text: Phaser.GameObjects.Text | null = null;
+
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.coins = 0;
     this.createText();
@@ -11,7 +16,7 @@ export default class CoinCounter {
     this.text = this.scene.add.text(
       this.scene.cameras.main.width - UI.COIN_COUNTER.OFFSET.x,
       UI.COIN_COUNTER.OFFSET.y,
-      "Coins: 0",
+      `Coins: ${this.coins}`,
       {
         fontSize: UI.COIN_COUNTER.FONT_SIZE,
         color: UI.COIN_COUNTER.COLOR,
@@ -20,9 +25,11 @@ export default class CoinCounter {
     this.text.setScrollFactor(0);
   }
 
-  updateCount(coins) {
+  updateCount(coins: number) {
     this.coins = coins;
-    this.text.setText(`Coins: ${this.coins}`);
+    if (this.text) {
+      this.text.setText(`Coins: ${this.coins}`);
+    }
   }
 
   destroy() {

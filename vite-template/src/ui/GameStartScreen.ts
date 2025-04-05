@@ -1,11 +1,18 @@
+import * as Phaser from "phaser";
 import { ASSETS } from "../lib/constants";
 
 export default class GameStartScreen {
-  constructor(scene) {
+  scene: Phaser.Scene;
+  overlay: Phaser.GameObjects.Image | null = null;
+
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
   }
 
-  show(isGameOver = false) {
+  show(isGameOver: boolean = false) {
+    if (this.overlay) {
+      this.overlay.destroy();
+    }
     this.overlay = this.scene.add
       .image(
         this.scene.cameras.main.centerX,
@@ -18,10 +25,18 @@ export default class GameStartScreen {
 
     this.overlay.on("pointerdown", () => {
       if (isGameOver) {
-        this.scene.scene.restart();
+        if (typeof (this.scene as any).scene?.restart === "function") {
+          (this.scene as any).scene.restart();
+        } else {
+          console.error("Scene does not have a scene.restart method!");
+        }
       } else {
         this.destroy();
-        this.scene.startGame();
+        if (typeof (this.scene as any).startGame === "function") {
+          (this.scene as any).startGame();
+        } else {
+          console.error("Scene does not have a startGame method!");
+        }
       }
     });
   }
@@ -29,6 +44,7 @@ export default class GameStartScreen {
   destroy() {
     if (this.overlay) {
       this.overlay.destroy();
+      this.overlay = null;
     }
   }
 }

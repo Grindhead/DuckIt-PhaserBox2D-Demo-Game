@@ -24,7 +24,7 @@ export default class PreloaderScene extends Phaser.Scene {
     percentText.setOrigin(0.5, 0.5);
 
     // Loading progress callback
-    this.load.on("progress", (value) => {
+    this.load.on("progress", (value: number) => {
       progressBar.clear();
       progressBar.fillStyle(0xffffff, 1);
       progressBar.fillRect(
@@ -33,7 +33,7 @@ export default class PreloaderScene extends Phaser.Scene {
         (width / 2 - 20) * value,
         30
       );
-      percentText.setText(parseInt(value * 100) + "%");
+      percentText.setText(Math.max(value * 100).toString() + "%");
     });
 
     // Load texture atlas from the correct location

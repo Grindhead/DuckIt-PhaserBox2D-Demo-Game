@@ -48,6 +48,14 @@ const StateTransitions = {
  * @class
  */
 class GameState {
+  // Declare static instance property for Singleton
+  private static instance: GameState;
+
+  // Declare instance properties
+  private currentState!: (typeof GameStates)[keyof typeof GameStates];
+  public worldId: any | null = null; // Use any for Box2D ID
+  private coins!: number; // Add definite assignment
+
   /**
    * Creates or returns the singleton instance of GameState
    * @constructor
@@ -86,8 +94,9 @@ class GameState {
    * @param {GameStates} newState - The state to transition to
    * @returns {boolean} Whether the transition was successful
    */
-  transition(newState) {
-    const validTransitions = StateTransitions[this.currentState];
+  transition(newState: (typeof GameStates)[keyof typeof GameStates]): boolean {
+    const validTransitions =
+      StateTransitions[this.currentState as keyof typeof StateTransitions];
     if (!validTransitions?.includes(newState)) {
       console.warn(
         `Invalid state transition: ${this.currentState} -> ${newState}`
@@ -107,7 +116,7 @@ class GameState {
    * @private
    * @param {GameStates} state - The state being entered
    */
-  _executeEntryActions(state) {
+  _executeEntryActions(state: (typeof GameStates)[keyof typeof GameStates]) {
     switch (state) {
       case GameStates.READY:
         // Reset game-specific state but keep worldId
@@ -127,7 +136,7 @@ class GameState {
    * @private
    * @param {GameStates} state - The state being exited
    */
-  _executeExitActions(state) {
+  _executeExitActions(state: (typeof GameStates)[keyof typeof GameStates]) {
     switch (state) {
       case GameStates.PLAYING:
         // Any cleanup needed when leaving playing state
@@ -177,9 +186,9 @@ class GameState {
 
   /**
    * Sets the Box2D world ID and transitions from INITIALIZING to READY if applicable
-   * @param {number} id - The Box2D world ID
+   * @param {any} id - The Box2D world ID
    */
-  setWorldId(id) {
+  setWorldId(id: any) {
     this.worldId = id;
     if (this.isInitializing) {
       this.transition(GameStates.READY);

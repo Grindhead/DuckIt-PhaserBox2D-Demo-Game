@@ -1,7 +1,23 @@
+import * as Phaser from "phaser";
 import { UI, ASSETS } from "../lib/constants";
 
+// Define interface for control state
+interface MobileControlState {
+  left: boolean;
+  right: boolean;
+  up: boolean;
+}
+
 export default class MobileControls {
-  constructor(scene) {
+  // Declare properties
+  scene: Phaser.Scene;
+  state: MobileControlState;
+  leftButton: Phaser.GameObjects.Image | null = null;
+  rightButton: Phaser.GameObjects.Image | null = null;
+  jumpButton: Phaser.GameObjects.Image | null = null;
+
+  // Add type to scene parameter
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.state = {
       left: false,
@@ -16,6 +32,7 @@ export default class MobileControls {
   }
 
   createControls() {
+    // Check UI constant structure - assuming these exist
     const buttonScale = UI.MOBILE_CONTROLS.SCALE;
     const padding = UI.MOBILE_CONTROLS.PADDING;
     const buttonSize = UI.MOBILE_CONTROLS.BUTTON_SIZE;
@@ -31,12 +48,12 @@ export default class MobileControls {
       .setScrollFactor(0)
       .setScale(buttonScale)
       .setInteractive()
-      .setAngle(180);
+      .setAngle(180); // Assuming angle controls orientation
 
     // Right button (to the right of left button)
     this.rightButton = this.scene.add
       .image(
-        padding + buttonSize * 3 * buttonScale,
+        padding + buttonSize * 3 * buttonScale, // Adjust position as needed
         this.scene.cameras.main.height - padding - buttonSize * buttonScale,
         ASSETS.ATLAS,
         ASSETS.UI.DIRECTION_BUTTON
@@ -56,12 +73,18 @@ export default class MobileControls {
       .setScrollFactor(0)
       .setScale(buttonScale)
       .setInteractive()
-      .setAngle(-90);
+      .setAngle(-90); // Use angle for jump button orientation
 
     this.setupEventHandlers();
   }
 
   setupEventHandlers() {
+    // Add null checks before setting up handlers
+    if (!this.leftButton || !this.rightButton || !this.jumpButton) {
+      console.error("Mobile control buttons not created!");
+      return;
+    }
+
     // Set up touch handlers
     this.leftButton.on("pointerdown", () => (this.state.left = true));
     this.leftButton.on("pointerup", () => (this.state.left = false));
@@ -76,15 +99,24 @@ export default class MobileControls {
     this.jumpButton.on("pointerout", () => (this.state.up = false));
   }
 
-  getState() {
+  // Specify return type
+  getState(): MobileControlState {
     return this.state;
   }
 
   destroy() {
+    // Destroy buttons if they exist
     if (this.leftButton) {
       this.leftButton.destroy();
+      this.leftButton = null;
+    }
+    if (this.rightButton) {
       this.rightButton.destroy();
+      this.rightButton = null;
+    }
+    if (this.jumpButton) {
       this.jumpButton.destroy();
+      this.jumpButton = null;
     }
   }
 }

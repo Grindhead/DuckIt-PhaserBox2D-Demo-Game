@@ -1,41 +1,36 @@
 {
   "compilerOptions": {
-    // Target modern browsers
-    "target": "es2016",
-    // Use modern module system
-    "module": "esnext",
-    "moduleResolution": "node",
-
-    // Phaser specific types
-    "typeRoots": [
-      "./node_modules/phaser/types",
-      "../types" // Adjusted path relative to vite-template
-    ],
-    "types": ["phaser", "main"],
-
-    // Enable strict type checking
-    "strict": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
 
-    // Allow importing .js files (for PhaserBox2D.js)
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx", // Assuming no React, but keeping for potential future use or if Phaser uses JSX-like syntax internally for some plugins
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Custom Type Paths */
+    "baseUrl": ".",
+    "paths": {
+      "@box2d/*": ["./types/*"] // Map @box2d/ to ./types/
+    },
+    "typeRoots": ["./node_modules/@types", "./types"], // Include both standard types and our custom types
+
+    /* Allow JS for PhaserBox2D.js */
     "allowJs": true,
-    "checkJs": false,
-
-    // Project structure
-    "rootDir": "./src",
-    "baseUrl": "./", // Base is now vite-template
-
-    // Include DOM libraries
-    "lib": ["es6", "dom", "dom.iterable", "scripthost"],
-
-    // Specify files to include
-    "include": [
-      "src/**/*",
-      "../types/**/*" // Adjusted path relative to vite-template
-    ],
-    // Specify files/folders to exclude
-    "exclude": ["node_modules", "dist"]
-  }
+    "checkJs": false // Don't type-check the JS file itself, just allow importing it
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "types/**/*.d.ts"],
+  "exclude": ["node_modules", "dist"]
 }

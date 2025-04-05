@@ -5,74 +5,77 @@ import {
   STATIC,
   b2DefaultBodyDef,
   pxmVec2,
-  DestroyBody,
   b2Body_SetTransform,
 } from "../lib/PhaserBox2D.js";
-import { PHYSICS } from "../lib/constants";
-import { gameState } from "../lib/gameState";
+import { PHYSICS, WORLD } from "../lib/constants.js";
+import { gameState } from "../lib/gameState.js";
+import { b2BodyDef } from "../../../types/include/types_h";
+
+interface InitialConfig {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 export default class DeathSensor extends Phaser.GameObjects.Rectangle {
-  constructor(scene) {
+  scene: Phaser.Scene;
+  bodyId: any | null = null;
+  initialConfig: InitialConfig | null = null;
+
+  constructor(scene: Phaser.Scene) {
     super(
       scene,
-      PHYSICS.SENSOR.X,
-      PHYSICS.SENSOR.Y,
-      PHYSICS.SENSOR.WIDTH,
-      PHYSICS.SENSOR.HEIGHT
+      WORLD.WIDTH / 2,
+      WORLD.DEATH_SENSOR_Y,
+      WORLD.WIDTH,
+      PHYSICS.DEATH_SENSOR.HEIGHT
     );
     this.scene = scene;
     this.initialize();
   }
 
   initialize() {
-    // Store initial position and size
     this.initialConfig = {
-      x: PHYSICS.SENSOR.X,
-      y: PHYSICS.SENSOR.Y,
-      width: PHYSICS.SENSOR.WIDTH,
-      height: PHYSICS.SENSOR.HEIGHT,
+      x: this.x,
+      y: this.y,
+      width: this.width,
+      height: this.height,
     };
 
-    // Add rectangle to scene
     this.scene.add.existing(this);
 
-    // Initialize physics body
     this.createSensor();
   }
 
   reset() {
-    // Reset position
+    if (!this.initialConfig || !this.bodyId) return;
     const { x, y } = this.initialConfig;
     const pos = pxmVec2(x, y);
-    b2Body_SetTransform(gameState.worldId, this.bodyId, pos, 0);
+    b2Body_SetTransform(this.bodyId, pos);
   }
 
   createSensor() {
-    // Create physics body for death sensor
-    const bodyDef = {
+    const bodyDef: b2BodyDef = {
       ...b2DefaultBodyDef(),
       type: STATIC,
       position: pxmVec2(this.x, this.y),
+      updateBodyMass: false,
     };
 
-    // Create the Box2D body and store its ID
-    const { bodyId } = SpriteToBox(gameState.worldId, this, {
+    const result = SpriteToBox(gameState.worldId as any, this, {
       bodyDef,
+      density: PHYSICS.DEATH_SENSOR.DENSITY,
+      friction: PHYSICS.DEATH_SENSOR.FRICTION,
+      restitution: PHYSICS.DEATH_SENSOR.RESTITUTION,
       isSensor: true,
       userData: { type: "deathSensor" },
     });
 
-    // Store the body ID for later use
-    this.bodyId = bodyId;
+    this.bodyId = result.bodyId;
 
-    // Add sprite to world with the body ID
-    AddSpriteToWorld(gameState.worldId, this, bodyId);
-  }
-
-  destroy() {
     if (this.bodyId) {
-      DestroyBody(gameState.worldId, this.bodyId);
+      AddSpriteToWorld(gameState.worldId as any, this, this.bodyId);
     }
-    super.destroy();
   }
 }
