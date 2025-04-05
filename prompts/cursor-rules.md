@@ -173,6 +173,10 @@ Consider Edge Cases: When implementing logic, always consider and handle potenti
 
 Use Assertions: Include assertions wherever possible to validate assumptions and catch potential errors early.
 
+Do not create any stub code or examples that are not required in the final application.
+
+Do not add any TODO comments or code, update the memory bank instead
+
 - Always look for existing code to iterate on instead of creating new code.
 - Do not drastically change the patterns before trying to iterate on existing patterns.
 - Always kill all existing related servers that may have been created in previous testing before trying to start a new server.
