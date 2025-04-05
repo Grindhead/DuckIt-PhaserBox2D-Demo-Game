@@ -53,7 +53,8 @@ class GameState {
 
   // Declare instance properties
   private currentState!: (typeof GameStates)[keyof typeof GameStates];
-  public worldId: any | null = null; // Use any for Box2D ID
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public worldId: any | null = null; // Add disable comment
   private coins!: number; // Add definite assignment
 
   /**
@@ -188,7 +189,9 @@ class GameState {
    * Sets the Box2D world ID and transitions from INITIALIZING to READY if applicable
    * @param {any} id - The Box2D world ID
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setWorldId(id: any) {
+    // Add disable comment
     this.worldId = id;
     if (this.isInitializing) {
       this.transition(GameStates.READY);

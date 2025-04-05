@@ -10,7 +10,7 @@ import * as Phaser from "phaser";
 import { PHYSICS, WORLD, SCENES } from "@constants";
 import DeathSensor from "@entities/DeathSensor";
 import Player from "@entities/Player";
-import { gameState } from "@gameState";
+import { gameState, GameStates } from "@gameState";
 import {
   CreateBoxPolygon,
   CreateWorld,
@@ -85,31 +85,38 @@ export default class GameScene extends Phaser.Scene {
 
   setupCollisions() {
     if (this.matter?.world) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.matter.world.on("collisionstart", (event: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         event.pairs.forEach((pair: any) => {
           const { bodyA, bodyB } = pair;
-          const userDataA = bodyA.gameObject?.userData;
-          const userDataB = bodyB.gameObject?.userData;
+          const gameObjectA = bodyA.gameObject;
+          const gameObjectB = bodyB.gameObject;
 
           if (
-            (userDataA?.type === "player" &&
-              userDataB?.type === "deathSensor") ||
-            (userDataA?.type === "deathSensor" && userDataB?.type === "player")
+            gameObjectA instanceof Player &&
+            gameObjectB instanceof DeathSensor
           ) {
-            this.killPlayer();
+            gameObjectA.kill();
+          } else if (
+            gameObjectB instanceof Player &&
+            gameObjectA instanceof DeathSensor
+          ) {
+            gameObjectB.kill();
           }
         });
       });
     }
   }
 
-  update(delta: number) {
+  update(time: number, delta: number) {
     if (gameState.isPlaying) {
       const timeStep = delta / 1000;
       const subStepCount = 3;
-      b2World_Step(gameState.worldId, timeStep, subStepCount);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      b2World_Step(gameState.worldId as any, timeStep, subStepCount);
 
-      if (this.controls) {
+      if (this.player && this.controls) {
         this.player.update(this.controls);
       }
       this.mobileControls.getState();
@@ -125,19 +132,22 @@ export default class GameScene extends Phaser.Scene {
   }
 
   startGame() {
-    gameState.startGame();
+    if (gameState.isReady) {
+      gameState.startGame();
+    }
   }
 
   restart() {
-    gameState.reset();
-    this.player.reset();
-    this.coinCounter.updateCount(0);
+    if (gameState.isGameOver) {
+      gameState.reset();
+      const worldId = CreateWorld({ x: 0, y: PHYSICS.GRAVITY.y });
+      gameState.setWorldId(worldId);
 
-    if (this.gameOverOverlay) {
-      this.gameOverOverlay.hide();
-    }
-    if (this.startScreen) {
-      this.startScreen.show();
+      this.player?.reset();
+      this.deathSensor?.reset();
+
+      gameState.transition(GameStates.READY);
+      this.startGame();
     }
   }
 }

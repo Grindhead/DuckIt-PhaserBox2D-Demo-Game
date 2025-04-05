@@ -1,14 +1,9 @@
-/**
- * @file DeathSensor.ts
- * @description Represents an invisible sensor area at the bottom of the game world.
- * If the player collides with this sensor (i.e., falls off the world),
- * it triggers the player's death sequence.
- * Implemented as a static Box2D sensor body.
- */
 import * as Phaser from "phaser";
 
 import { PHYSICS, WORLD } from "@constants";
 import { gameState } from "@gameState";
+
+// Import runtime values/functions via alias
 import {
   AddSpriteToWorld,
   SpriteToBox,
@@ -17,6 +12,14 @@ import {
   pxmVec2,
   b2Body_SetTransform,
 } from "@PhaserBox2D";
+
+/**
+ * @file DeathSensor.ts
+ * @description Represents an invisible sensor area at the bottom of the game world.
+ * If the player collides with this sensor (i.e., falls off the world),
+ * it triggers the player's death sequence.
+ * Implemented as a static Box2D sensor body.
+ */
 
 interface InitialConfig {
   x: number;
@@ -27,6 +30,7 @@ interface InitialConfig {
 
 export default class DeathSensor extends Phaser.GameObjects.Rectangle {
   scene: Phaser.Scene;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   bodyId: any | null = null;
   initialConfig: InitialConfig | null = null;
 
@@ -70,6 +74,7 @@ export default class DeathSensor extends Phaser.GameObjects.Rectangle {
       updateBodyMass: false,
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = SpriteToBox(gameState.worldId as any, this, {
       bodyDef,
       density: PHYSICS.DEATH_SENSOR.DENSITY,
@@ -82,6 +87,7 @@ export default class DeathSensor extends Phaser.GameObjects.Rectangle {
     this.bodyId = result.bodyId;
 
     if (this.bodyId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       AddSpriteToWorld(gameState.worldId as any, this, this.bodyId);
     }
   }

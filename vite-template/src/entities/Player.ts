@@ -7,8 +7,10 @@
  */
 import * as Phaser from "phaser";
 
-import { PHYSICS, ASSETS } from "@constants";
-import { gameState } from "@gameState";
+import { ASSETS, PHYSICS } from "@constants";
+import { gameState, GameStates } from "@gameState";
+
+// Runtime values only
 import {
   AddSpriteToWorld,
   SpriteToBox,
@@ -20,68 +22,44 @@ import {
   b2Body_SetLinearVelocity,
   b2Body_SetTransform,
 } from "@PhaserBox2D";
+// Remove type import
 
 interface PlayerState {
   isJumping: boolean;
-  isFalling: boolean;
   isDead: boolean;
-  facingRight: boolean;
 }
 
 export default class Player extends Phaser.GameObjects.Sprite {
   scene: Phaser.Scene;
-  bodyId: any | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  bodyId: any | null = null; // Revert to any
   playerState: PlayerState;
-  speed!: number;
-  jumpForce!: number;
+  jumpForce: number;
 
   constructor(scene: Phaser.Scene) {
-    super(
-      scene,
-      PHYSICS.PLAYER.START_POSITION.x,
-      PHYSICS.PLAYER.START_POSITION.y,
-      ASSETS.ATLAS,
-      ASSETS.PLAYER.IDLE.FRAME
-    );
-
+    super(scene, 100, 450, ASSETS.PLAYER.IDLE.KEY);
     this.scene = scene;
-    this.playerState = {
-      isJumping: false,
-      isFalling: false,
-      isDead: false,
-      facingRight: true,
-    };
+    this.playerState = { isJumping: false, isDead: false };
+    this.jumpForce = PHYSICS.PLAYER.JUMP_FORCE;
     this.initialize();
   }
 
   initialize() {
-    this.scene.add.existing(this);
-
     this.initPhysics();
-
     this.play(ASSETS.PLAYER.IDLE.KEY);
-
-    this.speed = PHYSICS.PLAYER.SPEED;
-    this.jumpForce = PHYSICS.PLAYER.JUMP_FORCE;
   }
 
   reset() {
     if (!this.bodyId) return;
-    const startPos = pxmVec2(
+    const pos = pxmVec2(
       PHYSICS.PLAYER.START_POSITION.x,
       PHYSICS.PLAYER.START_POSITION.y
     );
-    b2Body_SetTransform(this.bodyId, startPos);
+    b2Body_SetTransform(this.bodyId, pos);
     b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
-
-    this.playerState = {
-      isJumping: false,
-      isFalling: false,
-      isDead: false,
-      facingRight: true,
-    };
-
-    this.setFlipX(false);
+    this.playerState = { isJumping: false, isDead: false };
+    this.setActive(true);
+    this.setVisible(true);
     this.play(ASSETS.PLAYER.IDLE.KEY);
   }
 
@@ -89,16 +67,12 @@ export default class Player extends Phaser.GameObjects.Sprite {
     const bodyDef = {
       ...b2DefaultBodyDef(),
       type: DYNAMIC,
-      fixedRotation: true,
-      linearDamping: PHYSICS.PLAYER.LINEAR_DAMPING,
-      position: pxmVec2(
-        PHYSICS.PLAYER.START_POSITION.x,
-        PHYSICS.PLAYER.START_POSITION.y
-      ),
-      updateBodyMass: true,
+      position: pxmVec2(this.x, this.y),
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = SpriteToBox(gameState.worldId as any, this, {
+      // Revert to any
       bodyDef,
       density: PHYSICS.PLAYER.DENSITY,
       friction: PHYSICS.PLAYER.FRICTION,
@@ -109,29 +83,21 @@ export default class Player extends Phaser.GameObjects.Sprite {
     this.bodyId = result.bodyId;
 
     if (this.bodyId) {
-      AddSpriteToWorld(gameState.worldId as any, this, this.bodyId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      AddSpriteToWorld(gameState.worldId as any, this, this.bodyId); // Revert to any
     }
   }
 
   update(controls: Phaser.Types.Input.Keyboard.CursorKeys) {
-    if (!this.bodyId || this.playerState.isDead || !gameState.isPlaying) return;
+    if (!this.bodyId || gameState.isGameOver) return;
 
     const velocity = b2Body_GetLinearVelocity(this.bodyId);
-
-    let moveX = 0;
+    let moveX = velocity.x * PHYSICS.SCALE;
 
     if (controls.left?.isDown) {
-      moveX = -this.speed;
-      if (this.playerState.facingRight) {
-        this.setFlipX(true);
-        this.playerState.facingRight = false;
-      }
+      moveX = -PHYSICS.PLAYER.SPEED;
     } else if (controls.right?.isDown) {
-      moveX = this.speed;
-      if (!this.playerState.facingRight) {
-        this.setFlipX(false);
-        this.playerState.facingRight = true;
-      }
+      moveX = PHYSICS.PLAYER.SPEED;
     }
 
     b2Body_SetLinearVelocity(
@@ -148,49 +114,58 @@ export default class Player extends Phaser.GameObjects.Sprite {
       this.play(ASSETS.PLAYER.JUMP.KEY);
     }
 
-    this.updateAnimations(moveX, velocity);
+    this.updateAnimations(moveX, velocity); // Pass velocity (implicitly any now)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateAnimations(moveX: number, velocity: any) {
+    // Revert to any
     if (!this.bodyId) return;
+    if (this.playerState.isDead) return;
 
-    if (this.playerState.isJumping) {
-      if (velocity.y > 0) {
-        this.playerState.isJumping = false;
-        this.playerState.isFalling = true;
-        this.play(ASSETS.PLAYER.FALL.KEY);
+    if (velocity.y > PHYSICS.PLAYER.JUMP_THRESHOLD) {
+      if (!this.playerState.isJumping) {
+        this.play(ASSETS.PLAYER.FALL.KEY, true);
       }
-    } else if (this.playerState.isFalling) {
-      if (Math.abs(velocity.y) < 0.1) {
-        this.playerState.isFalling = false;
-        if (moveX === 0) {
-          this.play(ASSETS.PLAYER.IDLE.KEY);
-        } else {
-          this.play(ASSETS.PLAYER.RUN.KEY);
-        }
-      }
-    } else {
+    } else if (velocity.y < -PHYSICS.PLAYER.JUMP_THRESHOLD) {
       if (
-        moveX === 0 &&
-        this.anims.currentAnim?.key !== ASSETS.PLAYER.IDLE.KEY
+        !this.anims.isPlaying ||
+        this.anims.currentAnim?.key !== ASSETS.PLAYER.JUMP.KEY
       ) {
-        this.play(ASSETS.PLAYER.IDLE.KEY);
-      } else if (
-        moveX !== 0 &&
-        this.anims.currentAnim?.key !== ASSETS.PLAYER.RUN.KEY
-      ) {
-        this.play(ASSETS.PLAYER.RUN.KEY);
+        this.play(ASSETS.PLAYER.JUMP.KEY, true);
       }
+      this.playerState.isJumping = true;
+    } else {
+      this.playerState.isJumping = false;
+      if (Math.abs(moveX) > PHYSICS.PLAYER.MOVE_THRESHOLD) {
+        this.play(ASSETS.PLAYER.RUN.KEY, true);
+      } else {
+        this.play(ASSETS.PLAYER.IDLE.KEY, true);
+      }
+    }
+
+    if (moveX > PHYSICS.PLAYER.MOVE_THRESHOLD) {
+      this.setFlipX(false);
+    } else if (moveX < -PHYSICS.PLAYER.MOVE_THRESHOLD) {
+      this.setFlipX(true);
     }
   }
 
   kill() {
-    if (this.playerState.isDead) return;
-
-    this.playerState.isDead = true;
-    this.play(ASSETS.PLAYER.DEAD.KEY);
-    if (this.bodyId) {
-      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+    if (!this.playerState.isDead) {
+      this.playerState.isDead = true;
+      // Use correct animation key
+      this.play(ASSETS.PLAYER.DEAD.KEY);
+      // Disable physics body interactions if needed, or set velocity to zero
+      if (this.bodyId) {
+        b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+        // Consider setting body type to static or disabling body if appropriate
+      }
+      this.scene.time.delayedCall(1000, () => {
+        gameState.transition(GameStates.GAME_OVER);
+        this.setActive(false);
+        this.setVisible(false);
+      });
     }
   }
 }

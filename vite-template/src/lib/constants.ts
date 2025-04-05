@@ -46,6 +46,8 @@ export const PHYSICS = {
       /** Y coordinate in pixels */
       y: 100,
     },
+    JUMP_THRESHOLD: 0.1,
+    MOVE_THRESHOLD: 10,
   },
 
   /** Platform physics properties */
