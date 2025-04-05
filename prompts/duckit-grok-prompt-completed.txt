@@ -8,15 +8,17 @@ The player character is a duck with the following animations: Idle (duck-idle-00
 
 There are two types of crates: crate-big and crate-small (found in the crate folder). They have no animations and can be pushed by the player. Their physics mass ratio should be 2:1 (big:small). Level design puzzles should involve pushing crates to reach higher areas. Crates should never fall off the platform they are on and should never exist on a platform with an enemy.
 
-There is one enemy type: a ball (enemy asset in the enemy folder). It kills the player on contact. Enemies patrol a platform horizontally, reversing direction upon reaching the end. They move at 80% of the player's speed. They cannot move through platforms, and the player should be able to jump over them. There is only 1 enemy type.
+There is one enemy type: a ball (enemy.png asset in the enemy folder). It kills the player on contact. Enemies patrol a platform horizontally, reversing direction upon reaching the end. They move at 80% of the player's speed. They cannot move through platforms, and the player should be able to jump over them. There is only 1 enemy type.
 
-Controls use the arrow keys (Up for jump). Death occurs from falling off the bottom of the screen or touching an enemy. If the player dies, display the start.png image; pressing this resets the level and all entities to their initial state and position. Levels should be procedurally generated upon starting the game. Platform positioning must consider the player's maximum jump height (including potential jumps from crates) to ensure accessibility. Levels must always be completable with a medium difficulty level and include at least two crate-pushing puzzles. The level width is 10000 pixels. The player starts on the left side of the screen. The finish entity is located at the end of the furthest right platform, which must always be accessible. The camera follows the player with subtle easing. There is no checkpoint system.
+Controls use the arrow keys (Up for jump). Death occurs from falling off the bottom of the screen or touching an enemy. Detect this by having an invisible sensor 400px below the lowest platform that is the width of the level.  If the player dies, display the start.png image; pressing this resets the level and all entities to their initial state and position. Levels should be procedurally generated upon starting the game. Platform positioning must consider the player's maximum jump height (including potential jumps from crates) to ensure accessibility. Levels must always be completable with a medium difficulty level and include at least two crate-pushing puzzles. The level width is 10000 pixels. The player starts on the left side of the screen. The finish entity is located at the end of the furthest right platform, which must always be accessible. The camera follows the player with subtle easing. There is no checkpoint system.
 
 The finish entity is a Box2D sensor. It has three states: finish-idle (static default frame), finish-activated (plays once, finish-activated-0001 to finish-activated-0019, when the player touches it, disabling player control), and finish-active (loops continuously, finish-active-0001 to finish-active-0018, after finish-activated completes). After the finish-active animation plays through once, the level is complete; display the start.png image, and pressing it resets the level.
 
 Coins are Box2D sensors. The coin-idle animation (0001-0023) loops until the player touches the coin. When collected, the coin-collect animation (coin-collect-0001 to coin-collect-0008) plays once, and the coin is removed. There are 100 coins per level, placed 30px above random platforms, evenly spread, with only one coin per tile within a platform. Display the collected coin count in the top right corner. There is no bonus or reward for collecting all coins.
 
-The technical setup uses Phaser with Box2D physics and Vite as the build tool. Assets were created with Texture Packer (Phaser format); assets.png and assets.json are in the public folder. Source assets are in the assets folder (all PNGs). The IDE is Cursor. The canvas should be responsive to screen size.
+The technical setup uses Phaser with Box2D physics and Vite as the build tool. Assets were created with Texture Packer (Phaser format); assets.png and assets.json are in the public folder. Source assets are in the assets folder (all PNGs) and animations are all 30fps. The game should run at 60fps. The IDE is Cursor using the gemini 2.5 pro LLM. There is just 1 solo developer. The canvas should be responsive to screen size.
+
+All assets are in the texture atlas. Never attempt to load any other asset as they do not exist outside of this texture atlas. 
 
 For mobile devices, display on-screen controls (hide on desktop). Use the direction-button asset (ui folder), rotating the default left orientation for other directions. Position left/right buttons bottom-left and the jump button bottom-right.
 
@@ -45,10 +47,19 @@ Game
 During the boot scene we should setup the scaling and the background color, which is white before proceeding to the preloader state.
 
 During the preloader scene, the game should add the texture atlas to the loader before calling this.load() within the preload() method of the scene. When the assets are loaded, create() is automatically called and the game should transition to the game scene.
-The only external asset to load is the texture atlas. This contains all the art used within the game.
+The only external asset to load is the texture atlas. This contains all the art used within the game. There should be a loading bar that fills up to display the loading progress.
+There should also be a value as a whole number with % to show loading progress beneath it. 
 
 The game scene should setup the box2d world and all the required gameplay elemets. 
 
 When developing anything using Box2d, always refer to /types and also vite-template/src/PhaserBox2D.js for details on the implementation of Box2d.
 
-Write this specification in the format of a PRD using Markdown (.md).
+The game is developed in the vite-template folder. Vite has already been installed and there is a src/main.js that exists already that will need to be updated. The src/PhaserBox2D.js in already installed.
+Always use the most up to date packages from npm. 
+
+Make git commits once milestones have been reached and approved by the developer. There is no limit to the amount of git commits we should make. The game should be developed using small steps and each step should be
+reviewed to ensure that everything works as expected.
+
+Do not create any stub code, placeholder methods or examples that are not required in the final application.
+
+Write this specification in the format of a exhaustive, complete and comprehensive PRD using Markdown (.md) that can be used by cursor and gemini 2.5 pro to guide development. Include the asset frames and folder structure in the output.
