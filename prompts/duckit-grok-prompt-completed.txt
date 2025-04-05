@@ -34,4 +34,21 @@ There are no sounds.
 
 There is only 1 level.
 
+Use Phaser.Animations.Events rather than the duration property. 
+
+There are 3 scenes in the game. 
+
+Boot
+Preloader
+Game
+
+During the boot scene we should setup the scaling and the background color, which is white before proceeding to the preloader state.
+
+During the preloader scene, the game should add the texture atlas to the loader before calling this.load() within the preload() method of the scene. When the assets are loaded, create() is automatically called and the game should transition to the game scene.
+The only external asset to load is the texture atlas. This contains all the art used within the game.
+
+The game scene should setup the box2d world and all the required gameplay elemets. 
+
+When developing anything using Box2d, always refer to /types and also vite-template/src/PhaserBox2D.js for details on the implementation of Box2d.
+
 Write this specification in the format of a PRD using Markdown (.md).
