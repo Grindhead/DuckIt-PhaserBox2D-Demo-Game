@@ -64,6 +64,9 @@ export default class GameScene extends Phaser.Scene {
     // Box2D expects gravity in meters/second^2, so we scale it
     // In Box2D, negative Y means downward
     worldDef.gravity = new b2Vec2(0, PHYSICS.GRAVITY.y);
+    // Increase the maximum linear velocity (includes falling speed)
+    // Assuming b2_lengthUnitsPerMeter2 is 1 based on PhaserBox2D.js internal definition
+    worldDef.maximumLinearVelocity = 1000;
 
     const worldId = b2CreateWorld(worldDef);
     gameState.setWorldId(worldId);
@@ -202,9 +205,6 @@ export default class GameScene extends Phaser.Scene {
         }
         this.bodiesToDestroy.length = 0;
       }
-    } else if (gameState.isReady && this.player && this.player.bodyId) {
-      // If in READY state, ensure player stays in position by resetting velocity
-      b2Body_SetLinearVelocity(this.player.bodyId, new b2Vec2(0, 0));
     }
 
     // Handle potential restart input outside the isPlaying block
