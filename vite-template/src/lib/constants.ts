@@ -28,7 +28,7 @@ export const PHYSICS = {
   /** Player physics properties */
   PLAYER: {
     /** Horizontal movement speed in pixels/second */
-    SPEED: 100,
+    SPEED: 160,
     /** Vertical jump force (positive for upward force) */
     JUMP_FORCE: 50,
     /** Mass density for physics calculations */

@@ -29,6 +29,8 @@ import {
   b2Body_SetGravityScale,
   b2BodyId,
 } from "@PhaserBox2D";
+// Add import for GameScene
+import GameScene from "@scenes/GameScene";
 
 // Define a simple interface for b2Vec2 instances
 interface IB2Vec2 {
@@ -272,6 +274,19 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     // Add the sprite to the physics world for updates
     AddSpriteToWorld(gameState.worldId, this, { bodyId });
+
+    // Register this player's bodyId and sprite instance in the GameScene map
+    if (this.bodyId && this.scene instanceof GameScene) {
+      (this.scene as GameScene).bodyIdToSpriteMap.set(this.bodyId.index1, this);
+    } else if (this.bodyId) {
+      console.warn(
+        "Player added to a scene that is not GameScene. Cannot register in bodyIdToSpriteMap."
+      );
+    } else {
+      console.warn(
+        "Failed to register player in bodyIdToSpriteMap. BodyId invalid."
+      );
+    }
   }
 
   /**

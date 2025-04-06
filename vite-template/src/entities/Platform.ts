@@ -53,11 +53,6 @@ export default class Platform {
 
     // Get world ID from game state
     const worldId = gameState.worldId;
-    if (!worldId) {
-      console.error("Platform: No physics world found!");
-      return;
-    }
-
     // Calculate offset for better collision detection
     // Move the body upward to better align with the platform top surface
     const offsetY = (tileHeight * 0.15) / PHYSICS.SCALE; // Reduced offset for better top alignment
@@ -78,11 +73,6 @@ export default class Platform {
     // Create the body
     const bodyId = b2CreateBody(worldId, bodyDef);
     this.bodyId = bodyId;
-
-    if (!bodyId) {
-      console.error("Platform: Failed to create physics body");
-      return;
-    }
 
     // Create shape definition with high friction
     const shapeDef = {
@@ -110,15 +100,6 @@ export default class Platform {
     // Create the physics shape
     const shapeId = b2CreatePolygonShape(bodyId, shapeDef, box);
     this.shapeId = shapeId;
-
-    console.log(
-      `Platform physics body created: width=${width}px (${
-        halfWidth * 2
-      }m), height=${tileHeight * heightScale}px (${
-        halfHeight * 2
-      }m), bodyOffsetY=${offsetY}m, shapeId=${shapeId}`
-    );
-
     // --- Visual Tiling ---
     const tileWidth = this.scene.textures.getFrame(
       ASSETS.ATLAS,

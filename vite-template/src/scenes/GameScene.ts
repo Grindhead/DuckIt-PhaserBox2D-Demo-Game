@@ -39,6 +39,13 @@ import MobileControls from "@ui/MobileControls";
 import { generateLevel } from "../lib/levelGenerator";
 
 type b2WorldIdInstance = InstanceType<typeof b2WorldId>;
+type MappedSprite = Phaser.GameObjects.Sprite;
+type b2BodyIdInstance = InstanceType<typeof b2BodyId>;
+
+interface ShapeUserData {
+  type: string;
+  [key: string]: unknown;
+}
 
 export default class GameScene extends Phaser.Scene {
   player!: Player;
@@ -49,81 +56,53 @@ export default class GameScene extends Phaser.Scene {
   gameOverOverlay!: GameOverOverlay;
   mobileControls!: MobileControls;
   playerStartPosition: { x: number; y: number } | null = null;
+  coins!: Phaser.GameObjects.Group;
 
-  // Queue for delayed body destruction
-  bodiesToDestroy: (typeof b2BodyId)[] = [];
+  bodyIdToSpriteMap = new Map<number, MappedSprite>();
 
   constructor() {
     super({ key: SCENES.GAME });
   }
 
   create() {
-    // Initialize physics world first
     b2CreateWorldArray();
     const worldDef = b2DefaultWorldDef();
-    // Box2D expects gravity in meters/second^2, so we scale it
-    // In Box2D, negative Y means downward
     worldDef.gravity = new b2Vec2(0, PHYSICS.GRAVITY.y);
-    // Increase the maximum linear velocity (includes falling speed)
-    // Assuming b2_lengthUnitsPerMeter2 is 1 based on PhaserBox2D.js internal definition
     worldDef.maximumLinearVelocity = 4000;
 
     const worldId = b2CreateWorld(worldDef);
     gameState.setWorldId(worldId);
 
-    // Create level before player and get player start position
-    const playerPos = generateLevel(this);
-    //generateLevel(this); // Keep level generation uncommented
-    // Log the player position for debugging
-    console.log("Player spawn position from level generator:", playerPos);
+    this.bodyIdToSpriteMap.clear();
 
-    // Store the position for future reference (resets, etc.)
+    this.coins = this.add.group();
+
+    const playerPos = generateLevel(this, this.coins);
     this.playerStartPosition = playerPos;
 
-    // Create player at the position determined by the level generator
     this.player = new Player(this, playerPos.x, playerPos.y);
     console.log("GameScene: Player re-enabled", {
       x: this.player.x,
       y: this.player.y,
     });
 
-    // Disable gravity for the player initially
     if (this.player.bodyId) {
       b2Body_SetGravityScale(this.player.bodyId, 0);
     }
 
-    // Create death sensor after player
     this.deathSensor = new DeathSensor(this);
 
-    // Set up input
     if (this.input.keyboard) {
       this.controls = this.input.keyboard.createCursorKeys();
     }
 
-    // Set up camera
     this.cameras.main.setBounds(0, 0, WORLD.WIDTH, WORLD.HEIGHT);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-
-    // Reset camera to initial position
     this.cameras.main.centerOn(playerPos.x, playerPos.y);
 
-    // Create UI elements
     this.createUI();
     this.setupInput();
     this.startScreen.show();
-
-    // Set up event listeners
-    this.events.on("queueBodyDestruction", (bodyId: typeof b2BodyId) => {
-      if (bodyId) {
-        this.bodiesToDestroy.push(bodyId);
-      }
-    });
-
-    // Double check player is in display list
-    if (!this.player.displayList) {
-      console.warn("Player not in display list after creation, re-adding...");
-      this.add.existing(this.player);
-    }
   }
 
   createUI() {
@@ -137,90 +116,56 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number) {
-    // Process physics regardless of game state to maintain world stability
     const { worldId } = gameState;
     if (!worldId) return;
 
-    // Use higher substeps to prevent tunneling
-    const timeStep = delta / 1000; // Convert delta from ms to seconds
-    const subStepCount = 60;
+    b2World_Step(worldId, delta / 1000, 60);
 
-    // Step the physics world using delta time
-    b2World_Step(worldId, timeStep, subStepCount);
-
-    // Update sprites to match physics state
     UpdateWorldSprites(worldId);
 
-    // Check if player is close to a platform and artificially ground them if needed
-    // This additional check helps catch cases where normal collision detection fails
     if (this.player && this.player.bodyId) {
       const playerY = this.player.y;
-      // Get current player velocity
       const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
 
-      // If player is at or below y=500 (platform level) and moving down slowly, check for grounding
       if (
         playerY >= 500 &&
         playerY <= 620 &&
         velocity.y < 0 &&
         velocity.y > -5
       ) {
-        // Check if player should be grounded based on position
         if (!this.player.playerState.isGrounded) {
-          console.log(
-            "Position-based grounding check: Setting player as grounded"
-          );
           this.player.setGrounded(true);
         }
       }
     }
 
-    // Only process game logic if playing
     if (gameState.isPlaying) {
-      // Process physics events
       this.processPhysicsEvents(worldId);
 
-      // Update player if controls exist
       if (this.player && this.controls) {
         this.player.update(this.controls);
       }
 
-      // Update mobile controls and UI
       this.mobileControls.getState();
       this.coinCounter.updateCount();
-
-      // Process body destruction queue
-      if (this.bodiesToDestroy.length > 0) {
-        for (const bodyId of this.bodiesToDestroy) {
-          if (bodyId) {
-            try {
-              b2DestroyBody(bodyId);
-            } catch (e) {
-              console.warn(
-                `Error destroying body ${JSON.stringify(bodyId)}:`,
-                e
-              );
-            }
-          }
-        }
-        this.bodiesToDestroy.length = 0;
-      }
     }
 
-    // Handle potential restart input outside the isPlaying block
     if (gameState.isGameOver && this.input.activePointer.isDown) {
       this.restart();
     }
   }
 
   processPhysicsEvents(worldId: b2WorldIdInstance) {
-    // Process sensor events
     const sensorEvents = b2World_GetSensorEvents(worldId);
     for (const event of sensorEvents.beginEvents) {
       const sensorShapeId = event.sensorShapeId;
       const visitorShapeId = event.visitorShapeId;
-      const sensorUserData = b2Shape_GetUserData(sensorShapeId);
-      const visitorUserData = b2Shape_GetUserData(visitorShapeId);
+      const sensorUserData = b2Shape_GetUserData(
+        sensorShapeId
+      ) as ShapeUserData;
+      const visitorUserData = b2Shape_GetUserData(
+        visitorShapeId
+      ) as ShapeUserData;
 
       let coinInstance: Coin | null = null;
       if (
@@ -239,199 +184,138 @@ export default class GameScene extends Phaser.Scene {
         coinInstance.collect();
         gameState.incrementCoins();
       }
-    }
 
-    // Process contact events
-    const contactEvents = b2World_GetContactEvents(worldId);
-
-    // Log overall contact counts for debugging
-    if (contactEvents) {
-      const hitCount = contactEvents.hitEvents?.length || 0;
-      const beginCount = contactEvents.beginEvents?.length || 0;
-      const endCount = contactEvents.endEvents?.length || 0;
-
-      // Only log if there are actually events to report
-      if (hitCount > 0 || beginCount > 0 || endCount > 0) {
-        console.log(
-          `Contact events: hit=${hitCount}, begin=${beginCount}, end=${endCount}`
-        );
-      }
-    }
-
-    // IMPORTANT: Process hit events first as they're more reliable for platform collisions
-    if (contactEvents.hitEvents && contactEvents.hitEvents.length > 0) {
-      for (const event of contactEvents.hitEvents) {
-        const shapeIdA = event.shapeIdA;
-        const shapeIdB = event.shapeIdB;
-        const userDataA = b2Shape_GetUserData(shapeIdA);
-        const userDataB = b2Shape_GetUserData(shapeIdB);
-
-        const isSensorA = b2Shape_IsSensor(shapeIdA);
-        const isSensorB = b2Shape_IsSensor(shapeIdB);
-
-        // Only process non-sensor collisions (solid collisions)
-        if (!isSensorA && !isSensorB) {
-          // Check for player-platform collision
-          if (
-            (userDataA?.type === "player" && userDataB?.type === "platform") ||
-            (userDataB?.type === "player" && userDataA?.type === "platform")
-          ) {
-            // Be more lenient with the normal check to catch more collisions
-            // ANY contact with a platform is now considered a hit from above for robustness
-            console.log(
-              `Platform hit detected with normal: ${event.normal?.y}. Setting player grounded.`
-            );
-            this.player.setGrounded(true);
-          }
-        }
-      }
-    }
-
-    // Process begin contact events
-    for (const event of contactEvents.beginEvents) {
-      const shapeIdA = event.shapeIdA;
-      const shapeIdB = event.shapeIdB;
-      const isSensorA = b2Shape_IsSensor(shapeIdA);
-      const isSensorB = b2Shape_IsSensor(shapeIdB);
-      const userDataA = b2Shape_GetUserData(shapeIdA);
-      const userDataB = b2Shape_GetUserData(shapeIdB);
-
-      // Process player-platform contacts
-      // These are important to catch events that might be missed by hit events
-      if (!isSensorA && !isSensorB) {
-        if (
-          (userDataA?.type === "player" && userDataB?.type === "platform") ||
-          (userDataB?.type === "player" && userDataA?.type === "platform")
-        ) {
-          // Any contact with platform is sufficient to ground player for robustness
-          console.log("Begin contact with platform - setting grounded");
-          this.player.setGrounded(true);
-        }
-      }
-
-      // Process death sensor contacts
       if (
-        (userDataA?.type === "player" &&
-          userDataB?.type === "deathSensor" &&
-          isSensorB) ||
-        (userDataB?.type === "player" &&
-          userDataA?.type === "deathSensor" &&
-          isSensorA)
+        (sensorUserData?.type === "player" &&
+          visitorUserData?.type === "deathSensor") ||
+        (visitorUserData?.type === "player" &&
+          sensorUserData?.type === "deathSensor")
       ) {
         this.killPlayer();
       }
     }
 
-    // Process end contact events
-    for (const event of contactEvents.endEvents) {
+    const contactEvents = b2World_GetContactEvents(worldId);
+    const allContactEvents = [
+      ...(contactEvents.beginEvents || []),
+      ...(contactEvents.hitEvents || []),
+    ];
+
+    let isPlayerTouchingPlatform = false;
+    for (const event of allContactEvents) {
       const shapeIdA = event.shapeIdA;
       const shapeIdB = event.shapeIdB;
+      const userDataA = b2Shape_GetUserData(shapeIdA) as ShapeUserData;
+      const userDataB = b2Shape_GetUserData(shapeIdB) as ShapeUserData;
       const isSensorA = b2Shape_IsSensor(shapeIdA);
       const isSensorB = b2Shape_IsSensor(shapeIdB);
 
-      // Skip sensor contacts for platform collision handling
-      if (isSensorA || isSensorB) continue;
+      if (!isSensorA && !isSensorB) {
+        if (
+          (userDataA?.type === "player" && userDataB?.type === "platform") ||
+          (userDataB?.type === "player" && userDataA?.type === "platform")
+        ) {
+          isPlayerTouchingPlatform = true;
+          break;
+        }
+      }
+    }
 
-      const userDataA = b2Shape_GetUserData(shapeIdA);
-      const userDataB = b2Shape_GetUserData(shapeIdB);
+    if (this.player) {
+      const velocity = this.player.bodyId
+        ? b2Body_GetLinearVelocity(this.player.bodyId)
+        : { y: 0 };
 
-      // Check if player is leaving platform contact
-      if (
-        (userDataA?.type === "player" && userDataB?.type === "platform") ||
-        (userDataB?.type === "player" && userDataA?.type === "platform")
-      ) {
-        // Only unground if the player is clearly moving upward (jumping)
-        // OR if player is high above platform level (actual fall)
-        const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
-        const playerY = this.player.y;
-
-        if (velocity.y > 1.0 || playerY < 480) {
-          // Only unground if player is moving upward (jumping) or well above platforms
-          this.player.setGrounded(false);
-          console.log(
-            "Player moving upward/away from platform - setting not grounded. Velocity, position:",
-            velocity,
-            playerY
-          );
+      if (isPlayerTouchingPlatform) {
+        if (velocity.y <= PHYSICS.PLAYER.JUMP_THRESHOLD) {
+          if (!this.player.playerState.isGrounded) {
+            this.player.setGrounded(true);
+          }
         } else {
-          console.log(
-            "End contact with platform but maintaining grounded state. Velocity, position:",
-            velocity,
-            playerY
-          );
+          if (this.player.playerState.isGrounded) {
+            this.player.setGrounded(false);
+          }
+        }
+      } else {
+        const airborneThreshold = 0.1;
+        if (
+          Math.abs(velocity.y) > airborneThreshold ||
+          !this.player.playerState.isGrounded
+        ) {
+          if (this.player.playerState.isGrounded) {
+            this.player.setGrounded(false);
+          }
         }
       }
     }
   }
 
   killPlayer() {
-    if (!gameState.isPlaying) return;
+    if (!gameState.isPlaying || gameState.isGameOver) return;
 
-    this.player.kill();
+    console.log("Executing killPlayer...");
+    this.player?.kill();
     gameState.endGame();
     this.gameOverOverlay.show();
   }
 
   startGame() {
     if (gameState.isReady) {
-      // Enable gravity for the player when the game starts
       if (this.player && this.player.bodyId) {
         b2Body_SetGravityScale(this.player.bodyId, 1);
         console.log("Enabled gravity for player body");
-
-        // Log player position and velocity at game start
-        const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
-        console.log("Player at game start:", {
-          position: { x: this.player.x, y: this.player.y },
-          box2dPosition: {
-            x: this.player.x / PHYSICS.SCALE,
-            y: -this.player.y / PHYSICS.SCALE,
-          },
-          velocity: { x: velocity.x, y: velocity.y },
-        });
       }
 
-      // Log physics settings
-      console.log("Game starting with physics configuration:", {
-        gravity: PHYSICS.GRAVITY,
-        timestep: "1/60",
-        subStepCount: 12,
-      });
-
-      // Give physics a moment to initialize
-      this.time.delayedCall(100, () => {
-        const success = gameState.startGame();
-        console.log("GameScene.startGame: Game started", {
-          success,
-          isPlaying: gameState.isPlaying,
-          playerVisible: this.player?.visible,
-          playerActive: this.player?.active,
-        });
-      });
+      const success = gameState.startGame();
+      this.startScreen.hide();
+      this.gameOverOverlay.hide();
     }
   }
 
   restart() {
-    if (gameState.isGameOver) {
-      gameState.reset();
+    console.log("Restarting game scene...");
+    gameState.restartGame();
 
-      // If we have stored the start position, use it for reset
-      if (this.playerStartPosition) {
-        // Reset the player to the initial spawn position
-        this.player.x = this.playerStartPosition.x;
-        this.player.y = this.playerStartPosition.y;
+    this.bodyIdToSpriteMap.clear();
+    this.coins.clear(true, true);
+
+    if (this.player && this.player.bodyId) {
+      try {
+        b2DestroyBody(this.player.bodyId);
+        this.player.bodyId = null;
+      } catch (e) {
+        console.error("Error destroying old player body on restart:", e);
       }
-
-      this.player?.reset();
-      this.deathSensor?.reset();
-
-      // Disable gravity when resetting to READY state
-      if (this.player && this.player.bodyId) {
-        b2Body_SetGravityScale(this.player.bodyId, 0);
-      }
-
-      gameState.transition(GameStates.READY);
-      this.startGame();
     }
+
+    if (this.player) {
+      this.player.destroy();
+    }
+
+    const playerPos = generateLevel(this, this.coins);
+    this.playerStartPosition = playerPos;
+
+    this.player = new Player(this, playerPos.x, playerPos.y);
+    if (this.player.bodyId) {
+      b2Body_SetGravityScale(this.player.bodyId, 0);
+      this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+    } else {
+      console.error("Failed to create player body on restart!");
+    }
+
+    this.deathSensor?.reset();
+
+    this.gameOverOverlay.hide();
+    this.startScreen.show();
+    this.coinCounter.updateCount();
+
+    if (this.playerStartPosition) {
+      this.cameras.main.centerOn(
+        this.playerStartPosition.x,
+        this.playerStartPosition.y
+      );
+    }
+
+    console.log("Game scene restart complete.");
   }
 }

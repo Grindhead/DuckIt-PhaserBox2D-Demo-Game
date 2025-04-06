@@ -20,9 +20,13 @@ interface PlayerSpawnPosition {
 /**
  * Generates the level by placing composite platforms procedurally.
  * @param scene The GameScene instance to add platforms to.
+ * @param coinsGroup The Phaser Group to add created Coin instances to.
  * @returns Player spawn position calculated based on level generation.
  */
-export function generateLevel(scene: GameScene): PlayerSpawnPosition {
+export function generateLevel(
+  scene: GameScene,
+  coinsGroup: Phaser.GameObjects.Group // Add coinsGroup parameter
+): PlayerSpawnPosition {
   const platformY = 600;
   const tileWidth = 26; // Width of a single platform tile (from assets.json)
   const minPlatformLengthTiles = 3; // Min number of middle tiles
@@ -65,7 +69,8 @@ export function generateLevel(scene: GameScene): PlayerSpawnPosition {
     const coinX = platformStartX + tileWidth / 2 + i * tileWidth;
     // Add a small random horizontal offset
     const offsetX = Phaser.Math.Between(-5, 5);
-    new Coin(scene, coinX + offsetX, coinY);
+    const coin = new Coin(scene, coinX + offsetX, coinY); // Create coin
+    coinsGroup.add(coin); // Add to group
   }
 
   // Update currentX to the position after the first platform
@@ -117,7 +122,8 @@ export function generateLevel(scene: GameScene): PlayerSpawnPosition {
       const coinX = platformStartX + tileWidth / 2 + i * tileWidth;
       // Add a small random horizontal offset
       const offsetX = Phaser.Math.Between(-5, 5);
-      new Coin(scene, coinX + offsetX, coinY);
+      const coin = new Coin(scene, coinX + offsetX, coinY); // Create coin
+      coinsGroup.add(coin); // Add to group
     }
     // --- End Coin Placement ---
 
