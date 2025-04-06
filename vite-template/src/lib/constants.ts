@@ -14,20 +14,23 @@
  * @enum {Object}
  */
 export const PHYSICS = {
+  /** Physics scale (pixels per meter) for Box2D calculations */
+  SCALE: 30,
+
   /** World gravity configuration */
   GRAVITY: {
     /** Horizontal gravity (0 for no horizontal gravity) */
     x: 0,
-    /** Vertical gravity (positive for downward force) */
-    y: -30,
+    /** Vertical gravity (negative for downward force in Box2D) */
+    y: -20.0, // Stronger gravity to ensure collision detection works properly
   },
 
   /** Player physics properties */
   PLAYER: {
     /** Horizontal movement speed in pixels/second */
-    SPEED: 300,
+    SPEED: 30,
     /** Vertical jump force (positive for upward force) */
-    JUMP_FORCE: 5,
+    JUMP_FORCE: 8,
     /** Mass density for physics calculations */
     DENSITY: 1.0,
     /** Surface friction coefficient */

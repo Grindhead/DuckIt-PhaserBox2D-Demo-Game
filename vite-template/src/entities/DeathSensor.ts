@@ -5,12 +5,14 @@ import { gameState } from "@gameState";
 // Import runtime values/functions via alias
 import {
   AddSpriteToWorld,
-  SpriteToBox,
   STATIC,
   b2DefaultBodyDef,
-  pxmVec2,
-  b2Body_SetTransform,
   b2DestroyBody,
+  b2Vec2,
+  b2CreateBody,
+  b2DefaultShapeDef,
+  b2MakeBox,
+  b2CreatePolygonShape,
 } from "@PhaserBox2D";
 
 /**
@@ -92,26 +94,43 @@ export default class DeathSensor extends Phaser.GameObjects.Rectangle {
     const bodyDef = {
       ...b2DefaultBodyDef(),
       type: STATIC,
-      position: pxmVec2(this.x, this.y),
-      updateBodyMass: false,
+      position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE), // Scale and negate Y for Box2D
     };
 
+    // Create the body directly
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = SpriteToBox(gameState.worldId as any, this, {
-      bodyDef,
+    const bodyId = b2CreateBody(gameState.worldId as any, bodyDef);
+    this.bodyId = bodyId;
+
+    if (!bodyId) {
+      console.error("Failed to create death sensor physics body!");
+      return;
+    }
+
+    // Define the shape
+    const shapeDef = {
+      ...b2DefaultShapeDef(),
+      isSensor: true,
+      enableContactEvents: true,
       density: PHYSICS.DEATH_SENSOR.DENSITY,
       friction: PHYSICS.DEATH_SENSOR.FRICTION,
       restitution: PHYSICS.DEATH_SENSOR.RESTITUTION,
-      isSensor: true,
       userData: { type: "deathSensor" },
-    });
+    };
 
-    this.bodyId = result.bodyId;
+    // Create the box geometry with proper scaling (in meters)
+    const halfWidth = this.width / (2 * PHYSICS.SCALE);
+    const halfHeight = this.height / (2 * PHYSICS.SCALE);
 
-    if (this.bodyId) {
+    const box = b2MakeBox(halfWidth, halfHeight);
+
+    // Create the polygon shape and attach it to the body
+    b2CreatePolygonShape(bodyId, shapeDef, box);
+
+    if (bodyId) {
       // Pass an object with bodyId property
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      AddSpriteToWorld(gameState.worldId as any, this, { bodyId: this.bodyId });
+      AddSpriteToWorld(gameState.worldId as any, this, { bodyId });
     }
   }
 }

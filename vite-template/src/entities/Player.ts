@@ -142,9 +142,9 @@ export default class Player extends Phaser.GameObjects.Sprite {
       console.error("Player.reset: Failed to recreate physics body!");
       return;
     }
-    const pos = pxmVec2(
-      this.startPosition.x,
-      -this.startPosition.y // Negate Y for Box2D
+    const pos = new b2Vec2(
+      this.startPosition.x / PHYSICS.SCALE,
+      -this.startPosition.y / PHYSICS.SCALE // Negate Y for Box2D
     );
     b2Body_SetTransform(this.bodyId, pos, new b2Rot(0, 0));
     b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
@@ -169,12 +169,12 @@ export default class Player extends Phaser.GameObjects.Sprite {
     const bodyDef = {
       ...b2DefaultBodyDef(),
       type: DYNAMIC,
-      // Box2D coordinate system has Y pointing up, so we need to negate Y
-      position: pxmVec2(this.x, -this.y),
-      fixedRotation: true,
-      enableContactListener: true,
+      // Convert from pixels to Box2D coordinates (meters)
+      position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE),
+      fixedRotation: true, // Don't allow rotation
+      enableContactListener: true, // Make sure contact events are enabled
       allowSleep: false, // Prevent the body from sleeping
-      bullet: true, // Enable continuous collision detection
+      bullet: true, // Enable continuous collision detection for accurate collisions
     };
 
     const bodyId = b2CreateBody(gameState.worldId, bodyDef);
@@ -191,25 +191,30 @@ export default class Player extends Phaser.GameObjects.Sprite {
       friction: PHYSICS.PLAYER.FRICTION,
       restitution: PHYSICS.PLAYER.RESTITUTION,
       userData: { type: "player", sprite: this },
-      enableContactEvents: true,
+      enableContactEvents: true, // Important for collision detection
       filter: b2DefaultFilter(),
-      isSensor: false,
+      isSensor: false, // Explicitly set to false to ensure solid collisions
     };
 
-    const scaleX = this.scaleX;
-    const scaleY = this.scaleY;
-    // Adjust collision box to match sprite size more accurately
-    // Using full width and height for better collision detection
-    const boxWidth = this.width * scaleX;
-    const boxHeight = this.height * scaleY;
-    console.log(`Player box size: ${boxWidth}x${boxHeight} (Box2D units)`);
-    console.log(`Player sprite size: ${this.width}x${this.height} (pixels)`);
+    // Create a box shape with scaled dimensions
+    // Box2D uses half-width/height in meters
+    const halfWidth = this.width / 2 / PHYSICS.SCALE;
+    const halfHeight = this.height / 2 / PHYSICS.SCALE;
 
-    const box = b2MakeBox(boxWidth / 2, boxHeight / 2); // Box2D uses half-widths
+    console.log(
+      `Player physics body: ${this.width}x${this.height} pixels, ` +
+        `Box2D dimensions: ${halfWidth * 2}x${halfHeight * 2} meters, ` +
+        `half-dimensions: ${halfWidth}x${halfHeight} meters`
+    );
+
+    const box = b2MakeBox(halfWidth, halfHeight);
     b2CreatePolygonShape(bodyId, shapeDef, box);
 
-    // Initial position with inverted Y for Box2D
-    const initialPos = pxmVec2(this.x, -this.y);
+    // Initial position with scaled coordinates and inverted Y for Box2D
+    const initialPos = new b2Vec2(
+      this.x / PHYSICS.SCALE,
+      -this.y / PHYSICS.SCALE
+    );
     console.log(
       `Player Initial Position (Box2D Coords): x=${initialPos.x.toFixed(
         3
@@ -225,7 +230,14 @@ export default class Player extends Phaser.GameObjects.Sprite {
     console.log(`Player Initial Mass: ${initialMass}`);
 
     // Add sprite to physics world with a properly formatted object
-    AddSpriteToWorld(gameState.worldId, this, { bodyId: this.bodyId });
+    // The AddSpriteToWorld function attaches this sprite to the Box2D body
+    // so that the sprite will update position based on physics
+    AddSpriteToWorld(gameState.worldId, this, {
+      bodyId: this.bodyId,
+      offsetX: 0,
+      offsetY: 0,
+      drawShape: true, // Enable debug drawing of physics shape
+    });
 
     console.log("Player initialized", {
       position: { x: this.x, y: this.y },
@@ -239,13 +251,39 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
     const bodyMass = b2Body_GetMass(this.bodyId);
+
+    // Check if player has fallen below platforms (y > 700)
+    if (this.y > 700 && gameState.isPlaying) {
+      console.log("Player fell below platforms, resetting position");
+      // Reset position to starting point
+      const pos = new b2Vec2(
+        this.startPosition.x / PHYSICS.SCALE,
+        -this.startPosition.y / PHYSICS.SCALE
+      );
+      b2Body_SetTransform(this.bodyId, pos, new b2Rot(0, 0));
+      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+
+      // Log physics state when falling
+      console.log("Player physics state when falling:", {
+        position: { x: this.x, y: this.y },
+        box2dPosition: {
+          x: this.x / PHYSICS.SCALE,
+          y: -this.y / PHYSICS.SCALE,
+        },
+        velocity: { x: currentVelocity.x, y: currentVelocity.y },
+        grounded: this.playerState.isGrounded,
+      });
+    }
+
     let targetVelX = 0;
 
     if (controls.left?.isDown) {
-      targetVelX = -PHYSICS.PLAYER.SPEED;
+      // Convert from pixels/second to meters/second for Box2D
+      targetVelX = -PHYSICS.PLAYER.SPEED / PHYSICS.SCALE;
       this.setFlipX(true);
     } else if (controls.right?.isDown) {
-      targetVelX = PHYSICS.PLAYER.SPEED;
+      // Convert from pixels/second to meters/second for Box2D
+      targetVelX = PHYSICS.PLAYER.SPEED / PHYSICS.SCALE;
       this.setFlipX(false);
     }
 
@@ -267,12 +305,26 @@ export default class Player extends Phaser.GameObjects.Sprite {
       currentAnimKey !== ASSETS.PLAYER.JUMP.KEY &&
       currentAnimKey !== ASSETS.PLAYER.FALL.KEY
     ) {
-      // Apply upward force for jump (negative Y in Phaser)
-      const impulseMagnitude = this.jumpForce * bodyMass;
-      const impulseVec = new b2Vec2(0, -impulseMagnitude);
+      // Apply upward force for jump (positive Y in Box2D is upward)
+      // Calculate appropriate impulse based on mass and scale to Box2D units
+      const scaledJumpForce = this.jumpForce / PHYSICS.SCALE;
+      const impulseMagnitude = scaledJumpForce * bodyMass;
+
+      // For debugging
+      console.log(
+        `Applying jump impulse: magnitude=${impulseMagnitude}, mass=${bodyMass}, raw force=${this.jumpForce}, scaled force=${scaledJumpForce}`
+      );
+
+      // Create upward impulse vector (positive Y in Box2D)
+      const impulseVec = new b2Vec2(0, impulseMagnitude);
+
+      // Apply the impulse at the center of mass
       b2Body_ApplyLinearImpulseToCenter(this.bodyId, impulseVec, true);
+
+      // Set grounded to false immediately as we're jumping
       this.playerState.isGrounded = false;
 
+      // Play jump animation
       this.play(ASSETS.PLAYER.JUMP.KEY);
       this.once(
         Phaser.Animations.Events.ANIMATION_COMPLETE_KEY +
@@ -294,10 +346,10 @@ export default class Player extends Phaser.GameObjects.Sprite {
     if (this.playerState.isDead) return;
 
     const currentAnimKey = this.anims.currentAnim?.key;
-    const currentVelY = velocity.y;
+    const currentVelY = velocity.y; // In Box2D, positive Y is upward
 
-    // With standard coordinates, falling is when Y velocity is positive
-    if (currentVelY > PHYSICS.PLAYER.JUMP_THRESHOLD) {
+    // In Box2D coordinates, falling is when Y velocity is negative (moving down)
+    if (currentVelY < -PHYSICS.PLAYER.JUMP_THRESHOLD) {
       if (
         currentAnimKey !== ASSETS.PLAYER.FALL.KEY &&
         currentAnimKey !== ASSETS.PLAYER.JUMP.KEY

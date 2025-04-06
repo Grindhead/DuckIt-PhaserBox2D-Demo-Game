@@ -12,9 +12,10 @@ import {
   b2DefaultShapeDef,
   b2DefaultFilter,
   pxmVec2,
-  SpriteToBox,
-  pxm,
-  b2Shape_GetUserData,
+  b2CreateBody,
+  b2MakeBox,
+  b2CreatePolygonShape,
+  b2Vec2,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
 
@@ -45,62 +46,67 @@ export default class Platform {
       ASSETS.PLATFORM.MIDDLE
     ).height;
 
-    // Adjust collision box size to match the platform dimensions
-    // For Box2D, we need half-widths, but for SpriteToBox we'll use the actual dimensions
-    const hx = width / 2; // Half-width in pixels
-    const hy = tileHeight / 2; // Half-height in pixels
+    // Get world ID from game state
+    const worldId = gameState.worldId;
+    if (!worldId) {
+      console.error("Platform: No physics world found!");
+      return;
+    }
 
+    // Create body definition
     const bodyDef = {
       ...b2DefaultBodyDef(),
       type: STATIC,
-      position: pxmVec2(centerX, -centerY),
+      position: new b2Vec2(centerX / PHYSICS.SCALE, -centerY / PHYSICS.SCALE), // Convert to Box2D coordinates
     };
 
-    console.log("Platform physics body:", {
-      centerX,
-      centerY,
-      width,
-      height: tileHeight,
-      halfWidth: hx,
-      halfHeight: hy,
-      box2dPosition: `${pxm(centerX)}, ${pxm(-centerY)}`,
-      negatedY: -centerY,
-    });
+    // Create the body
+    const bodyId = b2CreateBody(worldId, bodyDef);
+    if (!bodyId) {
+      console.error("Platform: Failed to create physics body");
+      return;
+    }
 
-    // Create a temporary, invisible rectangle at the center as our physics template
-    const tempRect = this.scene.add.rectangle(
-      centerX,
-      centerY,
-      width,
-      tileHeight
-    );
-    tempRect.setVisible(false); // Make it invisible
+    console.log("Platform physics body created with ID:", bodyId);
 
-    // Define the shape explicitly for solid collision detection
+    // Create shape definition
     const shapeDef = {
       ...b2DefaultShapeDef(),
       density: 0, // Static bodies have 0 density
       friction: PHYSICS.PLATFORM.FRICTION,
-      restitution: 0,
-      userData: { type: "platform" },
-      isSensor: false, // Explicitly set to false
+      restitution: 0, // No bounce
+      userData: { type: "platform" }, // Important for collision identification
+      isSensor: false, // Explicitly ensure it's not a sensor
       enableContactEvents: true, // Enable contact events for the platform
       filter: b2DefaultFilter(),
     };
 
-    // Create the physics body with the exact dimensions of the platform
-    const bodyResult = SpriteToBox(gameState.worldId, tempRect, {
-      bodyDef,
-      shapeDef: shapeDef,
+    // Create box shape with proper scaling for Box2D (in meters)
+    const halfWidth = width / (2 * PHYSICS.SCALE);
+    // Make the collision box slightly taller to improve collision detection
+    const halfHeight = (tileHeight + 4) / (2 * PHYSICS.SCALE);
+
+    // Create the box shape
+    const box = b2MakeBox(halfWidth, halfHeight);
+    const shapeId = b2CreatePolygonShape(bodyId, shapeDef, box);
+
+    // Log shape ID to ensure it's created
+    console.log("Platform physics body created:", {
+      shapeId,
+      bodyId,
+      centerX,
+      centerY,
+      width,
+      height: tileHeight + 4, // Actual collision height is slightly taller
+      box2dHalfWidth: halfWidth,
+      box2dHalfHeight: halfHeight,
+      box2dPosition: `${centerX / PHYSICS.SCALE}, ${-centerY / PHYSICS.SCALE}`,
+      scale: PHYSICS.SCALE,
+      isSensor: shapeDef.isSensor,
+      enableContactEvents: shapeDef.enableContactEvents,
+      friction: shapeDef.friction,
+      userDataType: shapeDef.userData.type,
     });
-
-    // Remove temporary rectangle after physics creation
-    tempRect.destroy();
-
-    // Log created shape details
-    if (bodyResult?.shapeId) {
-      b2Shape_GetUserData(bodyResult.shapeId);
-    }
 
     // --- Visual Tiling ---
     const tileWidth = this.scene.textures.getFrame(

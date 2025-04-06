@@ -16,6 +16,7 @@ import {
   b2DefaultShapeDef,
   b2MakeBox,
   b2CreatePolygonShape,
+  b2Vec2,
 } from "@PhaserBox2D";
 
 export default class Coin extends Phaser.GameObjects.Sprite {
@@ -36,7 +37,7 @@ export default class Coin extends Phaser.GameObjects.Sprite {
     const bodyDef = {
       ...b2DefaultBodyDef(),
       type: STATIC,
-      position: pxmVec2(this.x, -this.y),
+      position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE), // Scale and negate Y for Box2D
       userData: { type: "coin", coinInstance: this },
     };
 
@@ -61,13 +62,13 @@ export default class Coin extends Phaser.GameObjects.Sprite {
       userData: { type: "coin", coinInstance: this },
     };
 
-    // Create the box geometry
+    // Create box geometry with proper scaling for Box2D (in meters)
     const scaleX = this.scaleX;
     const scaleY = this.scaleY;
-    const box = b2MakeBox(
-      (this.width * scaleX) / 2 / PHYSICS.SCALE,
-      (this.height * scaleY) / 2 / PHYSICS.SCALE
-    );
+    const halfWidth = (this.width * scaleX) / (2 * PHYSICS.SCALE);
+    const halfHeight = (this.height * scaleY) / (2 * PHYSICS.SCALE);
+
+    const box = b2MakeBox(halfWidth, halfHeight);
 
     // Create the polygon shape and attach it to the body
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
