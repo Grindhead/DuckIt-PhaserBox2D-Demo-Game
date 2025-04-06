@@ -10,6 +10,7 @@ import {
   b2DefaultBodyDef,
   pxmVec2,
   b2Body_SetTransform,
+  b2DestroyBody,
 } from "@PhaserBox2D";
 
 /**
@@ -58,14 +59,36 @@ export default class DeathSensor extends Phaser.GameObjects.Rectangle {
     this.createSensor();
   }
 
+  destroySensor() {
+    if (this.bodyId) {
+      console.log(
+        `DeathSensor.destroySensor: Destroying body ${JSON.stringify(
+          this.bodyId
+        )} in world ${JSON.stringify(gameState.worldId)}`
+      );
+      b2DestroyBody(this.bodyId);
+      this.bodyId = null;
+    }
+  }
+
   reset() {
-    if (!this.initialConfig || !this.bodyId) return;
-    const { x, y } = this.initialConfig;
-    const pos = pxmVec2(x, y);
-    b2Body_SetTransform(this.bodyId, pos);
+    this.destroySensor();
+    this.createSensor();
+
+    if (!this.bodyId) {
+      console.error("DeathSensor.reset: Failed to recreate sensor body!");
+      return;
+    }
   }
 
   createSensor() {
+    if (!this.initialConfig) {
+      console.error("DeathSensor.createSensor: initialConfig is null!");
+      return;
+    }
+    this.setPosition(this.initialConfig.x, this.initialConfig.y);
+    this.setSize(this.initialConfig.width, this.initialConfig.height);
+
     const bodyDef = {
       ...b2DefaultBodyDef(),
       type: STATIC,
@@ -86,8 +109,9 @@ export default class DeathSensor extends Phaser.GameObjects.Rectangle {
     this.bodyId = result.bodyId;
 
     if (this.bodyId) {
+      // Pass an object with bodyId property
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      AddSpriteToWorld(gameState.worldId as any, this, this.bodyId);
+      AddSpriteToWorld(gameState.worldId as any, this, { bodyId: this.bodyId });
     }
   }
 }

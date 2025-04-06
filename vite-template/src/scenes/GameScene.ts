@@ -205,6 +205,9 @@ export default class GameScene extends Phaser.Scene {
       this.player?.reset();
       this.deathSensor?.reset();
 
+      // Regenerate the level (platforms, coins) in the new world
+      generateLevel(this);
+
       gameState.transition(GameStates.READY);
       this.startGame();
     }

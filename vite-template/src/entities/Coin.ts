@@ -50,8 +50,9 @@ export default class Coin extends Phaser.GameObjects.Sprite {
     this.bodyId = result.bodyId;
 
     if (this.bodyId) {
+      // Pass an object with bodyId property
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      AddSpriteToWorld(gameState.worldId as any, this, this.bodyId);
+      AddSpriteToWorld(gameState.worldId as any, this, { bodyId: this.bodyId });
     }
   }
 
