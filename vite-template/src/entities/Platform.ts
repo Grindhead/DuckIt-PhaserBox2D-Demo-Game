@@ -11,16 +11,19 @@ import {
   b2DefaultBodyDef,
   b2DefaultShapeDef,
   b2DefaultFilter,
-  pxmVec2,
   b2CreateBody,
   b2MakeBox,
   b2CreatePolygonShape,
   b2Vec2,
+  AddSpriteToWorld,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
 
 export default class Platform {
   scene: GameScene;
+  bodyId: any = null;
+  shapeId: any = null;
+  platformSprites: Phaser.GameObjects.Image[] = [];
 
   /**
    * Creates a composite platform entity.
@@ -53,28 +56,38 @@ export default class Platform {
       return;
     }
 
-    // Create body definition
+    // Calculate offset for better collision detection
+    // Move the body upward to better align with the platform top surface
+    const offsetY = (tileHeight * 0.15) / PHYSICS.SCALE; // Reduced offset for better top alignment
+
+    // Create body definition with the position offset applied directly
     const bodyDef = {
       ...b2DefaultBodyDef(),
       type: STATIC,
-      position: new b2Vec2(centerX / PHYSICS.SCALE, -centerY / PHYSICS.SCALE), // Convert to Box2D coordinates
+      // Apply offset to the body position itself
+      position: new b2Vec2(
+        centerX / PHYSICS.SCALE,
+        -centerY / PHYSICS.SCALE + offsetY
+      ),
+      fixedRotation: true, // Prevent rotation of the platform
+      allowSleep: false, // Keep the platform awake for reliable collision
     };
 
     // Create the body
     const bodyId = b2CreateBody(worldId, bodyDef);
+    this.bodyId = bodyId;
+
     if (!bodyId) {
       console.error("Platform: Failed to create physics body");
       return;
     }
 
-    console.log("Platform physics body created with ID:", bodyId);
-
-    // Create shape definition
+    // Create shape definition with high friction
     const shapeDef = {
       ...b2DefaultShapeDef(),
       density: 0, // Static bodies have 0 density
-      friction: PHYSICS.PLATFORM.FRICTION,
-      restitution: 0, // No bounce
+      friction: 4.0, // High friction for better stability (reduced from 8.0 to prevent sticking)
+      restitution: 0.0, // No bounce at all
       userData: { type: "platform" }, // Important for collision identification
       isSensor: false, // Explicitly ensure it's not a sensor
       enableContactEvents: true, // Enable contact events for the platform
@@ -83,30 +96,26 @@ export default class Platform {
 
     // Create box shape with proper scaling for Box2D (in meters)
     const halfWidth = width / (2 * PHYSICS.SCALE);
-    // Make the collision box slightly taller to improve collision detection
-    const halfHeight = (tileHeight + 4) / (2 * PHYSICS.SCALE);
 
-    // Create the box shape
+    // Increase the collision height to prevent tunneling
+    // Use a more moderate height scale to avoid over-extension
+    const heightScale = 1.5; // Make collision box 1.5x taller than visual (reduced from 2.5x)
+    const halfHeight = (tileHeight * heightScale) / (2 * PHYSICS.SCALE);
+
+    // Create a standard box shape (no offset in the shape itself)
     const box = b2MakeBox(halfWidth, halfHeight);
-    const shapeId = b2CreatePolygonShape(bodyId, shapeDef, box);
 
-    // Log shape ID to ensure it's created
-    console.log("Platform physics body created:", {
-      shapeId,
-      bodyId,
-      centerX,
-      centerY,
-      width,
-      height: tileHeight + 4, // Actual collision height is slightly taller
-      box2dHalfWidth: halfWidth,
-      box2dHalfHeight: halfHeight,
-      box2dPosition: `${centerX / PHYSICS.SCALE}, ${-centerY / PHYSICS.SCALE}`,
-      scale: PHYSICS.SCALE,
-      isSensor: shapeDef.isSensor,
-      enableContactEvents: shapeDef.enableContactEvents,
-      friction: shapeDef.friction,
-      userDataType: shapeDef.userData.type,
-    });
+    // Create the physics shape
+    const shapeId = b2CreatePolygonShape(bodyId, shapeDef, box);
+    this.shapeId = shapeId;
+
+    console.log(
+      `Platform physics body created: width=${width}px (${
+        halfWidth * 2
+      }m), height=${tileHeight * heightScale}px (${
+        halfHeight * 2
+      }m), bodyOffsetY=${offsetY}m, shapeId=${shapeId}`
+    );
 
     // --- Visual Tiling ---
     const tileWidth = this.scene.textures.getFrame(
@@ -115,36 +124,44 @@ export default class Platform {
     ).width;
     const startX = centerX - width / 2; // Left edge of the platform
 
+    // Create a base sprite for physics visualization (will be invisible)
+    // This sprite will be connected to the physics body
+    const physicsSprite = this.scene.add.sprite(centerX, centerY, "__WHITE");
+    physicsSprite.setVisible(false); // Hide the sprite
+    physicsSprite.setScale(width / 32, (tileHeight * heightScale) / 32); // Match the physics body dimensions
+
+    // Connect the physics body to this sprite
+    AddSpriteToWorld(worldId, physicsSprite, { bodyId });
+
     // Add left edge sprite
-    this.scene.add.image(
+    const leftSprite = this.scene.add.image(
       startX + tileWidth / 2, // Center of the left tile
       centerY,
       ASSETS.ATLAS,
       ASSETS.PLATFORM.LEFT
     );
+    this.platformSprites.push(leftSprite);
 
     // Add middle sprites
     let currentTileX = startX + tileWidth;
     for (let i = 0; i < middleTileCount; i++) {
-      this.scene.add.image(
+      const middleSprite = this.scene.add.image(
         currentTileX + tileWidth / 2, // Center of the current middle tile
         centerY,
         ASSETS.ATLAS,
         ASSETS.PLATFORM.MIDDLE
       );
+      this.platformSprites.push(middleSprite);
       currentTileX += tileWidth;
     }
 
     // Add right edge sprite
-    this.scene.add.image(
+    const rightSprite = this.scene.add.image(
       currentTileX + tileWidth / 2, // Center of the right tile
       centerY,
       ASSETS.ATLAS,
       ASSETS.PLATFORM.RIGHT
     );
-
-    // The individual visual tiles are added directly to the scene.
-    // We don't need to manage them further within this class unless
-    // platforms needed to be destroyed or manipulated later.
+    this.platformSprites.push(rightSprite);
   }
 }

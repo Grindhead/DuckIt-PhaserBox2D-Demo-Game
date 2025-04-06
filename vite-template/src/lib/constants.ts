@@ -22,7 +22,7 @@ export const PHYSICS = {
     /** Horizontal gravity (0 for no horizontal gravity) */
     x: 0,
     /** Vertical gravity (negative for downward force in Box2D) */
-    y: -20.0, // Stronger gravity to ensure collision detection works properly
+    y: -9.5, // Slightly reduced gravity from -10.0 for better stability
   },
 
   /** Player physics properties */
@@ -30,13 +30,13 @@ export const PHYSICS = {
     /** Horizontal movement speed in pixels/second */
     SPEED: 30,
     /** Vertical jump force (positive for upward force) */
-    JUMP_FORCE: 8,
+    JUMP_FORCE: 7,
     /** Mass density for physics calculations */
     DENSITY: 1.0,
     /** Surface friction coefficient */
-    FRICTION: 0.5,
+    FRICTION: 0.8,
     /** Bounce coefficient (0 for no bounce) */
-    RESTITUTION: 0.1,
+    RESTITUTION: 0.0,
     /** Vertical velocity threshold for jump/fall detection */
     JUMP_THRESHOLD: 0.5,
     /** Horizontal velocity threshold for movement detection */
@@ -46,7 +46,7 @@ export const PHYSICS = {
   /** Platform physics properties */
   PLATFORM: {
     /** Surface friction coefficient */
-    FRICTION: 1.0,
+    FRICTION: 1.5,
   },
 
   /** Death sensor properties */

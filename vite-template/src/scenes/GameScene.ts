@@ -5,7 +5,7 @@
  * UI components (coin counter, overlays, mobile controls), handles input, manages game state,
  * and runs the game loop (physics updates, player updates).
  */
-import constants from "constants";
+
 import * as Phaser from "phaser";
 
 import { PHYSICS, WORLD, SCENES } from "@constants";
@@ -70,7 +70,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Create level before player and get player start position
     const playerPos = generateLevel(this);
-
+    //generateLevel(this); // Keep level generation uncommented
     // Log the player position for debugging
     console.log("Player spawn position from level generator:", playerPos);
 
@@ -79,15 +79,9 @@ export default class GameScene extends Phaser.Scene {
 
     // Create player at the position determined by the level generator
     this.player = new Player(this, playerPos.x, playerPos.y);
-
-    console.log("GameScene: Player created", {
-      visible: this.player.visible,
-      active: this.player.active,
+    console.log("GameScene: Player re-enabled", {
       x: this.player.x,
       y: this.player.y,
-      texture: this.player.texture.key,
-      frame: this.player.frame.name,
-      inDisplayList: this.player.displayList !== null,
     });
 
     // Disable gravity for the player initially
@@ -127,19 +121,6 @@ export default class GameScene extends Phaser.Scene {
       console.warn("Player not in display list after creation, re-adding...");
       this.add.existing(this.player);
     }
-
-    // Log camera position
-    console.log("Camera position:", {
-      scrollX: this.cameras.main.scrollX,
-      scrollY: this.cameras.main.scrollY,
-      midPoint: {
-        x: this.cameras.main.midPoint.x,
-        y: this.cameras.main.midPoint.y,
-      },
-      worldView: this.cameras.main.worldView,
-      playerVisible: this.player.visible,
-      playerPosition: { x: this.player.x, y: this.player.y },
-    });
   }
 
   createUI() {
@@ -157,14 +138,55 @@ export default class GameScene extends Phaser.Scene {
     const { worldId } = gameState;
     if (!worldId) return;
 
+    // Use higher substeps to prevent tunneling
     const timeStep = 1 / 60; // Fixed timestep for stability
-    const subStepCount = 8;
+    const subStepCount = 45; // Further increased for more accurate collision detection (was 36)
 
     // Step the physics world
     b2World_Step(worldId, timeStep, subStepCount);
 
+    // Log physics step details periodically for debugging (every 100 frames)
+    if (Math.random() < 0.01) {
+      console.log("Physics step:", {
+        timeStep,
+        subStepCount,
+        playerPosition: this.player
+          ? { x: this.player.x, y: this.player.y }
+          : null,
+        playerGrounded: this.player ? this.player.playerState.isGrounded : null,
+        playerVelocity:
+          this.player && this.player.bodyId
+            ? b2Body_GetLinearVelocity(this.player.bodyId)
+            : null,
+      });
+    }
+
     // Update sprites to match physics state
     UpdateWorldSprites(worldId);
+
+    // Check if player is close to a platform and artificially ground them if needed
+    // This additional check helps catch cases where normal collision detection fails
+    if (this.player && this.player.bodyId) {
+      const playerY = this.player.y;
+      // Get current player velocity
+      const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
+
+      // If player is at or below y=500 (platform level) and moving down slowly, check for grounding
+      if (
+        playerY >= 500 &&
+        playerY <= 620 &&
+        velocity.y < 0 &&
+        velocity.y > -5
+      ) {
+        // Check if player should be grounded based on position
+        if (!this.player.playerState.isGrounded) {
+          console.log(
+            "Position-based grounding check: Setting player as grounded"
+          );
+          this.player.setGrounded(true);
+        }
+      }
+    }
 
     // Only process game logic if playing
     if (gameState.isPlaying) {
@@ -252,7 +274,7 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    // Process hit events (immediate collision impacts)
+    // IMPORTANT: Process hit events first as they're more reliable for platform collisions
     if (contactEvents.hitEvents && contactEvents.hitEvents.length > 0) {
       for (const event of contactEvents.hitEvents) {
         const shapeIdA = event.shapeIdA;
@@ -263,11 +285,6 @@ export default class GameScene extends Phaser.Scene {
         const isSensorA = b2Shape_IsSensor(shapeIdA);
         const isSensorB = b2Shape_IsSensor(shapeIdB);
 
-        // Log all hit events for debugging
-        console.log(
-          `Hit event: typeA=${userDataA?.type}, typeB=${userDataB?.type}, isSensorA=${isSensorA}, isSensorB=${isSensorB}`
-        );
-
         // Only process non-sensor collisions (solid collisions)
         if (!isSensorA && !isSensorB) {
           // Check for player-platform collision
@@ -275,18 +292,12 @@ export default class GameScene extends Phaser.Scene {
             (userDataA?.type === "player" && userDataB?.type === "platform") ||
             (userDataB?.type === "player" && userDataA?.type === "platform")
           ) {
-            // Hit events are good indicators of actual collisions
-            console.log("Player hit platform - grounded");
-
-            // Check velocity - if moving down, player is landing on platform
-            const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
-            if (velocity.y <= 0) {
-              // Moving down or stationary in Box2D coords
-              this.player.setGrounded(true);
-              console.log(
-                `Setting player grounded=true on hit, velocity.y=${velocity.y}`
-              );
-            }
+            // Be more lenient with the normal check to catch more collisions
+            // ANY contact with a platform is now considered a hit from above for robustness
+            console.log(
+              `Platform hit detected with normal: ${event.normal?.y}. Setting player grounded.`
+            );
+            this.player.setGrounded(true);
           }
         }
       }
@@ -301,25 +312,16 @@ export default class GameScene extends Phaser.Scene {
       const userDataA = b2Shape_GetUserData(shapeIdA);
       const userDataB = b2Shape_GetUserData(shapeIdB);
 
-      // Only process non-sensor collisions for platform interactions
+      // Process player-platform contacts
+      // These are important to catch events that might be missed by hit events
       if (!isSensorA && !isSensorB) {
         if (
           (userDataA?.type === "player" && userDataB?.type === "platform") ||
           (userDataB?.type === "player" && userDataA?.type === "platform")
         ) {
-          // Begin contact is the start of any collision
-          const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
-          console.log(
-            "Player began contact with platform, velocity:",
-            velocity
-          );
-
-          // Set grounded true if the player's y velocity is near zero or negative
-          // (moving down in Box2D coordinates, as positive y is up)
-          if (velocity.y <= 0.1) {
-            this.player.setGrounded(true);
-            console.log("Player is now grounded");
-          }
+          // Any contact with platform is sufficient to ground player for robustness
+          console.log("Begin contact with platform - setting grounded");
+          this.player.setGrounded(true);
         }
       }
 
@@ -354,15 +356,24 @@ export default class GameScene extends Phaser.Scene {
         (userDataA?.type === "player" && userDataB?.type === "platform") ||
         (userDataB?.type === "player" && userDataA?.type === "platform")
       ) {
+        // Only unground if the player is clearly moving upward (jumping)
+        // OR if player is high above platform level (actual fall)
         const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
+        const playerY = this.player.y;
 
-        // Only set not grounded if we're actually leaving the platform
-        // We're not leaving if we're moving upward (velocity.y > 0 in Box2D)
-        if (velocity.y <= 0) {
+        if (velocity.y > 1.0 || playerY < 480) {
+          // Only unground if player is moving upward (jumping) or well above platforms
           this.player.setGrounded(false);
           console.log(
-            "Player ended contact with platform - not grounded, velocity:",
-            velocity
+            "Player moving upward/away from platform - setting not grounded. Velocity, position:",
+            velocity,
+            playerY
+          );
+        } else {
+          console.log(
+            "End contact with platform but maintaining grounded state. Velocity, position:",
+            velocity,
+            playerY
           );
         }
       }
@@ -395,6 +406,13 @@ export default class GameScene extends Phaser.Scene {
           velocity: { x: velocity.x, y: velocity.y },
         });
       }
+
+      // Log physics settings
+      console.log("Game starting with physics configuration:", {
+        gravity: PHYSICS.GRAVITY,
+        timestep: "1/60",
+        subStepCount: 12,
+      });
 
       // Give physics a moment to initialize
       this.time.delayedCall(100, () => {

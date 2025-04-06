@@ -9,7 +9,6 @@ import { gameState } from "@gameState";
 import {
   STATIC,
   b2DefaultBodyDef,
-  pxmVec2,
   AddSpriteToWorld,
   RemoveSpriteFromWorld,
   b2CreateBody,
@@ -70,8 +69,6 @@ export default class Coin extends Phaser.GameObjects.Sprite {
 
     const box = b2MakeBox(halfWidth, halfHeight);
 
-    // Create the polygon shape and attach it to the body
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     b2CreatePolygonShape(bodyId, shapeDef, box);
 
     // Link the sprite to the body for rendering updates

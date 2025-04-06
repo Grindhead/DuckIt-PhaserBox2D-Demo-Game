@@ -7,17 +7,15 @@
  */
 import * as Phaser from "phaser";
 
-import { ASSETS, PHYSICS } from "@constants";
+import { ASSETS, PHYSICS, ANIMATION } from "@constants";
 import { gameState, GameStates } from "@gameState";
 // Runtime values only
 import {
   AddSpriteToWorld,
   DYNAMIC,
-  b2DefaultFilter,
   b2DefaultBodyDef,
   b2Vec2,
   b2Rot,
-  pxmVec2,
   b2Body_GetLinearVelocity,
   b2Body_SetLinearVelocity,
   b2Body_ApplyLinearImpulseToCenter,
@@ -28,6 +26,7 @@ import {
   b2DefaultShapeDef,
   b2MakeBox,
   b2CreatePolygonShape,
+  b2Body_SetGravityScale,
 } from "@PhaserBox2D";
 
 // Define a simple interface for b2Vec2 instances
@@ -36,99 +35,148 @@ interface IB2Vec2 {
   y: number;
 }
 
+// Player state interface
 interface PlayerState {
   isDead: boolean;
   isGrounded: boolean;
 }
 
+/**
+ * Player class representing the duck character
+ * Handles physics, animations, and controls
+ */
 export default class Player extends Phaser.GameObjects.Sprite {
   scene: Phaser.Scene;
-
-  // Change type annotation to 'any | null' for consistency and to fix linter error
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  bodyId: any | null = null;
+  bodyId: any = null; // Using any type to avoid TS compatibility issues with Box2D
   playerState: PlayerState;
-  jumpForce: number;
-  startPosition: { x: number; y: number };
+  startPosition: Phaser.Math.Vector2;
 
+  /**
+   * Creates an instance of the Player.
+   *
+   * @param scene - The scene to add the player to
+   * @param x - Initial x position
+   * @param y - Initial y position
+   */
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, ASSETS.ATLAS, ASSETS.PLAYER.IDLE.FRAME);
+
     this.scene = scene;
+    this.startPosition = new Phaser.Math.Vector2(x, y);
+
+    // Initialize state
     this.playerState = {
       isDead: false,
       isGrounded: false,
     };
-    this.jumpForce = PHYSICS.PLAYER.JUMP_FORCE;
-    this.startPosition = { x, y }; // Store initial position for reset
 
-    // Set up sprite properties
-    this.setOrigin(0.5, 0.5);
-    this.setVisible(true);
-    this.setDepth(1); // Ensure player renders above platforms
-
-    // Add to scene's display list (MUST be done before physics setup)
+    // Add player to the scene display list
     scene.add.existing(this);
 
-    console.log("Player constructor:", {
-      x: x,
-      y: y,
-      spriteX: this.x,
-      spriteY: this.y,
-      inDisplayList: this.displayList !== null,
-      visible: this.visible,
-      active: this.active,
-      texture: this.texture.key,
-      frame: this.frame.name,
-      atlas: ASSETS.ATLAS,
-      idleFrame: ASSETS.PLAYER.IDLE.FRAME,
-    });
+    // Set depth (render order)
+    this.setDepth(10);
 
-    this.initialize();
-  }
-
-  initialize() {
-    // Ensure sprite is set up before physics
-    if (!this.displayList) {
-      console.warn("Player not in display list, re-adding...");
-      this.scene.add.existing(this);
-    }
-
+    // Create physics body
     this.initPhysics();
 
-    // Verify animation exists before playing
-    if (this.scene.anims.exists(ASSETS.PLAYER.IDLE.KEY)) {
-      this.play(ASSETS.PLAYER.IDLE.KEY);
-    } else {
-      console.error(`Animation ${ASSETS.PLAYER.IDLE.KEY} not found!`);
-      // Set static frame as fallback
-      this.setFrame(ASSETS.PLAYER.IDLE.FRAME);
+    // Create animations if needed
+    if (!this.scene.anims.exists(ASSETS.PLAYER.IDLE.KEY)) {
+      this.createAnimations();
     }
 
-    console.log("Player initialization state:", {
-      position: { x: this.x, y: this.y },
-      visible: this.visible,
-      active: this.active,
-      texture: {
-        key: this.texture.key,
-        frame: this.frame.name,
-        frameTotal: this.texture.frameTotal,
-      },
-      inDisplayList: this.displayList !== null,
-      animations: {
-        currentKey: this.anims.currentAnim?.key,
-        isPlaying: this.anims.isPlaying,
-        hasAnimation: this.scene.anims.exists(ASSETS.PLAYER.IDLE.KEY),
-      },
-    });
+    // Start with idle animation
+    this.play(ASSETS.PLAYER.IDLE.KEY);
+  }
+
+  /**
+   * Create all player animations
+   */
+  createAnimations() {
+    const { IDLE, RUN, JUMP, FALL, DEAD } = ASSETS.PLAYER;
+
+    // Idle animation
+    if (!this.scene.anims.exists(IDLE.KEY)) {
+      this.scene.anims.create({
+        key: IDLE.KEY,
+        frames: this.scene.anims.generateFrameNames(ASSETS.ATLAS, {
+          prefix: "player/idle/duck-idle-",
+          start: 1,
+          end: IDLE.FRAME_COUNT,
+          zeroPad: 4,
+          suffix: ".png",
+        }),
+        frameRate: ANIMATION.FRAME_RATE,
+        repeat: -1,
+      });
+    }
+
+    // Run animation
+    if (!this.scene.anims.exists(RUN.KEY)) {
+      this.scene.anims.create({
+        key: RUN.KEY,
+        frames: this.scene.anims.generateFrameNames(ASSETS.ATLAS, {
+          prefix: RUN.FRAME_PREFIX,
+          start: 1,
+          end: RUN.FRAME_COUNT,
+          zeroPad: 4,
+          suffix: ".png",
+        }),
+        frameRate: ANIMATION.FRAME_RATE,
+        repeat: -1,
+      });
+    }
+
+    // Jump animation
+    if (!this.scene.anims.exists(JUMP.KEY)) {
+      this.scene.anims.create({
+        key: JUMP.KEY,
+        frames: this.scene.anims.generateFrameNames(ASSETS.ATLAS, {
+          prefix: JUMP.FRAME_PREFIX,
+          start: 1,
+          end: JUMP.FRAME_COUNT,
+          zeroPad: 4,
+          suffix: ".png",
+        }),
+        frameRate: ANIMATION.FRAME_RATE,
+        repeat: 0,
+      });
+    }
+
+    // Fall animation
+    if (!this.scene.anims.exists(FALL.KEY)) {
+      this.scene.anims.create({
+        key: FALL.KEY,
+        frames: this.scene.anims.generateFrameNames(ASSETS.ATLAS, {
+          prefix: FALL.FRAME_PREFIX,
+          start: 1,
+          end: FALL.FRAME_COUNT,
+          zeroPad: 4,
+          suffix: ".png",
+        }),
+        frameRate: ANIMATION.FRAME_RATE,
+        repeat: -1,
+      });
+    }
+
+    // Dead animation
+    if (!this.scene.anims.exists(DEAD.KEY)) {
+      this.scene.anims.create({
+        key: DEAD.KEY,
+        frames: this.scene.anims.generateFrameNames(ASSETS.ATLAS, {
+          prefix: DEAD.FRAME_PREFIX,
+          start: 1,
+          end: DEAD.FRAME_COUNT,
+          zeroPad: 4,
+          suffix: ".png",
+        }),
+        frameRate: ANIMATION.FRAME_RATE,
+        repeat: 0,
+      });
+    }
   }
 
   destroyPhysics() {
     if (this.bodyId) {
-      console.log(
-        `Player.destroyPhysics: Destroying body ${JSON.stringify(
-          this.bodyId
-        )} in world ${JSON.stringify(gameState.worldId)}`
-      );
       b2DestroyBody(this.bodyId);
       this.bodyId = null;
     }
@@ -175,6 +223,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       enableContactListener: true, // Make sure contact events are enabled
       allowSleep: false, // Prevent the body from sleeping
       bullet: true, // Enable continuous collision detection for accurate collisions
+      linearDamping: 0.1, // Decreased damping for better movement
     };
 
     const bodyId = b2CreateBody(gameState.worldId, bodyDef);
@@ -185,65 +234,108 @@ export default class Player extends Phaser.GameObjects.Sprite {
       return;
     }
 
-    const shapeDef = {
-      ...b2DefaultShapeDef(),
-      density: PHYSICS.PLAYER.DENSITY,
-      friction: PHYSICS.PLAYER.FRICTION,
-      restitution: PHYSICS.PLAYER.RESTITUTION,
-      userData: { type: "player", sprite: this },
-      enableContactEvents: true, // Important for collision detection
-      filter: b2DefaultFilter(),
-      isSensor: false, // Explicitly set to false to ensure solid collisions
-    };
+    // Set gravity scale to 0 initially (will be set to 1 when game starts)
+    b2Body_SetGravityScale(bodyId, 0);
 
     // Create a box shape with scaled dimensions
     // Box2D uses half-width/height in meters
-    const halfWidth = this.width / 2 / PHYSICS.SCALE;
-    const halfHeight = this.height / 2 / PHYSICS.SCALE;
+    const halfWidth = (this.width * 0.7) / 2 / PHYSICS.SCALE; // Slightly smaller than sprite width
+    const halfHeight = (this.height * 0.9) / 2 / PHYSICS.SCALE; // Slightly smaller than sprite height
 
-    console.log(
-      `Player physics body: ${this.width}x${this.height} pixels, ` +
-        `Box2D dimensions: ${halfWidth * 2}x${halfHeight * 2} meters, ` +
-        `half-dimensions: ${halfWidth}x${halfHeight} meters`
-    );
+    // Create the shape definition
+    const shapeDef = {
+      ...b2DefaultShapeDef(),
+      density: 1.0, // Normal density
+      friction: 0.3, // Moderate friction to prevent sticking to walls
+      restitution: 0.0, // No bounce
+      userData: { type: "player" }, // Important for collision identification
+      isSensor: false, // Explicitly ensure it's not a sensor
+      enableContactEvents: true, // Enable contact events for the player
+    };
 
+    // Create and attach the box shape to the body
     const box = b2MakeBox(halfWidth, halfHeight);
     b2CreatePolygonShape(bodyId, shapeDef, box);
 
-    // Initial position with scaled coordinates and inverted Y for Box2D
-    const initialPos = new b2Vec2(
-      this.x / PHYSICS.SCALE,
-      -this.y / PHYSICS.SCALE
-    );
-    console.log(
-      `Player Initial Position (Box2D Coords): x=${initialPos.x.toFixed(
-        3
-      )}, y=${initialPos.y.toFixed(3)}`
-    );
-    console.log(`Player Initial Position (Pixels): x=${this.x}, y=${this.y}`);
-
-    const initialRot = new b2Rot(0, 0);
-    b2Body_SetTransform(this.bodyId, initialPos, initialRot);
-    b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
-
-    const initialMass = b2Body_GetMass(this.bodyId);
-    console.log(`Player Initial Mass: ${initialMass}`);
-
-    // Add sprite to physics world with a properly formatted object
-    // The AddSpriteToWorld function attaches this sprite to the Box2D body
-    // so that the sprite will update position based on physics
-    AddSpriteToWorld(gameState.worldId, this, {
-      bodyId: this.bodyId,
-      offsetX: 0,
-      offsetY: 0,
-      drawShape: true, // Enable debug drawing of physics shape
+    // Log shape creation
+    console.log("Player physics body and shape created:", {
+      bodyId,
+      width: this.width * 0.7, // Actual collision width being used
+      height: this.height * 0.9, // Actual collision height being used
+      halfWidth,
+      halfHeight,
+      scale: PHYSICS.SCALE,
+      density: shapeDef.density,
+      friction: shapeDef.friction,
     });
 
-    console.log("Player initialized", {
-      position: { x: this.x, y: this.y },
-      visible: this.visible,
-      inPhysicsWorld: this.bodyId != null,
-    });
+    // Add the sprite to the physics world for updates
+    AddSpriteToWorld(gameState.worldId, this, { bodyId });
+  }
+
+  /**
+   * Set the grounded state of the player
+   * @param grounded - Whether the player is on ground
+   */
+  setGrounded(grounded: boolean) {
+    // Don't update if the state is the same
+    if (this.playerState.isGrounded === grounded) return;
+
+    // Set the internal state
+    this.playerState.isGrounded = grounded;
+
+    // Log for debugging
+    console.log(`Player.setGrounded: ${grounded}`);
+  }
+
+  /**
+   * Apply jump impulse if player is grounded
+   * @returns true if jump successful, false otherwise
+   */
+  jump(): boolean {
+    // Only jump if we have a physics body and are grounded
+    if (!this.bodyId || !this.playerState.isGrounded) {
+      return false;
+    }
+
+    // Get current velocity
+    const velocity = b2Body_GetLinearVelocity(this.bodyId);
+
+    // Only jump if we're not already moving upward significantly
+    if (velocity.y < PHYSICS.PLAYER.JUMP_THRESHOLD) {
+      // Apply jump impulse
+      const jumpImpulse = new b2Vec2(0, PHYSICS.PLAYER.JUMP_FORCE);
+      b2Body_ApplyLinearImpulseToCenter(this.bodyId, jumpImpulse, true);
+
+      // Set grounded to false since we're jumping
+      this.playerState.isGrounded = false;
+
+      // Play jump animation
+      this.play(ASSETS.PLAYER.JUMP.KEY);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Kill the player (called when hitting enemies or death sensor)
+   */
+  kill() {
+    console.log("killing player");
+    if (!this.playerState.isDead) {
+      this.playerState.isDead = true;
+      this.play(ASSETS.PLAYER.DEAD.KEY);
+
+      this.destroyPhysics();
+
+      this.scene.time.delayedCall(1000, () => {
+        gameState.transition(GameStates.GAME_OVER);
+        this.setActive(false);
+        this.setVisible(false);
+      });
+    }
   }
 
   update(controls: Phaser.Types.Input.Keyboard.CursorKeys) {
@@ -252,27 +344,17 @@ export default class Player extends Phaser.GameObjects.Sprite {
     const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
     const bodyMass = b2Body_GetMass(this.bodyId);
 
-    // Check if player has fallen below platforms (y > 700)
-    if (this.y > 700 && gameState.isPlaying) {
-      console.log("Player fell below platforms, resetting position");
-      // Reset position to starting point
-      const pos = new b2Vec2(
-        this.startPosition.x / PHYSICS.SCALE,
-        -this.startPosition.y / PHYSICS.SCALE
+    // CRITICAL FIX: Limit maximum falling velocity to prevent tunneling
+    // If falling speed gets too high, cap it to prevent tunneling through platforms
+    const MAX_FALL_VELOCITY = -5.0; // Moderate limit to reduce tunneling but not too restrictive
+    if (currentVelocity.y < MAX_FALL_VELOCITY) {
+      console.log(
+        `Limiting excessive fall velocity from ${currentVelocity.y} to ${MAX_FALL_VELOCITY} m/s`
       );
-      b2Body_SetTransform(this.bodyId, pos, new b2Rot(0, 0));
-      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
-
-      // Log physics state when falling
-      console.log("Player physics state when falling:", {
-        position: { x: this.x, y: this.y },
-        box2dPosition: {
-          x: this.x / PHYSICS.SCALE,
-          y: -this.y / PHYSICS.SCALE,
-        },
-        velocity: { x: currentVelocity.x, y: currentVelocity.y },
-        grounded: this.playerState.isGrounded,
-      });
+      b2Body_SetLinearVelocity(
+        this.bodyId,
+        new b2Vec2(currentVelocity.x, MAX_FALL_VELOCITY)
+      );
     }
 
     let targetVelX = 0;
@@ -299,102 +381,88 @@ export default class Player extends Phaser.GameObjects.Sprite {
     const currentAnimKey = this.anims.currentAnim?.key;
     const canJump = this.playerState.isGrounded;
 
-    if (
-      controls.up?.isDown &&
-      canJump &&
-      currentAnimKey !== ASSETS.PLAYER.JUMP.KEY &&
-      currentAnimKey !== ASSETS.PLAYER.FALL.KEY
-    ) {
-      // Apply upward force for jump (positive Y in Box2D is upward)
-      // Calculate appropriate impulse based on mass and scale to Box2D units
-      const scaledJumpForce = this.jumpForce / PHYSICS.SCALE;
-      const impulseMagnitude = scaledJumpForce * bodyMass;
-
-      // For debugging
-      console.log(
-        `Applying jump impulse: magnitude=${impulseMagnitude}, mass=${bodyMass}, raw force=${this.jumpForce}, scaled force=${scaledJumpForce}`
-      );
-
-      // Create upward impulse vector (positive Y in Box2D)
-      const impulseVec = new b2Vec2(0, impulseMagnitude);
-
-      // Apply the impulse at the center of mass
-      b2Body_ApplyLinearImpulseToCenter(this.bodyId, impulseVec, true);
-
-      // Set grounded to false immediately as we're jumping
-      this.playerState.isGrounded = false;
-
-      // Play jump animation
-      this.play(ASSETS.PLAYER.JUMP.KEY);
-      this.once(
-        Phaser.Animations.Events.ANIMATION_COMPLETE_KEY +
-          ASSETS.PLAYER.JUMP.KEY,
-        () => {
-          if (!this.playerState.isDead) {
-            this.play(ASSETS.PLAYER.FALL.KEY, true);
-          }
-        }
-      );
+    // Handle jump input
+    if (canJump && controls.up?.isDown) {
+      this.jump();
     }
 
-    // Update animations based on current state
-    this.updateAnimations(targetVelX, currentVelocity);
-  }
-
-  updateAnimations(moveX: number, velocity: IB2Vec2) {
-    if (!this.bodyId) return;
-    if (this.playerState.isDead) return;
-
-    const currentAnimKey = this.anims.currentAnim?.key;
-    const currentVelY = velocity.y; // In Box2D, positive Y is upward
-
-    // In Box2D coordinates, falling is when Y velocity is negative (moving down)
-    if (currentVelY < -PHYSICS.PLAYER.JUMP_THRESHOLD) {
-      if (
-        currentAnimKey !== ASSETS.PLAYER.FALL.KEY &&
-        currentAnimKey !== ASSETS.PLAYER.JUMP.KEY
-      ) {
-        this.play(ASSETS.PLAYER.FALL.KEY, true);
+    // Determine animation based on state and velocity
+    if (this.playerState.isDead) {
+      // Play death animation if not already playing
+      if (currentAnimKey !== ASSETS.PLAYER.DEAD.KEY) {
+        this.play(ASSETS.PLAYER.DEAD.KEY);
       }
-    } else if (
-      Math.abs(currentVelY) <= PHYSICS.PLAYER.JUMP_THRESHOLD &&
-      currentAnimKey !== ASSETS.PLAYER.JUMP.KEY
-    ) {
-      if (Math.abs(moveX) > PHYSICS.PLAYER.MOVE_THRESHOLD) {
-        if (currentAnimKey !== ASSETS.PLAYER.RUN.KEY) {
-          this.play(ASSETS.PLAYER.RUN.KEY, true);
+    } else if (!this.playerState.isGrounded) {
+      // We're in the air
+      if (currentVelocity.y > 0) {
+        // Moving upward (jumping)
+        if (currentAnimKey !== ASSETS.PLAYER.JUMP.KEY) {
+          this.play(ASSETS.PLAYER.JUMP.KEY);
         }
       } else {
+        // Moving downward (falling)
+        if (
+          currentAnimKey !== ASSETS.PLAYER.FALL.KEY &&
+          (!this.anims.isPlaying || currentAnimKey !== ASSETS.PLAYER.JUMP.KEY)
+        ) {
+          this.play(ASSETS.PLAYER.FALL.KEY);
+        }
+      }
+    } else {
+      // We're on the ground
+      const isMoving =
+        Math.abs(currentVelocity.x) >
+        PHYSICS.PLAYER.MOVE_THRESHOLD / PHYSICS.SCALE;
+
+      if (isMoving) {
+        // Running
+        if (currentAnimKey !== ASSETS.PLAYER.RUN.KEY) {
+          this.play(ASSETS.PLAYER.RUN.KEY);
+        }
+      } else {
+        // Idle
         if (currentAnimKey !== ASSETS.PLAYER.IDLE.KEY) {
-          this.play(ASSETS.PLAYER.IDLE.KEY, true);
+          this.play(ASSETS.PLAYER.IDLE.KEY);
         }
       }
     }
 
-    if (moveX > PHYSICS.PLAYER.MOVE_THRESHOLD) {
-      this.setFlipX(false);
-    } else if (moveX < -PHYSICS.PLAYER.MOVE_THRESHOLD) {
-      this.setFlipX(true);
-    }
-  }
+    // Check if player has fallen below platforms (y > 700)
+    if (this.y > 700 && gameState.isPlaying) {
+      console.log("Player fell below platforms, resetting position");
+      // Reset position to starting point
+      const pos = new b2Vec2(
+        this.startPosition.x / PHYSICS.SCALE,
+        -this.startPosition.y / PHYSICS.SCALE
+      );
+      // Set rotation to 0 (Box2D expects b2Rot)
+      const angle = new b2Rot(0, 0);
 
-  kill() {
-    console.log("killing player");
-    if (!this.playerState.isDead) {
-      this.playerState.isDead = true;
-      this.play(ASSETS.PLAYER.DEAD.KEY);
+      // --- Add Logging Before SetTransform ---
+      console.log("Player.update: Attempting SetTransform", {
+        startPositionX: this.startPosition?.x,
+        startPositionY: this.startPosition?.y,
+        scale: PHYSICS.SCALE,
+        calculatedPosX: pos?.x,
+        calculatedPosY: pos?.y,
+        intendedAngle: 0, // We know we are setting angle to 0
+        bodyIdValid: !!this.bodyId,
+      });
+      // --------------------------------------
 
-      this.destroyPhysics();
+      b2Body_SetTransform(this.bodyId, pos, angle);
+      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 
-      this.scene.time.delayedCall(1000, () => {
-        gameState.transition(GameStates.GAME_OVER);
-        this.setActive(false);
-        this.setVisible(false);
+      // Log physics state when falling
+      console.log("Player physics state when falling:", {
+        position: { x: this.x, y: this.y },
+        box2dPosition: {
+          x: this.x / PHYSICS.SCALE,
+          y: -this.y / PHYSICS.SCALE,
+        },
+        velocity: { x: currentVelocity.x, y: currentVelocity.y },
+        grounded: this.playerState.isGrounded,
       });
     }
-  }
-
-  setGrounded(isGrounded: boolean) {
-    this.playerState.isGrounded = isGrounded;
   }
 }
