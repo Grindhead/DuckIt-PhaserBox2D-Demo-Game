@@ -27,6 +27,7 @@ import {
   b2MakeBox,
   b2CreatePolygonShape,
   b2Body_SetGravityScale,
+  b2BodyId,
 } from "@PhaserBox2D";
 
 // Define a simple interface for b2Vec2 instances
@@ -47,7 +48,7 @@ interface PlayerState {
  */
 export default class Player extends Phaser.GameObjects.Sprite {
   scene: Phaser.Scene;
-  bodyId: any = null; // Using any type to avoid TS compatibility issues with Box2D
+  bodyId: InstanceType<typeof b2BodyId> | null = null; // Corrected type to InstanceType
   playerState: PlayerState;
   startPosition: Phaser.Math.Vector2;
 
@@ -343,19 +344,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
     const bodyMass = b2Body_GetMass(this.bodyId);
-
-    // CRITICAL FIX: Limit maximum falling velocity to prevent tunneling
-    // If falling speed gets too high, cap it to prevent tunneling through platforms
-    const MAX_FALL_VELOCITY = -5.0; // Moderate limit to reduce tunneling but not too restrictive
-    if (currentVelocity.y < MAX_FALL_VELOCITY) {
-      console.log(
-        `Limiting excessive fall velocity from ${currentVelocity.y} to ${MAX_FALL_VELOCITY} m/s`
-      );
-      b2Body_SetLinearVelocity(
-        this.bodyId,
-        new b2Vec2(currentVelocity.x, MAX_FALL_VELOCITY)
-      );
-    }
 
     let targetVelX = 0;
 

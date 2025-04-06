@@ -66,7 +66,7 @@ export default class GameScene extends Phaser.Scene {
     worldDef.gravity = new b2Vec2(0, PHYSICS.GRAVITY.y);
     // Increase the maximum linear velocity (includes falling speed)
     // Assuming b2_lengthUnitsPerMeter2 is 1 based on PhaserBox2D.js internal definition
-    worldDef.maximumLinearVelocity = 1000;
+    worldDef.maximumLinearVelocity = 4000;
 
     const worldId = b2CreateWorld(worldDef);
     gameState.setWorldId(worldId);
@@ -142,10 +142,10 @@ export default class GameScene extends Phaser.Scene {
     if (!worldId) return;
 
     // Use higher substeps to prevent tunneling
-    const timeStep = 1 / 60; // Fixed timestep for stability
-    const subStepCount = 45; // Further increased for more accurate collision detection (was 36)
+    const timeStep = delta / 1000; // Convert delta from ms to seconds
+    const subStepCount = 60;
 
-    // Step the physics world
+    // Step the physics world using delta time
     b2World_Step(worldId, timeStep, subStepCount);
 
     // Update sprites to match physics state
