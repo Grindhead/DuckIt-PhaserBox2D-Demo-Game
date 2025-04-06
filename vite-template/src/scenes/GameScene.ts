@@ -62,7 +62,7 @@ export default class GameScene extends Phaser.Scene {
     b2CreateWorldArray();
     const worldDef = b2DefaultWorldDef();
     // Since Box2D has Y pointing up, we use negative gravity for downward force
-    worldDef.gravity = new b2Vec2(0, -PHYSICS.GRAVITY.y / PHYSICS.SCALE);
+    worldDef.gravity = new b2Vec2(0, PHYSICS.GRAVITY.y);
     const worldId = b2CreateWorld(worldDef);
     gameState.setWorldId(worldId);
 
@@ -236,7 +236,7 @@ export default class GameScene extends Phaser.Scene {
     // Process contact events
     const contactEvents = b2World_GetContactEvents(worldId);
 
-    // Process hit events
+    // Process hit events (immediate collision impacts)
     if (contactEvents.hitEvents && contactEvents.hitEvents.length > 0) {
       for (const event of contactEvents.hitEvents) {
         const shapeIdA = event.shapeIdA;
@@ -247,12 +247,15 @@ export default class GameScene extends Phaser.Scene {
         const isSensorA = b2Shape_IsSensor(shapeIdA);
         const isSensorB = b2Shape_IsSensor(shapeIdB);
 
+        // Only process non-sensor collisions (solid collisions)
         if (!isSensorA && !isSensorB) {
+          // Check for player-platform collision
           if (
             (userDataA?.type === "player" && userDataB?.type === "platform") ||
             (userDataB?.type === "player" && userDataA?.type === "platform")
           ) {
             this.player.setGrounded(true);
+            console.log("Player hit platform - grounded");
           }
         }
       }
@@ -267,15 +270,18 @@ export default class GameScene extends Phaser.Scene {
       const userDataA = b2Shape_GetUserData(shapeIdA);
       const userDataB = b2Shape_GetUserData(shapeIdB);
 
+      // Only process non-sensor collisions for platform interactions
       if (!isSensorA && !isSensorB) {
         if (
           (userDataA?.type === "player" && userDataB?.type === "platform") ||
           (userDataB?.type === "player" && userDataA?.type === "platform")
         ) {
           this.player.setGrounded(true);
+          console.log("Player began contact with platform - grounded");
         }
       }
 
+      // Process death sensor contacts
       if (
         (userDataA?.type === "player" &&
           userDataB?.type === "deathSensor" &&
@@ -295,18 +301,22 @@ export default class GameScene extends Phaser.Scene {
       const isSensorA = b2Shape_IsSensor(shapeIdA);
       const isSensorB = b2Shape_IsSensor(shapeIdB);
 
+      // Skip sensor contacts for platform collision handling
       if (isSensorA || isSensorB) continue;
 
       const userDataA = b2Shape_GetUserData(shapeIdA);
       const userDataB = b2Shape_GetUserData(shapeIdB);
 
+      // Check if player is leaving platform contact
       if (
         (userDataA?.type === "player" && userDataB?.type === "platform") ||
         (userDataB?.type === "player" && userDataA?.type === "platform")
       ) {
         const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
+        // Only set not grounded if moving upward or falling
         if (velocity.y < 0) {
           this.player.setGrounded(false);
+          console.log("Player ended contact with platform - not grounded");
         }
       }
     }
@@ -324,7 +334,7 @@ export default class GameScene extends Phaser.Scene {
     if (gameState.isReady) {
       // Enable gravity for the player when the game starts
       if (this.player && this.player.bodyId) {
-        b2Body_SetGravityScale(this.player.bodyId, 1.0);
+        b2Body_SetGravityScale(this.player.bodyId, 1);
       }
 
       const success = gameState.startGame();

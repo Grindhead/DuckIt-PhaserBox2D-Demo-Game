@@ -14,15 +14,12 @@
  * @enum {Object}
  */
 export const PHYSICS = {
-  /** Conversion factor from pixels to Box2D meters */
-  SCALE: 30,
-
   /** World gravity configuration */
   GRAVITY: {
     /** Horizontal gravity (0 for no horizontal gravity) */
     x: 0,
     /** Vertical gravity (positive for downward force) */
-    y: 300, // Standard gravity in m/s²
+    y: -30,
   },
 
   /** Player physics properties */

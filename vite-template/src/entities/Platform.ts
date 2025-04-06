@@ -44,8 +44,11 @@ export default class Platform {
       ASSETS.ATLAS,
       ASSETS.PLATFORM.MIDDLE
     ).height;
-    const hx = pxm(width / 2);
-    const hy = pxm(tileHeight / 2);
+
+    // Adjust collision box size to match the platform dimensions
+    // For Box2D, we need half-widths, but for SpriteToBox we'll use the actual dimensions
+    const hx = width / 2; // Half-width in pixels
+    const hy = tileHeight / 2; // Half-height in pixels
 
     const bodyDef = {
       ...b2DefaultBodyDef(),
@@ -58,13 +61,13 @@ export default class Platform {
       centerY,
       width,
       height: tileHeight,
-      position: { x: centerX, y: centerY },
+      halfWidth: hx,
+      halfHeight: hy,
       box2dPosition: `${pxm(centerX)}, ${pxm(-centerY)}`,
       negatedY: -centerY,
     });
 
-    // Create a temporary, invisible rectangle at the center for SpriteToBox
-    // Its dimensions don't affect the physics body due to explicit boxSize
+    // Create a temporary, invisible rectangle at the center as our physics template
     const tempRect = this.scene.add.rectangle(
       centerX,
       centerY,
@@ -73,24 +76,26 @@ export default class Platform {
     );
     tempRect.setVisible(false); // Make it invisible
 
-    // Define the shape explicitly to ensure it's not a sensor
+    // Define the shape explicitly for solid collision detection
     const shapeDef = {
-      ...b2DefaultShapeDef(), // Start with defaults
+      ...b2DefaultShapeDef(),
       density: 0, // Static bodies have 0 density
       friction: PHYSICS.PLATFORM.FRICTION,
       restitution: 0,
       userData: { type: "platform" },
       isSensor: false, // Explicitly set to false
       enableContactEvents: true, // Enable contact events for the platform
-      filter: b2DefaultFilter(), // Explicitly set default filter
+      filter: b2DefaultFilter(),
     };
 
-    // Create the single physics body using the temporary rectangle
+    // Create the physics body with the exact dimensions of the platform
     const bodyResult = SpriteToBox(gameState.worldId, tempRect, {
       bodyDef,
-      boxSize: { hx, hy },
       shapeDef: shapeDef,
     });
+
+    // Remove temporary rectangle after physics creation
+    tempRect.destroy();
 
     // Log created shape details
     if (bodyResult?.shapeId) {

@@ -198,13 +198,14 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     const scaleX = this.scaleX;
     const scaleY = this.scaleY;
-    // Adjust collision box to be slightly smaller than sprite
-    const boxWidth = (this.width * scaleX * 0.8) / PHYSICS.SCALE;
-    const boxHeight = (this.height * scaleY * 0.8) / PHYSICS.SCALE;
+    // Adjust collision box to match sprite size more accurately
+    // Using full width and height for better collision detection
+    const boxWidth = this.width * scaleX;
+    const boxHeight = this.height * scaleY;
     console.log(`Player box size: ${boxWidth}x${boxHeight} (Box2D units)`);
     console.log(`Player sprite size: ${this.width}x${this.height} (pixels)`);
 
-    const box = b2MakeBox(boxWidth, boxHeight);
+    const box = b2MakeBox(boxWidth / 2, boxHeight / 2); // Box2D uses half-widths
     b2CreatePolygonShape(bodyId, shapeDef, box);
 
     // Initial position with inverted Y for Box2D
@@ -241,10 +242,10 @@ export default class Player extends Phaser.GameObjects.Sprite {
     let targetVelX = 0;
 
     if (controls.left?.isDown) {
-      targetVelX = -PHYSICS.PLAYER.SPEED / PHYSICS.SCALE;
+      targetVelX = -PHYSICS.PLAYER.SPEED;
       this.setFlipX(true);
     } else if (controls.right?.isDown) {
-      targetVelX = PHYSICS.PLAYER.SPEED / PHYSICS.SCALE;
+      targetVelX = PHYSICS.PLAYER.SPEED;
       this.setFlipX(false);
     }
 
@@ -267,7 +268,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       currentAnimKey !== ASSETS.PLAYER.FALL.KEY
     ) {
       // Apply upward force for jump (negative Y in Phaser)
-      const impulseMagnitude = (this.jumpForce * bodyMass) / PHYSICS.SCALE;
+      const impulseMagnitude = this.jumpForce * bodyMass;
       const impulseVec = new b2Vec2(0, -impulseMagnitude);
       b2Body_ApplyLinearImpulseToCenter(this.bodyId, impulseVec, true);
       this.playerState.isGrounded = false;
@@ -285,7 +286,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
     }
 
     // Update animations based on current state
-    this.updateAnimations(targetVelX * PHYSICS.SCALE, currentVelocity);
+    this.updateAnimations(targetVelX, currentVelocity);
   }
 
   updateAnimations(moveX: number, velocity: IB2Vec2) {
@@ -296,7 +297,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
     const currentVelY = velocity.y;
 
     // With standard coordinates, falling is when Y velocity is positive
-    if (currentVelY > PHYSICS.PLAYER.JUMP_THRESHOLD / PHYSICS.SCALE) {
+    if (currentVelY > PHYSICS.PLAYER.JUMP_THRESHOLD) {
       if (
         currentAnimKey !== ASSETS.PLAYER.FALL.KEY &&
         currentAnimKey !== ASSETS.PLAYER.JUMP.KEY
@@ -304,7 +305,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
         this.play(ASSETS.PLAYER.FALL.KEY, true);
       }
     } else if (
-      Math.abs(currentVelY) <= PHYSICS.PLAYER.JUMP_THRESHOLD / PHYSICS.SCALE &&
+      Math.abs(currentVelY) <= PHYSICS.PLAYER.JUMP_THRESHOLD &&
       currentAnimKey !== ASSETS.PLAYER.JUMP.KEY
     ) {
       if (Math.abs(moveX) > PHYSICS.PLAYER.MOVE_THRESHOLD) {
