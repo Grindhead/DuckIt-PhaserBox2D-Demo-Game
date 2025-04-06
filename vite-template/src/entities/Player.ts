@@ -101,6 +101,11 @@ export default class Player extends Phaser.GameObjects.Sprite {
       const initialMass = b2Body_GetMass(this.bodyId);
       console.log(`Player Initial Mass: ${initialMass}`);
 
+      console.log(
+        `Player.initPhysics: Adding sprite to world with worldId: ${JSON.stringify(
+          gameState.worldId
+        )} and bodyId: ${JSON.stringify(this.bodyId)}`
+      );
       AddSpriteToWorld(gameState.worldId, this, this.bodyId);
     } else {
       console.error("Failed to create player physics body!");

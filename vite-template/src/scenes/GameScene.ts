@@ -13,13 +13,16 @@ import Player from "@entities/Player";
 import { gameState, GameStates } from "@gameState";
 import {
   CreateWorld,
+  b2BodyId,
+  b2DestroyBody,
   STATIC,
   b2DefaultBodyDef,
   b2World_Step,
   SpriteToBox,
   pxmVec2,
   UpdateWorldSprites,
-  // UpdateWorldSprites, // Keep commented out for now
+  ClearWorldSprites,
+  AddSpriteToWorld,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -36,6 +39,9 @@ export default class GameScene extends Phaser.Scene {
   startScreen!: GameStartScreen;
   gameOverOverlay!: GameOverOverlay;
   mobileControls!: MobileControls;
+
+  // Queue for delayed body destruction
+  bodiesToDestroy: (typeof b2BodyId)[] = [];
 
   constructor() {
     super({ key: SCENES.GAME });
@@ -60,6 +66,13 @@ export default class GameScene extends Phaser.Scene {
     this.setupInput();
 
     this.startScreen.show();
+
+    // Listen for coin collection event to queue body destruction
+    this.events.on("queueBodyDestruction", (bodyId: typeof b2BodyId) => {
+      if (bodyId) {
+        this.bodiesToDestroy.push(bodyId);
+      }
+    });
   }
 
   createUI() {
@@ -105,8 +118,8 @@ export default class GameScene extends Phaser.Scene {
       position: pxmVec2(x, y),
     };
 
-    // Use SpriteToBox to link the sprite with a static body
-    SpriteToBox(gameState.worldId, image, {
+    // Use SpriteToBox to create the physics body
+    const { bodyId } = SpriteToBox(gameState.worldId, image, {
       bodyDef,
       density: 0, // Static bodies have 0 density
       friction: PHYSICS.PLATFORM.FRICTION,
@@ -114,10 +127,23 @@ export default class GameScene extends Phaser.Scene {
       userData: { type: "platform" },
     });
 
-    // No need for AddSpriteToWorld explicitly here, as SpriteToBox handles the linking
+    // Explicitly add the sprite and body to the tracking map
+    AddSpriteToWorld(gameState.worldId, image, { bodyId });
   }
 
   update(_time: number, delta: number) {
+    // Destroy bodies queued for removal from the *previous* frame
+    // BEFORE stepping physics or updating sprites for the current frame.
+    if (this.bodiesToDestroy.length > 0) {
+      for (const bodyId of this.bodiesToDestroy) {
+        if (bodyId) {
+          // Ensure bodyId is not null/undefined
+          b2DestroyBody(bodyId);
+        }
+      }
+      this.bodiesToDestroy.length = 0; // Clear the array
+    }
+
     // Add log to see if update is running and check state (using getters)
     // console.log(`GameScene update - isPlaying: ${gameState.isPlaying}`);
     if (gameState.isPlaying) {
@@ -126,6 +152,7 @@ export default class GameScene extends Phaser.Scene {
       const timeStep = delta / 1000;
       const subStepCount = 3;
 
+      // Restore the physics step
       b2World_Step(gameState.worldId, timeStep, subStepCount);
 
       if (this.player && this.controls) {
@@ -134,6 +161,14 @@ export default class GameScene extends Phaser.Scene {
       this.mobileControls.getState();
       // Update the coin counter display
       this.coinCounter.updateCount();
+
+      // Restore call to UpdateWorldSprites
+      console.log(
+        `Calling UpdateWorldSprites with worldId: ${JSON.stringify(
+          gameState.worldId
+        )}`
+      );
+      UpdateWorldSprites(gameState.worldId);
     }
   }
 
@@ -159,6 +194,9 @@ export default class GameScene extends Phaser.Scene {
 
   restart() {
     if (gameState.isGameOver) {
+      // Clear sprites associated with the old world BEFORE creating a new one
+      ClearWorldSprites(gameState.worldId);
+
       gameState.reset();
       // ---> REVERT TO POSITIVE GRAVITY ON RESTART <--- //
       const worldData = CreateWorld({ x: 0, y: PHYSICS.GRAVITY.y });

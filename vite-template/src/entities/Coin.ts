@@ -12,6 +12,7 @@ import {
   b2DefaultBodyDef,
   pxmVec2,
   AddSpriteToWorld,
+  RemoveSpriteFromWorld,
 } from "@PhaserBox2D";
 
 export default class Coin extends Phaser.GameObjects.Sprite {
@@ -69,7 +70,21 @@ export default class Coin extends Phaser.GameObjects.Sprite {
       () => {
         this.setVisible(false);
         this.setActive(false);
-        // TODO: Consider properly removing the Box2D body from the world here
+
+        // Properly remove the sprite-body link and destroy the body
+        if (this.bodyId) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          RemoveSpriteFromWorld(gameState.worldId as any, this);
+
+          // Emit event to queue destruction in GameScene
+          this.scene.events.emit("queueBodyDestruction", this.bodyId);
+          // this.scene.bodiesToDestroy.push(this.bodyId);
+          // b2DestroyBody(this.bodyId);
+          this.bodyId = null; // Still nullify the reference here
+        }
+
+        // Destroy the Phaser GameObject itself
+        this.destroy();
       }
     );
 
