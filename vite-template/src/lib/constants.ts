@@ -22,15 +22,15 @@ export const PHYSICS = {
     /** Horizontal gravity (0 for no horizontal gravity) */
     x: 0,
     /** Vertical gravity (negative for downward force in Box2D) */
-    y: -9.5, // Slightly reduced gravity from -10.0 for better stability
+    y: -50, // Slightly reduced gravity from -10.0 for better stability
   },
 
   /** Player physics properties */
   PLAYER: {
     /** Horizontal movement speed in pixels/second */
-    SPEED: 30,
+    SPEED: 100,
     /** Vertical jump force (positive for upward force) */
-    JUMP_FORCE: 7,
+    JUMP_FORCE: 50,
     /** Mass density for physics calculations */
     DENSITY: 1.0,
     /** Surface friction coefficient */

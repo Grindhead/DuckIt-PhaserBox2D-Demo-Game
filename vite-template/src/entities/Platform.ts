@@ -21,8 +21,10 @@ import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
 
 export default class Platform {
   scene: GameScene;
-  bodyId: any = null;
-  shapeId: any = null;
+  /** Box2D body identifier */
+  bodyId: ReturnType<typeof b2CreateBody> | null = null;
+  /** Box2D shape identifier */
+  shapeId: ReturnType<typeof b2CreatePolygonShape> | null = null;
   platformSprites: Phaser.GameObjects.Image[] = [];
 
   /**

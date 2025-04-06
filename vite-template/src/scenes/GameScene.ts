@@ -145,22 +145,6 @@ export default class GameScene extends Phaser.Scene {
     // Step the physics world
     b2World_Step(worldId, timeStep, subStepCount);
 
-    // Log physics step details periodically for debugging (every 100 frames)
-    if (Math.random() < 0.01) {
-      console.log("Physics step:", {
-        timeStep,
-        subStepCount,
-        playerPosition: this.player
-          ? { x: this.player.x, y: this.player.y }
-          : null,
-        playerGrounded: this.player ? this.player.playerState.isGrounded : null,
-        playerVelocity:
-          this.player && this.player.bodyId
-            ? b2Body_GetLinearVelocity(this.player.bodyId)
-            : null,
-      });
-    }
-
     // Update sprites to match physics state
     UpdateWorldSprites(worldId);
 
