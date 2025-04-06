@@ -13,6 +13,7 @@ import { gameState, GameStates } from "@gameState";
 import {
   AddSpriteToWorld,
   DYNAMIC,
+  b2DefaultFilter,
   b2DefaultBodyDef,
   b2Vec2,
   b2Rot,
@@ -21,12 +22,7 @@ import {
   b2Body_SetLinearVelocity,
   b2Body_ApplyLinearImpulseToCenter,
   b2Body_SetTransform,
-  b2Body_GetPosition,
-  b2Body_GetRotation,
   b2Body_GetMass,
-  mpx,
-  b2Rot_GetAngle,
-  b2BodyId,
   b2DestroyBody,
   b2CreateBody,
   b2DefaultShapeDef,
@@ -123,6 +119,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       restitution: PHYSICS.PLAYER.RESTITUTION,
       userData: { type: "player" },
       enableContactEvents: true,
+      filter: b2DefaultFilter(),
     };
 
     const scaleX = this.scaleX;

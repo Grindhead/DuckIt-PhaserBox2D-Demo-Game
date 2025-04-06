@@ -7,7 +7,7 @@
  */
 import * as Phaser from "phaser";
 
-import { PHYSICS, WORLD, SCENES, ASSETS } from "@constants";
+import { PHYSICS, WORLD, SCENES } from "@constants";
 import Coin from "@entities/Coin";
 import DeathSensor from "@entities/DeathSensor";
 import Player from "@entities/Player";
@@ -16,16 +16,15 @@ import {
   CreateWorld,
   b2BodyId,
   b2DestroyBody,
-  STATIC,
-  b2DefaultBodyDef,
   b2World_Step,
-  SpriteToBox,
-  pxmVec2,
   UpdateWorldSprites,
   ClearWorldSprites,
-  AddSpriteToWorld,
   b2World_GetSensorEvents,
   b2Shape_GetUserData,
+  b2World_GetContactEvents,
+  AddSpriteToWorld,
+  pxm,
+  b2DefaultFilter,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -88,52 +87,6 @@ export default class GameScene extends Phaser.Scene {
     this.mobileControls = new MobileControls(this);
   }
 
-  /**
-   * Creates a single platform segment (sprite and physics body).
-   *
-   * @param x The center x position in pixels.
-   * @param y The center y position in pixels.
-   * @param type The type of platform segment ('left', 'middle', 'right').
-   */
-  createPlatformSegment(
-    x: number,
-    y: number,
-    type: "left" | "middle" | "right"
-  ) {
-    let assetKey: string;
-    switch (type) {
-      case "left":
-        assetKey = ASSETS.PLATFORM.LEFT;
-        break;
-      case "middle":
-        assetKey = ASSETS.PLATFORM.MIDDLE;
-        break;
-      case "right":
-        assetKey = ASSETS.PLATFORM.RIGHT;
-        break;
-    }
-
-    const image = this.add.image(x, y, ASSETS.ATLAS, assetKey);
-
-    const bodyDef = {
-      ...b2DefaultBodyDef(),
-      type: STATIC,
-      position: pxmVec2(x, y),
-    };
-
-    // Use SpriteToBox to create the physics body
-    const { bodyId } = SpriteToBox(gameState.worldId, image, {
-      bodyDef,
-      density: 0, // Static bodies have 0 density
-      friction: PHYSICS.PLATFORM.FRICTION,
-      restitution: 0,
-      userData: { type: "platform" },
-    });
-
-    // Explicitly add the sprite and body to the tracking map
-    AddSpriteToWorld(gameState.worldId, image, { bodyId });
-  }
-
   update(_time: number, delta: number) {
     // Destroy bodies queued for removal
     if (this.bodiesToDestroy.length > 0) {
@@ -149,6 +102,9 @@ export default class GameScene extends Phaser.Scene {
       const timeStep = delta / 1000;
       const subStepCount = 3;
 
+      // Update sprites based on *previous* frame's physics BEFORE stepping
+      UpdateWorldSprites(gameState.worldId);
+
       b2World_Step(gameState.worldId, timeStep, subStepCount);
 
       if (this.player && this.controls) {
@@ -156,8 +112,6 @@ export default class GameScene extends Phaser.Scene {
       }
       this.mobileControls.getState();
       this.coinCounter.updateCount();
-
-      UpdateWorldSprites(gameState.worldId);
 
       // --- Process Sensor Events (Replaces Contact Events) ---
       const sensorEvents = b2World_GetSensorEvents(gameState.worldId);
@@ -172,12 +126,12 @@ export default class GameScene extends Phaser.Scene {
         const visitorUserData = b2Shape_GetUserData(visitorShapeId);
 
         // Add console log for debugging sensor events
-        console.log(
-          "Sensor Begin Event - Sensor Data:",
-          sensorUserData,
-          "Visitor Data:",
-          visitorUserData
-        );
+        // console.log(
+        //   "Sensor Begin Event - Sensor Data:",
+        //   sensorUserData,
+        //   "Visitor Data:",
+        //   visitorUserData
+        // );
 
         // Check for player-coin sensor collision
         let coinInstance: Coin | null = null;
@@ -191,9 +145,6 @@ export default class GameScene extends Phaser.Scene {
           sensorUserData?.type === "player" &&
           visitorUserData?.type === "coin"
         ) {
-          // Player might also be a sensor in some cases, handle if needed
-          // This case shouldn't happen for coin collection based on current setup
-          // but included for completeness if player shape also becomes a sensor
           coinInstance = visitorUserData.coinInstance as Coin;
         }
 
@@ -203,8 +154,38 @@ export default class GameScene extends Phaser.Scene {
           gameState.incrementCoins();
         }
 
+        // Check for player-platform collision (begin contact) - Moved to contact events
+        // if (
+        //   (sensorUserData?.type === "player" && visitorUserData?.type === "platform") ||
+        //   (sensorUserData?.type === "platform" && visitorUserData?.type === "player")
+        // ) {
+        //   console.log("Player started touching platform");
+        // }
+
         // TODO: Add checks for other sensor interactions if needed
       }
+      // --- End Sensor Events ---
+
+      // --- Process Contact Events ---
+      const contactEvents = b2World_GetContactEvents(gameState.worldId);
+
+      for (const event of contactEvents.beginEvents) {
+        // Note: Contact events provide shape IDs directly
+        const shapeIdA = event.shapeIdA;
+        const shapeIdB = event.shapeIdB;
+
+        const userDataA = b2Shape_GetUserData(shapeIdA);
+        const userDataB = b2Shape_GetUserData(shapeIdB);
+
+        // Check for player-platform collision (begin contact)
+        if (
+          (userDataA?.type === "player" && userDataB?.type === "platform") ||
+          (userDataA?.type === "platform" && userDataB?.type === "player")
+        ) {
+          console.log("Player started touching platform (CONTACT EVENT)");
+        }
+      }
+      // --- End Contact Events ---
 
       // Process End Sensor Events (Optional: if logic is needed when player leaves coin area)
       // for (const event of sensorEvents.endEvents) {
