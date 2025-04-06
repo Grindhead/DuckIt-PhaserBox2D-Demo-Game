@@ -54,7 +54,7 @@ export default class MobileControls {
       )
       .setScrollFactor(0)
       .setScale(buttonScale)
-      .setInteractive()
+      .setInteractive({ cursor: "pointer" })
       .setAngle(180); // Assuming angle controls orientation
 
     // Right button (to the right of left button)
@@ -67,7 +67,7 @@ export default class MobileControls {
       )
       .setScrollFactor(0)
       .setScale(buttonScale)
-      .setInteractive();
+      .setInteractive({ cursor: "pointer" });
 
     // Jump button (bottom-right)
     this.jumpButton = this.scene.add
@@ -79,7 +79,7 @@ export default class MobileControls {
       )
       .setScrollFactor(0)
       .setScale(buttonScale)
-      .setInteractive()
+      .setInteractive({ cursor: "pointer" })
       .setAngle(-90); // Use angle for jump button orientation
 
     this.setupEventHandlers();

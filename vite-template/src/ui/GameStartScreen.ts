@@ -30,7 +30,7 @@ export default class GameStartScreen {
         ASSETS.UI.START
       )
       .setScrollFactor(0)
-      .setInteractive()
+      .setInteractive({ cursor: "pointer" })
       .setVisible(false);
 
     if (this.overlay) {

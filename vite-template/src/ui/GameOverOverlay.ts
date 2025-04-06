@@ -27,7 +27,7 @@ export default class GameOverOverlay {
           ASSETS.UI.START
         )
         .setScrollFactor(0)
-        .setInteractive()
+        .setInteractive({ cursor: "pointer" })
         .setVisible(false);
 
       this.overlay.on("pointerdown", () => {
