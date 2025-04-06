@@ -19,11 +19,11 @@ const config: GameConfig = {
   parent: "app",
   width: RENDERER.WIDTH,
   height: RENDERER.HEIGHT,
-  backgroundColor: "#2d2d2d",
+  transparent: true,
   // Remove the physics property as we are using external Box2D
   scene: [BootScene, PreloaderScene, GameScene],
   scale: {
-    mode: Phaser.Scale.RESIZE,
+    mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
 };

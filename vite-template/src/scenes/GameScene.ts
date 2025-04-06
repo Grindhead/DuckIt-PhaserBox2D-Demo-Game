@@ -8,23 +8,17 @@
 import * as Phaser from "phaser";
 
 import { PHYSICS, WORLD, SCENES, ASSETS } from "@constants";
-
 import DeathSensor from "@entities/DeathSensor";
 import Player from "@entities/Player";
 import { gameState, GameStates } from "@gameState";
-
 import {
-  CreateBoxPolygon,
   CreateWorld,
   STATIC,
-  DYNAMIC,
   b2DefaultBodyDef,
-  b2Vec2,
-  pxmVec2,
   b2World_Step,
   SpriteToBox,
+  pxmVec2,
 } from "@PhaserBox2D";
-
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
 import GameStartScreen from "@ui/GameStartScreen";
@@ -123,7 +117,11 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number) {
+    // Add log to see if update is running and check state (using getters)
+    // console.log(`GameScene update - isPlaying: ${gameState.isPlaying}`);
     if (gameState.isPlaying) {
+      // Add log inside the isPlaying check
+      // console.log('Physics and player update running...');
       const timeStep = delta / 1000;
       const subStepCount = 3;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -145,8 +143,16 @@ export default class GameScene extends Phaser.Scene {
   }
 
   startGame() {
+    // Add log to check if startGame is called and the state (using getters)
+    console.log(
+      `GameScene.startGame() called. isReady: ${gameState.isReady}, isPlaying: ${gameState.isPlaying}, isGameOver: ${gameState.isGameOver}`
+    );
     if (gameState.isReady) {
-      gameState.startGame();
+      const success = gameState.startGame();
+      // Add log to check transition result
+      console.log(
+        `gameState.startGame() transition success: ${success}, newState isPlaying: ${gameState.isPlaying}`
+      );
     }
   }
 
