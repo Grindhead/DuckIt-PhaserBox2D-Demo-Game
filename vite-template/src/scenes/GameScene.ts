@@ -25,6 +25,8 @@ import {
   AddSpriteToWorld,
   pxm,
   b2DefaultFilter,
+  b2Shape_IsSensor,
+  b2Body_GetLinearVelocity,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -75,6 +77,9 @@ export default class GameScene extends Phaser.Scene {
         this.bodiesToDestroy.push(bodyId);
       }
     });
+
+    // Make sure to manually check for grounded state every frame
+    this.events.on("update", this.checkGroundedState, this);
   }
 
   createUI() {
@@ -88,54 +93,50 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number) {
-    // Destroy bodies queued for removal
-    if (this.bodiesToDestroy.length > 0) {
-      for (const bodyId of this.bodiesToDestroy) {
-        if (bodyId) {
-          b2DestroyBody(bodyId);
-        }
-      }
-      this.bodiesToDestroy.length = 0;
-    }
+    // --- REMOVE Body Destruction from here ---
+    // if (this.bodiesToDestroy.length > 0) { ... }
 
     if (gameState.isPlaying) {
+      const { worldId } = gameState; // Destructure worldId
+      if (!worldId) return; // Guard clause if worldId is null
+
       const timeStep = delta / 1000;
-      const subStepCount = 3;
+      const subStepCount = 3; // Example sub-step count
 
-      // Update sprites based on *previous* frame's physics BEFORE stepping
-      UpdateWorldSprites(gameState.worldId);
-
-      b2World_Step(gameState.worldId, timeStep, subStepCount);
-
-      if (this.player && this.controls) {
-        this.player.update(this.controls);
+      // ADDED: Log player position
+      if (this.player && this.player.bodyId) {
+        const playerVel = b2Body_GetLinearVelocity(this.player.bodyId);
+        console.log(
+          `Player Y Position: ${this.player.y}, Y Velocity: ${playerVel.y}`
+        );
       }
-      this.mobileControls.getState();
-      this.coinCounter.updateCount();
 
-      // --- Process Sensor Events (Replaces Contact Events) ---
-      const sensorEvents = b2World_GetSensorEvents(gameState.worldId);
+      // 1. Step the physics world
+      b2World_Step(worldId, timeStep, subStepCount);
 
-      // Process Begin Sensor Events
+      // 2. Process Events (Sensors & Contacts)
+      // --- Process Sensor Events ---
+      const sensorEvents = b2World_GetSensorEvents(worldId);
+
+      // ADDED: Log specific player info each frame for debugging
+      if (this.player && this.player.bodyId) {
+        const playerVel = b2Body_GetLinearVelocity(this.player.bodyId);
+        const onGround = this.player.playerState.isGrounded;
+        console.log(
+          `Player position: x=${this.player.x.toFixed(
+            1
+          )}, y=${this.player.y.toFixed(1)}, ` +
+            `velocityY=${playerVel.y.toFixed(2)}, onGround=${onGround}`
+        );
+      }
+
       for (const event of sensorEvents.beginEvents) {
         const sensorShapeId = event.sensorShapeId;
         const visitorShapeId = event.visitorShapeId;
-
-        // Get user data from the shapes involved
         const sensorUserData = b2Shape_GetUserData(sensorShapeId);
         const visitorUserData = b2Shape_GetUserData(visitorShapeId);
 
-        // Add console log for debugging sensor events
-        // console.log(
-        //   "Sensor Begin Event - Sensor Data:",
-        //   sensorUserData,
-        //   "Visitor Data:",
-        //   visitorUserData
-        // );
-
-        // Check for player-coin sensor collision
         let coinInstance: Coin | null = null;
-
         if (
           sensorUserData?.type === "coin" &&
           visitorUserData?.type === "player"
@@ -148,54 +149,168 @@ export default class GameScene extends Phaser.Scene {
           coinInstance = visitorUserData.coinInstance as Coin;
         }
 
-        // If it's a player-coin collision, collect the coin
         if (coinInstance && !coinInstance.isCollected) {
           coinInstance.collect();
           gameState.incrementCoins();
+          // Queue destruction via event emitter (already in place)
         }
-
-        // Check for player-platform collision (begin contact) - Moved to contact events
-        // if (
-        //   (sensorUserData?.type === "player" && visitorUserData?.type === "platform") ||
-        //   (sensorUserData?.type === "platform" && visitorUserData?.type === "player")
-        // ) {
-        //   console.log("Player started touching platform");
-        // }
-
-        // TODO: Add checks for other sensor interactions if needed
       }
-      // --- End Sensor Events ---
+      // TODO: Add end sensor logic if needed
 
       // --- Process Contact Events ---
-      const contactEvents = b2World_GetContactEvents(gameState.worldId);
+      const contactEvents = b2World_GetContactEvents(worldId);
+
+      // Log contact events count for debugging
+      if (
+        contactEvents.beginEvents.length > 0 ||
+        contactEvents.endEvents.length > 0
+      ) {
+        console.log(
+          `Contact Event Counts - Begin: ${contactEvents.beginEvents.length}, End: ${contactEvents.endEvents.length}`
+        );
+      }
+
+      // Process all types of contact events
+      // Note: PhaserBox2D might not support preSolve/postSolve in the same
+      // way as Box2D directly, but we can look for hits
+
+      // Check for hit events (continuous contacts)
+      if (contactEvents.hitEvents && contactEvents.hitEvents.length > 0) {
+        for (const event of contactEvents.hitEvents) {
+          const shapeIdA = event.shapeIdA;
+          const shapeIdB = event.shapeIdB;
+          const userDataA = b2Shape_GetUserData(shapeIdA);
+          const userDataB = b2Shape_GetUserData(shapeIdB);
+
+          // Handle player-platform hit contacts
+          if (
+            (userDataA?.type === "player" && userDataB?.type === "platform") ||
+            (userDataB?.type === "player" && userDataA?.type === "platform")
+          ) {
+            console.log("HIT CONTACT: Player and Platform");
+            this.player.setGrounded(true);
+          }
+        }
+      }
 
       for (const event of contactEvents.beginEvents) {
-        // Note: Contact events provide shape IDs directly
         const shapeIdA = event.shapeIdA;
         const shapeIdB = event.shapeIdB;
+
+        // Ignore contacts if either shape is a sensor for physical collision checks
+        const isSensorA = b2Shape_IsSensor(shapeIdA);
+        const isSensorB = b2Shape_IsSensor(shapeIdB);
+
+        console.log(
+          `CONTACT BEGIN - SHAPE IDs: A=${JSON.stringify(
+            shapeIdA
+          )} (Sensor: ${isSensorA}), B=${JSON.stringify(
+            shapeIdB
+          )} (Sensor: ${isSensorB})`
+        );
 
         const userDataA = b2Shape_GetUserData(shapeIdA);
         const userDataB = b2Shape_GetUserData(shapeIdB);
 
-        // Check for player-platform collision (begin contact)
+        console.log(
+          `CONTACT BEGIN - USERDATA: A=${JSON.stringify(
+            userDataA
+          )}, B=${JSON.stringify(userDataB)}`
+        );
+
+        // --- Player-Platform Physical Collision Check (Ignore Sensors) ---
+        if (!isSensorA && !isSensorB) {
+          if (userDataA?.type === "player" && userDataB?.type === "platform") {
+            console.log("PHYSICAL CONTACT: Player (A) and Platform (B)");
+            // Set player as grounded when on a platform
+            this.player.setGrounded(true);
+          } else if (
+            userDataB?.type === "player" &&
+            userDataA?.type === "platform"
+          ) {
+            console.log("PHYSICAL CONTACT: Platform (A) and Player (B)");
+            // Set player as grounded when on a platform
+            this.player.setGrounded(true);
+          }
+        }
+
+        // --- Player-DeathSensor Collision Check (Use Sensors) ---
+        if (
+          (userDataA?.type === "player" &&
+            userDataB?.type === "deathSensor" &&
+            isSensorB) ||
+          (userDataB?.type === "player" &&
+            userDataA?.type === "deathSensor" &&
+            isSensorA)
+        ) {
+          console.log("SENSOR CONTACT: Player and DeathSensor");
+          this.killPlayer(); // Call killPlayer method
+        }
+
+        // Add other collision checks here (e.g., player-enemy)
+      }
+
+      // Also check end contact events to handle leaving a platform
+      for (const event of contactEvents.endEvents) {
+        const shapeIdA = event.shapeIdA;
+        const shapeIdB = event.shapeIdB;
+
+        // We only care about non-sensor contacts here
+        const isSensorA = b2Shape_IsSensor(shapeIdA);
+        const isSensorB = b2Shape_IsSensor(shapeIdB);
+
+        if (isSensorA || isSensorB) continue;
+
+        const userDataA = b2Shape_GetUserData(shapeIdA);
+        const userDataB = b2Shape_GetUserData(shapeIdB);
+
         if (
           (userDataA?.type === "player" && userDataB?.type === "platform") ||
-          (userDataA?.type === "platform" && userDataB?.type === "player")
+          (userDataB?.type === "player" && userDataA?.type === "platform")
         ) {
-          console.log("Player started touching platform (CONTACT EVENT)");
+          console.log("END CONTACT: Player and Platform");
+          // Player has left the platform, set grounded to false
+          this.player.setGrounded(false);
         }
       }
-      // --- End Contact Events ---
 
-      // Process End Sensor Events (Optional: if logic is needed when player leaves coin area)
-      // for (const event of sensorEvents.endEvents) {
-      //   const sensorShapeId = event.sensorShapeId;
-      //   const visitorShapeId = event.visitorShapeId;
-      //   const sensorUserData = b2Shape_GetUserData(sensorShapeId);
-      //   const visitorUserData = b2Shape_GetUserData(visitorShapeId);
-      //   // ... logic for end overlap ...
-      // }
-      // -------------------------------------------------------
+      // 3. Update Player/Game Logic
+      if (this.player && this.controls) {
+        this.player.update(this.controls);
+      }
+      this.mobileControls.getState();
+      this.coinCounter.updateCount();
+
+      // 4. Update Sprites to match new physics state
+      UpdateWorldSprites(worldId);
+
+      // 5. Destroy bodies queued for removal (Moved Here)
+      if (this.bodiesToDestroy.length > 0) {
+        for (const bodyId of this.bodiesToDestroy) {
+          // Check for null before destroying
+          if (bodyId) {
+            try {
+              // We might need b2World_IsValid if available and reliable
+              b2DestroyBody(bodyId);
+            } catch (e) {
+              // Use JSON.stringify for potentially complex bodyId object
+              console.warn(
+                `Error destroying body ${JSON.stringify(bodyId)}:`,
+                e
+              );
+            }
+          }
+        }
+        this.bodiesToDestroy.length = 0; // Clear the array
+      }
+    } // End if (gameState.isPlaying)
+
+    // Handle potential restart input outside the isPlaying block
+    if (gameState.isGameOver) {
+      // Check for restart condition (e.g., click/tap)
+      if (this.input.activePointer.isDown) {
+        this.restart();
+      }
     }
   }
 
@@ -237,6 +352,41 @@ export default class GameScene extends Phaser.Scene {
 
       gameState.transition(GameStates.READY);
       this.startGame();
+    }
+  }
+
+  // Manual checking for ground collision when Box2D contact events aren't firing properly
+  checkGroundedState() {
+    if (!this.player || !this.player.bodyId || !gameState.isPlaying) return;
+
+    // Get player velocity - if moving downward and not already grounded, check below
+    const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
+
+    // Check if we've landed on a platform based on position
+    // We don't have full raycast, but we can check for collision at a small offset
+    const playerY = this.player.y;
+    const playerHeight = this.player.height * this.player.scaleY;
+    const groundCheckY = playerY + playerHeight / 2 + 2; // Just below player
+
+    // Find platforms at or just below the player
+    const possiblePlatforms = this.children.list.filter((child) => {
+      // Skip non-game objects
+      if (!(child instanceof Phaser.GameObjects.GameObject)) return false;
+
+      // Check if it's a platform (we'd need to tag platforms or have a way to identify them)
+      // For now, just look for rectangle game objects that might be platforms
+      if (child instanceof Phaser.GameObjects.Rectangle) {
+        const platformTop = child.y - child.height / 2;
+        // Check if player bottom is at or just above platform top
+        const bottomToTopDist = Math.abs(groundCheckY - platformTop);
+        return bottomToTopDist <= 5; // Tolerance of 5 pixels
+      }
+      return false;
+    });
+
+    if (possiblePlatforms.length > 0 && velocity.y >= 0) {
+      console.log("Manual ground detection found platform below player");
+      this.player.setGrounded(true);
     }
   }
 }

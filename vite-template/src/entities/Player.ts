@@ -38,6 +38,7 @@ interface IB2Vec2 {
 
 interface PlayerState {
   isDead: boolean;
+  isGrounded: boolean;
 }
 
 export default class Player extends Phaser.GameObjects.Sprite {
@@ -50,9 +51,17 @@ export default class Player extends Phaser.GameObjects.Sprite {
   jumpForce: number;
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 100, 450, ASSETS.PLAYER.IDLE.KEY);
+    super(
+      scene,
+      PHYSICS.PLAYER.START_POSITION.x,
+      PHYSICS.PLAYER.START_POSITION.y,
+      ASSETS.PLAYER.IDLE.KEY
+    );
     this.scene = scene;
-    this.playerState = { isDead: false };
+    this.playerState = {
+      isDead: false,
+      isGrounded: false,
+    };
     this.jumpForce = PHYSICS.PLAYER.JUMP_FORCE;
     this.scene.add.existing(this);
     this.initialize();
@@ -90,7 +99,10 @@ export default class Player extends Phaser.GameObjects.Sprite {
     b2Body_SetTransform(this.bodyId, pos, new b2Rot(1, 0));
     b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 
-    this.playerState = { isDead: false };
+    this.playerState = {
+      isDead: false,
+      isGrounded: false,
+    };
     this.setActive(true);
     this.setVisible(true);
     this.play(ASSETS.PLAYER.IDLE.KEY);
@@ -102,6 +114,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       type: DYNAMIC,
       position: pxmVec2(this.x, this.y),
       fixedRotation: true,
+      enableContactListener: true,
     };
 
     const bodyId = b2CreateBody(gameState.worldId, bodyDef);
@@ -120,20 +133,28 @@ export default class Player extends Phaser.GameObjects.Sprite {
       userData: { type: "player" },
       enableContactEvents: true,
       filter: b2DefaultFilter(),
+      isSensor: false,
     };
 
     const scaleX = this.scaleX;
     const scaleY = this.scaleY;
-    const box = b2MakeBox(
-      (this.width * scaleX) / 2 / PHYSICS.SCALE,
-      (this.height * scaleY) / 2 / PHYSICS.SCALE
-    );
+    const boxWidth = (this.width * scaleX) / 2 / PHYSICS.SCALE;
+    const boxHeight = (this.height * scaleY) / 2 / PHYSICS.SCALE;
+    console.log(`Player box size: ${boxWidth}x${boxHeight} (Box2D units)`);
+
+    const box = b2MakeBox(boxWidth, boxHeight);
 
     b2CreatePolygonShape(bodyId, shapeDef, box);
 
-    const correctInitialPos = pxmVec2(this.x, this.y);
+    const initialPos = pxmVec2(this.x, this.y);
+    console.log(
+      `Player Initial Position (Box2D Coords): x=${initialPos.x.toFixed(
+        3
+      )}, y=${initialPos.y.toFixed(3)}`
+    );
+
     const initialRot = new b2Rot(1, 0);
-    b2Body_SetTransform(this.bodyId, correctInitialPos, initialRot);
+    b2Body_SetTransform(this.bodyId, initialPos, initialRot);
     b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 
     const initialMass = b2Body_GetMass(this.bodyId);
@@ -155,6 +176,16 @@ export default class Player extends Phaser.GameObjects.Sprite {
     const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
     const bodyMass = b2Body_GetMass(this.bodyId);
     let targetVelX = 0;
+
+    // Hack to help with platform detection issues:
+    // If we're moving downward and close to the normal platform height,
+    // sample to see if we should be considered on a platform
+    if (currentVelocity.y > 0 && !this.playerState.isGrounded) {
+      // Convert to Box2D coordinates and check for platforms below
+      const posBox2D = pxmVec2(this.x, this.y);
+      // We don't have direct access to world query methods here, but this
+      // check in GameScene should help with detecting platforms
+    }
 
     if (controls.left?.isDown) {
       targetVelX = -PHYSICS.PLAYER.SPEED / PHYSICS.SCALE;
@@ -180,8 +211,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
     }
 
     const currentAnimKey = this.anims.currentAnim?.key;
-    const canJump =
-      Math.abs(currentVelocity.y) < PHYSICS.PLAYER.JUMP_THRESHOLD * 0.1;
+    const canJump = this.playerState.isGrounded;
 
     if (
       controls.up?.isDown &&
@@ -192,6 +222,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       const impulseMagnitude = this.jumpForce / PHYSICS.SCALE;
       const impulseVec = new b2Vec2(0, impulseMagnitude);
       b2Body_ApplyLinearImpulseToCenter(this.bodyId, impulseVec, true);
+      this.playerState.isGrounded = false;
 
       this.play(ASSETS.PLAYER.JUMP.KEY);
       this.once(
@@ -260,5 +291,9 @@ export default class Player extends Phaser.GameObjects.Sprite {
         this.setVisible(false);
       });
     }
+  }
+
+  setGrounded(isGrounded: boolean) {
+    this.playerState.isGrounded = isGrounded;
   }
 }

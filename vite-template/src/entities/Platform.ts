@@ -14,6 +14,7 @@ import {
   pxmVec2,
   SpriteToBox,
   pxm,
+  b2Shape_GetUserData,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
 
@@ -54,8 +55,22 @@ export default class Platform {
 
     // Create a temporary, invisible rectangle at the center for SpriteToBox
     // Its dimensions don't affect the physics body due to explicit boxSize
-    const tempRect = this.scene.add.rectangle(centerX, centerY, 1, 1);
+    const tempRect = this.scene.add.rectangle(
+      centerX,
+      centerY,
+      width,
+      tileHeight
+    );
     tempRect.setVisible(false); // Make it invisible
+
+    // Log platform dimensions
+    console.log(
+      `Platform Initial Position (Box2D Coords): x=${pxm(centerX).toFixed(
+        3
+      )}, y=${pxm(centerY).toFixed(3)}, width=${hx.toFixed(
+        3
+      )}, height=${hy.toFixed(3)}`
+    );
 
     // Define the shape explicitly to ensure it's not a sensor
     const shapeDef = {
@@ -70,12 +85,24 @@ export default class Platform {
     };
 
     // Create the single physics body using the temporary rectangle
-    // Use SpriteToBox again, passing explicit shapeDef
-    SpriteToBox(gameState.worldId, tempRect, {
+    const bodyResult = SpriteToBox(gameState.worldId, tempRect, {
       bodyDef,
       boxSize: { hx, hy },
       shapeDef: shapeDef,
     });
+
+    // Log created shape details
+    if (bodyResult?.shapeId) {
+      console.log(
+        `Platform Shape Created: ID=${JSON.stringify(
+          bodyResult.shapeId
+        )}, Set UserData=${JSON.stringify(
+          shapeDef.userData
+        )}, Retrieved UserData=${JSON.stringify(
+          b2Shape_GetUserData(bodyResult.shapeId)
+        )}`
+      );
+    }
 
     // --- Visual Tiling ---
     const tileWidth = this.scene.textures.getFrame(

@@ -36,7 +36,7 @@ export const PHYSICS = {
     /** Surface friction coefficient */
     FRICTION: 1.0,
     /** Bounce coefficient (0 for no bounce) */
-    RESTITUTION: 0.2,
+    RESTITUTION: 0,
     /** Air resistance factor */
     LINEAR_DAMPING: 0.1,
     /** Initial spawn position */
@@ -44,16 +44,16 @@ export const PHYSICS = {
       /** X coordinate in pixels */
       x: 100,
       /** Y coordinate in pixels */
-      y: 100,
+      y: 200,
     },
-    JUMP_THRESHOLD: 0.1,
+    JUMP_THRESHOLD: 0.5,
     MOVE_THRESHOLD: 10,
   },
 
   /** Platform physics properties */
   PLATFORM: {
     /** Surface friction coefficient */
-    FRICTION: 0.5,
+    FRICTION: 1.0,
   },
 
   /** Death sensor properties */
