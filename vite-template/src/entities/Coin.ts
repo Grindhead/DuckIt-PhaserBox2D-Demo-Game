@@ -45,6 +45,7 @@ export default class Coin extends Phaser.GameObjects.Sprite {
       restitution: 0,
       isSensor: true, // Explicitly mark as sensor
       userData: { type: "coin", coinInstance: this }, // Add reference to this instance
+      enableContactEvents: true, // Added
     });
 
     this.bodyId = result.bodyId;

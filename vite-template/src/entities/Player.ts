@@ -109,6 +109,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       friction: PHYSICS.PLAYER.FRICTION,
       restitution: PHYSICS.PLAYER.RESTITUTION,
       userData: { type: "player" },
+      enableContactEvents: true,
     });
 
     this.bodyId = result.bodyId;

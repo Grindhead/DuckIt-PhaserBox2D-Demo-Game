@@ -8,6 +8,7 @@
 import * as Phaser from "phaser";
 
 import { PHYSICS, WORLD, SCENES, ASSETS } from "@constants";
+import Coin from "@entities/Coin";
 import DeathSensor from "@entities/DeathSensor";
 import Player from "@entities/Player";
 import { gameState, GameStates } from "@gameState";
@@ -23,6 +24,9 @@ import {
   UpdateWorldSprites,
   ClearWorldSprites,
   AddSpriteToWorld,
+  b2World_GetContactEvents,
+  b2Body_GetUserData,
+  b2Shape_GetBody,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -162,13 +166,45 @@ export default class GameScene extends Phaser.Scene {
       // Update the coin counter display
       this.coinCounter.updateCount();
 
-      // Restore call to UpdateWorldSprites
-      console.log(
-        `Calling UpdateWorldSprites with worldId: ${JSON.stringify(
-          gameState.worldId
-        )}`
-      );
       UpdateWorldSprites(gameState.worldId);
+
+      // --- Process Contact Events ---
+      const events = b2World_GetContactEvents(gameState.worldId);
+
+      // Process Begin Contact Events
+      for (const event of events.beginEvents) {
+        const shapeIdA = event.shapeIdA;
+        const shapeIdB = event.shapeIdB;
+
+        // Get the bodies associated with the shapes
+        const bodyIdA = b2Shape_GetBody(shapeIdA);
+        const bodyIdB = b2Shape_GetBody(shapeIdB);
+
+        // Get user data from the bodies
+        const userDataA = b2Body_GetUserData(bodyIdA);
+        const userDataB = b2Body_GetUserData(bodyIdB);
+
+        // Check for player-coin collision
+        let coinInstance: Coin | null = null;
+
+        if (userDataA?.type === "player" && userDataB?.type === "coin") {
+          coinInstance = userDataB.coinInstance as Coin;
+        } else if (userDataB?.type === "player" && userDataA?.type === "coin") {
+          coinInstance = userDataA.coinInstance as Coin;
+        }
+
+        // If it's a player-coin collision, collect the coin
+        if (coinInstance && !coinInstance.isCollected) {
+          coinInstance.collect();
+        }
+
+        // TODO: Add checks for player-deathSensor collisions
+        // TODO: Add checks for player-enemy collisions
+      }
+
+      // TODO: Process endEvents, preSolveEvents, postSolveEvents if needed
+      // ... (existing TODO comments)
+      // ----------------------------------
     }
   }
 
