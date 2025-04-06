@@ -22,29 +22,24 @@ export const PHYSICS = {
     /** Horizontal gravity (0 for no horizontal gravity) */
     x: 0,
     /** Vertical gravity (positive for downward force) */
-    y: 300,
+    y: 300, // Standard gravity in m/s²
   },
 
   /** Player physics properties */
   PLAYER: {
     /** Horizontal movement speed in pixels/second */
-    SPEED: 100,
-    /** Vertical jump force (negative for upward force) */
-    JUMP_FORCE: -300,
+    SPEED: 300,
+    /** Vertical jump force (positive for upward force) */
+    JUMP_FORCE: 5,
     /** Mass density for physics calculations */
     DENSITY: 1.0,
     /** Surface friction coefficient */
-    FRICTION: 1.0,
+    FRICTION: 0.5,
     /** Bounce coefficient (0 for no bounce) */
-    RESTITUTION: 0,
-    /** Initial spawn position */
-    START_POSITION: {
-      /** X coordinate in pixels */
-      x: 100,
-      /** Y coordinate in pixels */
-      y: 200,
-    },
+    RESTITUTION: 0.1,
+    /** Vertical velocity threshold for jump/fall detection */
     JUMP_THRESHOLD: 0.5,
+    /** Horizontal velocity threshold for movement detection */
     MOVE_THRESHOLD: 10,
   },
 

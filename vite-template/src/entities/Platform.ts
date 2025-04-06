@@ -50,8 +50,18 @@ export default class Platform {
     const bodyDef = {
       ...b2DefaultBodyDef(),
       type: STATIC,
-      position: pxmVec2(centerX, centerY),
+      position: pxmVec2(centerX, -centerY),
     };
+
+    console.log("Platform physics body:", {
+      centerX,
+      centerY,
+      width,
+      height: tileHeight,
+      position: { x: centerX, y: centerY },
+      box2dPosition: `${pxm(centerX)}, ${pxm(-centerY)}`,
+      negatedY: -centerY,
+    });
 
     // Create a temporary, invisible rectangle at the center for SpriteToBox
     // Its dimensions don't affect the physics body due to explicit boxSize

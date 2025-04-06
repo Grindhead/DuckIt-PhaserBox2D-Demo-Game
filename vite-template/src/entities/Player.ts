@@ -49,27 +49,77 @@ export default class Player extends Phaser.GameObjects.Sprite {
   bodyId: any | null = null;
   playerState: PlayerState;
   jumpForce: number;
+  startPosition: { x: number; y: number };
 
-  constructor(scene: Phaser.Scene) {
-    super(
-      scene,
-      PHYSICS.PLAYER.START_POSITION.x,
-      PHYSICS.PLAYER.START_POSITION.y,
-      ASSETS.PLAYER.IDLE.KEY
-    );
+  constructor(scene: Phaser.Scene, x: number, y: number) {
+    super(scene, x, y, ASSETS.ATLAS, ASSETS.PLAYER.IDLE.FRAME);
     this.scene = scene;
     this.playerState = {
       isDead: false,
       isGrounded: false,
     };
     this.jumpForce = PHYSICS.PLAYER.JUMP_FORCE;
-    this.scene.add.existing(this);
+    this.startPosition = { x, y }; // Store initial position for reset
+
+    // Set up sprite properties
+    this.setOrigin(0.5, 0.5);
+    this.setVisible(true);
+    this.setDepth(1); // Ensure player renders above platforms
+
+    // Add to scene's display list (MUST be done before physics setup)
+    scene.add.existing(this);
+
+    console.log("Player constructor:", {
+      x: x,
+      y: y,
+      spriteX: this.x,
+      spriteY: this.y,
+      inDisplayList: this.displayList !== null,
+      visible: this.visible,
+      active: this.active,
+      texture: this.texture.key,
+      frame: this.frame.name,
+      atlas: ASSETS.ATLAS,
+      idleFrame: ASSETS.PLAYER.IDLE.FRAME,
+    });
+
     this.initialize();
   }
 
   initialize() {
+    // Ensure sprite is set up before physics
+    if (!this.displayList) {
+      console.warn("Player not in display list, re-adding...");
+      this.scene.add.existing(this);
+    }
+
     this.initPhysics();
-    this.play(ASSETS.PLAYER.IDLE.KEY);
+
+    // Verify animation exists before playing
+    if (this.scene.anims.exists(ASSETS.PLAYER.IDLE.KEY)) {
+      this.play(ASSETS.PLAYER.IDLE.KEY);
+    } else {
+      console.error(`Animation ${ASSETS.PLAYER.IDLE.KEY} not found!`);
+      // Set static frame as fallback
+      this.setFrame(ASSETS.PLAYER.IDLE.FRAME);
+    }
+
+    console.log("Player initialization state:", {
+      position: { x: this.x, y: this.y },
+      visible: this.visible,
+      active: this.active,
+      texture: {
+        key: this.texture.key,
+        frame: this.frame.name,
+        frameTotal: this.texture.frameTotal,
+      },
+      inDisplayList: this.displayList !== null,
+      animations: {
+        currentKey: this.anims.currentAnim?.key,
+        isPlaying: this.anims.isPlaying,
+        hasAnimation: this.scene.anims.exists(ASSETS.PLAYER.IDLE.KEY),
+      },
+    });
   }
 
   destroyPhysics() {
@@ -93,10 +143,10 @@ export default class Player extends Phaser.GameObjects.Sprite {
       return;
     }
     const pos = pxmVec2(
-      PHYSICS.PLAYER.START_POSITION.x,
-      PHYSICS.PLAYER.START_POSITION.y
+      this.startPosition.x,
+      -this.startPosition.y // Negate Y for Box2D
     );
-    b2Body_SetTransform(this.bodyId, pos, new b2Rot(1, 0));
+    b2Body_SetTransform(this.bodyId, pos, new b2Rot(0, 0));
     b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 
     this.playerState = {
@@ -109,12 +159,22 @@ export default class Player extends Phaser.GameObjects.Sprite {
   }
 
   initPhysics() {
+    // Log current position before creating physics body
+    console.log("Player.initPhysics: Current position before physics", {
+      x: this.x,
+      y: this.y,
+      startPosition: this.startPosition,
+    });
+
     const bodyDef = {
       ...b2DefaultBodyDef(),
       type: DYNAMIC,
-      position: pxmVec2(this.x, this.y),
+      // Box2D coordinate system has Y pointing up, so we need to negate Y
+      position: pxmVec2(this.x, -this.y),
       fixedRotation: true,
       enableContactListener: true,
+      allowSleep: false, // Prevent the body from sleeping
+      bullet: true, // Enable continuous collision detection
     };
 
     const bodyId = b2CreateBody(gameState.worldId, bodyDef);
@@ -130,7 +190,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       density: PHYSICS.PLAYER.DENSITY,
       friction: PHYSICS.PLAYER.FRICTION,
       restitution: PHYSICS.PLAYER.RESTITUTION,
-      userData: { type: "player" },
+      userData: { type: "player", sprite: this },
       enableContactEvents: true,
       filter: b2DefaultFilter(),
       isSensor: false,
@@ -138,36 +198,39 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     const scaleX = this.scaleX;
     const scaleY = this.scaleY;
-    const boxWidth = (this.width * scaleX) / 2 / PHYSICS.SCALE;
-    const boxHeight = (this.height * scaleY) / 2 / PHYSICS.SCALE;
+    // Adjust collision box to be slightly smaller than sprite
+    const boxWidth = (this.width * scaleX * 0.8) / PHYSICS.SCALE;
+    const boxHeight = (this.height * scaleY * 0.8) / PHYSICS.SCALE;
     console.log(`Player box size: ${boxWidth}x${boxHeight} (Box2D units)`);
+    console.log(`Player sprite size: ${this.width}x${this.height} (pixels)`);
 
     const box = b2MakeBox(boxWidth, boxHeight);
-
     b2CreatePolygonShape(bodyId, shapeDef, box);
 
-    const initialPos = pxmVec2(this.x, this.y);
+    // Initial position with inverted Y for Box2D
+    const initialPos = pxmVec2(this.x, -this.y);
     console.log(
       `Player Initial Position (Box2D Coords): x=${initialPos.x.toFixed(
         3
       )}, y=${initialPos.y.toFixed(3)}`
     );
+    console.log(`Player Initial Position (Pixels): x=${this.x}, y=${this.y}`);
 
-    const initialRot = new b2Rot(1, 0);
+    const initialRot = new b2Rot(0, 0);
     b2Body_SetTransform(this.bodyId, initialPos, initialRot);
     b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 
     const initialMass = b2Body_GetMass(this.bodyId);
     console.log(`Player Initial Mass: ${initialMass}`);
 
-    console.log(
-      `Player.initPhysics: Adding sprite to world with worldId: ${JSON.stringify(
-        gameState.worldId
-      )} and bodyId: ${JSON.stringify(this.bodyId)}`
-    );
+    // Add sprite to physics world with a properly formatted object
     AddSpriteToWorld(gameState.worldId, this, { bodyId: this.bodyId });
 
-    console.log("Player initialized");
+    console.log("Player initialized", {
+      position: { x: this.x, y: this.y },
+      visible: this.visible,
+      inPhysicsWorld: this.bodyId != null,
+    });
   }
 
   update(controls: Phaser.Types.Input.Keyboard.CursorKeys) {
@@ -179,8 +242,10 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     if (controls.left?.isDown) {
       targetVelX = -PHYSICS.PLAYER.SPEED / PHYSICS.SCALE;
+      this.setFlipX(true);
     } else if (controls.right?.isDown) {
       targetVelX = PHYSICS.PLAYER.SPEED / PHYSICS.SCALE;
+      this.setFlipX(false);
     }
 
     const deltaVx = targetVelX - currentVelocity.x;
@@ -201,7 +266,8 @@ export default class Player extends Phaser.GameObjects.Sprite {
       currentAnimKey !== ASSETS.PLAYER.JUMP.KEY &&
       currentAnimKey !== ASSETS.PLAYER.FALL.KEY
     ) {
-      const impulseMagnitude = this.jumpForce / PHYSICS.SCALE;
+      // Apply upward force for jump (negative Y in Phaser)
+      const impulseMagnitude = (this.jumpForce * bodyMass) / PHYSICS.SCALE;
       const impulseVec = new b2Vec2(0, -impulseMagnitude);
       b2Body_ApplyLinearImpulseToCenter(this.bodyId, impulseVec, true);
       this.playerState.isGrounded = false;
@@ -218,9 +284,8 @@ export default class Player extends Phaser.GameObjects.Sprite {
       );
     }
 
-    const moveXForAnim = targetVelX * PHYSICS.SCALE;
-    const latestVelocity = b2Body_GetLinearVelocity(this.bodyId);
-    this.updateAnimations(moveXForAnim, latestVelocity);
+    // Update animations based on current state
+    this.updateAnimations(targetVelX * PHYSICS.SCALE, currentVelocity);
   }
 
   updateAnimations(moveX: number, velocity: IB2Vec2) {
@@ -230,6 +295,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
     const currentAnimKey = this.anims.currentAnim?.key;
     const currentVelY = velocity.y;
 
+    // With standard coordinates, falling is when Y velocity is positive
     if (currentVelY > PHYSICS.PLAYER.JUMP_THRESHOLD / PHYSICS.SCALE) {
       if (
         currentAnimKey !== ASSETS.PLAYER.FALL.KEY &&

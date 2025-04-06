@@ -4,16 +4,25 @@
  */
 import * as Phaser from "phaser";
 
-import { WORLD } from "@constants";
+import { WORLD, PHYSICS } from "@constants";
 import Coin from "@entities/Coin"; // Moved import order
 import Platform from "@entities/Platform"; // Import the new Platform entity
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting and accessing its methods
 
 /**
+ * Position information for player spawning
+ */
+interface PlayerSpawnPosition {
+  x: number;
+  y: number;
+}
+
+/**
  * Generates the level by placing composite platforms procedurally.
  * @param scene The GameScene instance to add platforms to.
+ * @returns Player spawn position calculated based on level generation.
  */
-export function generateLevel(scene: GameScene): void {
+export function generateLevel(scene: GameScene): PlayerSpawnPosition {
   const platformY = 600;
   const tileWidth = 26; // Width of a single platform tile (from assets.json)
   const minPlatformLengthTiles = 3; // Min number of middle tiles
@@ -24,6 +33,53 @@ export function generateLevel(scene: GameScene): void {
 
   let currentX = edgePadding;
 
+  // First platform will determine player start position
+  const firstPlatformMiddleTiles = Phaser.Math.Between(
+    minPlatformLengthTiles,
+    maxPlatformLengthTiles
+  );
+  const firstPlatformTotalTiles = firstPlatformMiddleTiles + 2;
+  const firstPlatformWidth = firstPlatformTotalTiles * tileWidth;
+  const firstPlatformCenterX = currentX + firstPlatformWidth / 2;
+
+  // Calculate player start position above the first platform
+  const playerStartX = firstPlatformCenterX;
+  const playerStartY = platformY - 100; // 100px above the platform
+
+  // Instantiate the first platform
+  new Platform(
+    scene,
+    firstPlatformCenterX,
+    platformY,
+    firstPlatformWidth,
+    firstPlatformMiddleTiles
+  );
+
+  // Store the start X before updating currentX for coin placement
+  const platformStartX = currentX;
+
+  // --- Coin Placement for first platform ---
+  const coinY = platformY - 40; // Place coins slightly above the platform
+  // Place coins based on the number of *tiles* (edges + middle)
+  for (let i = 0; i < firstPlatformTotalTiles; i++) {
+    const coinX = platformStartX + tileWidth / 2 + i * tileWidth;
+    // Add a small random horizontal offset
+    const offsetX = Phaser.Math.Between(-5, 5);
+    new Coin(scene, coinX + offsetX, coinY);
+  }
+
+  // Update currentX to the position after the first platform
+  currentX += firstPlatformWidth;
+
+  // --- First Gap Generation ---
+  const firstGapWidthTiles = Phaser.Math.Between(
+    minGapWidthTiles,
+    maxGapWidthTiles
+  );
+  const firstGapPixelWidth = firstGapWidthTiles * tileWidth;
+  currentX += firstGapPixelWidth;
+
+  // Continue generating the rest of the level
   while (currentX < WORLD.WIDTH - edgePadding) {
     // Determine the number of middle tiles for this platform
     const platformMiddleTiles = Phaser.Math.Between(
@@ -77,4 +133,10 @@ export function generateLevel(scene: GameScene): void {
     currentX += gapPixelWidth;
     // --- End Gap Generation ---
   }
+
+  // Return the player spawn position
+  return {
+    x: playerStartX,
+    y: playerStartY,
+  };
 }
