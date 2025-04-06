@@ -18,6 +18,8 @@ import {
   b2World_Step,
   SpriteToBox,
   pxmVec2,
+  UpdateWorldSprites,
+  // UpdateWorldSprites, // Keep commented out for now
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -54,7 +56,7 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
     this.createUI();
-    generateLevel(this);
+    generateLevel(this); // Uncomment level generation
     this.setupInput();
 
     this.startScreen.show();
@@ -104,8 +106,7 @@ export default class GameScene extends Phaser.Scene {
     };
 
     // Use SpriteToBox to link the sprite with a static body
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    SpriteToBox(gameState.worldId as any, image, {
+    SpriteToBox(gameState.worldId, image, {
       bodyDef,
       density: 0, // Static bodies have 0 density
       friction: PHYSICS.PLATFORM.FRICTION,
@@ -121,16 +122,18 @@ export default class GameScene extends Phaser.Scene {
     // console.log(`GameScene update - isPlaying: ${gameState.isPlaying}`);
     if (gameState.isPlaying) {
       // Add log inside the isPlaying check
-      // console.log('Physics and player update running...');
+      // console.log('Physics and player update running...'); // Remove log
       const timeStep = delta / 1000;
       const subStepCount = 3;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      b2World_Step(gameState.worldId as any, timeStep, subStepCount);
+
+      b2World_Step(gameState.worldId, timeStep, subStepCount);
 
       if (this.player && this.controls) {
         this.player.update(this.controls);
       }
       this.mobileControls.getState();
+      // Update the coin counter display
+      this.coinCounter.updateCount();
     }
   }
 
@@ -144,23 +147,22 @@ export default class GameScene extends Phaser.Scene {
 
   startGame() {
     // Add log to check if startGame is called and the state (using getters)
-    console.log(
-      `GameScene.startGame() called. isReady: ${gameState.isReady}, isPlaying: ${gameState.isPlaying}, isGameOver: ${gameState.isGameOver}`
-    );
+    // console.log(`GameScene.startGame() called. isReady: ${gameState.isReady}, isPlaying: ${gameState.isPlaying}, isGameOver: ${gameState.isGameOver}`); // Remove log
     if (gameState.isReady) {
       const success = gameState.startGame();
       // Add log to check transition result
       console.log(
         `gameState.startGame() transition success: ${success}, newState isPlaying: ${gameState.isPlaying}`
-      );
+      ); // Remove log
     }
   }
 
   restart() {
     if (gameState.isGameOver) {
       gameState.reset();
-      const worldId = CreateWorld({ x: 0, y: PHYSICS.GRAVITY.y });
-      gameState.setWorldId(worldId);
+      // ---> REVERT TO POSITIVE GRAVITY ON RESTART <--- //
+      const worldData = CreateWorld({ x: 0, y: PHYSICS.GRAVITY.y });
+      gameState.setWorldId(worldData.worldId);
 
       this.player?.reset();
       this.deathSensor?.reset();

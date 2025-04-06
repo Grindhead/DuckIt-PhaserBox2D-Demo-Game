@@ -4,7 +4,7 @@
  */
 import * as Phaser from "phaser";
 
-import { ASSETS, PHYSICS } from "@constants";
+import { ASSETS } from "@constants";
 import { gameState } from "@gameState";
 import {
   STATIC,

@@ -9,6 +9,8 @@
  *
  * @module gameState
  */
+import { b2WorldId as B2WorldIdClass } from "@PhaserBox2D"; // Import the class
+type b2WorldIdInstance = InstanceType<typeof B2WorldIdClass>; // Get instance type
 
 /**
  * Enumeration of possible game states
@@ -53,8 +55,7 @@ class GameState {
 
   // Declare instance properties
   private currentState!: (typeof GameStates)[keyof typeof GameStates];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public worldId: any | null = null;
+  public worldId: b2WorldIdInstance | null = null; // Use derived instance type
   private coins: number = 0; // Initialize coins to 0
 
   /**
@@ -189,8 +190,7 @@ class GameState {
    * Sets the Box2D world ID and transitions from INITIALIZING to READY if applicable
    * @param {any} id - The Box2D world ID
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setWorldId(id: any) {
+  setWorldId(id: b2WorldIdInstance) {
     // Add disable comment
     this.worldId = id;
     if (this.isInitializing) {
@@ -227,6 +227,7 @@ class GameState {
    * @returns {boolean} Whether the transition was successful
    */
   endGame() {
+    console.log("Ending game");
     return this.transition(GameStates.GAME_OVER);
   }
 
@@ -235,6 +236,7 @@ class GameState {
    * @returns {boolean} Whether the transition was successful
    */
   restartGame() {
+    console.log("restarting game");
     if (this.isGameOver) {
       return this.transition(GameStates.READY);
     }

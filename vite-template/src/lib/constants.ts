@@ -28,15 +28,15 @@ export const PHYSICS = {
   /** Player physics properties */
   PLAYER: {
     /** Horizontal movement speed in pixels/second */
-    SPEED: 300,
+    SPEED: 100,
     /** Vertical jump force (negative for upward force) */
     JUMP_FORCE: -400,
     /** Mass density for physics calculations */
     DENSITY: 1.0,
     /** Surface friction coefficient */
-    FRICTION: 0.5,
+    FRICTION: 1.0,
     /** Bounce coefficient (0 for no bounce) */
-    RESTITUTION: 0.0,
+    RESTITUTION: 0.2,
     /** Air resistance factor */
     LINEAR_DAMPING: 0.1,
     /** Initial spawn position */
@@ -58,10 +58,6 @@ export const PHYSICS = {
 
   /** Death sensor properties */
   DEATH_SENSOR: {
-    /** Y position based on WORLD constant */
-    // Y: defined dynamically using WORLD.DEATH_SENSOR_Y
-    /** Width based on WORLD constant */
-    // WIDTH: defined dynamically using WORLD.WIDTH
     /** Height in pixels */
     HEIGHT: 10, // Arbitrary small height for the sensor box
     /** Mass density (irrelevant for sensor, but needed for Box2D) */
