@@ -190,6 +190,8 @@ export const ASSETS = {
       /** Total number of frames */
       FRAME_COUNT: 8,
     },
+    /** Single frame identifier (for placement) */
+    FRAME: "coin/coin-idle/coin-idle-0001.png",
   },
 
   /** Level finish flag assets */

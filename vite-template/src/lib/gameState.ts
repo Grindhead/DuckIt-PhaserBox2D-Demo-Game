@@ -54,8 +54,8 @@ class GameState {
   // Declare instance properties
   private currentState!: (typeof GameStates)[keyof typeof GameStates];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public worldId: any | null = null; // Add disable comment
-  private coins!: number; // Add definite assignment
+  public worldId: any | null = null;
+  private coins: number = 0; // Initialize coins to 0
 
   /**
    * Creates or returns the singleton instance of GameState
@@ -245,9 +245,12 @@ class GameState {
    * Adds a coin to the player's collection (only in PLAYING state)
    * @returns {boolean} Whether the coin was successfully added
    */
-  addCoin() {
+  incrementCoins(): boolean {
+    // Renamed from addCoin for clarity
     if (this.isPlaying) {
       this.coins++;
+      // TODO: Add event emission or update UI callback here if needed
+      console.log(`Coin collected! Total: ${this.coins}`); // Simple log for now
       return true;
     }
     return false;

@@ -8,9 +8,11 @@
 import * as Phaser from "phaser";
 
 import { PHYSICS, WORLD, SCENES, ASSETS } from "@constants";
+
 import DeathSensor from "@entities/DeathSensor";
 import Player from "@entities/Player";
 import { gameState, GameStates } from "@gameState";
+
 import {
   CreateBoxPolygon,
   CreateWorld,
@@ -22,10 +24,13 @@ import {
   b2World_Step,
   SpriteToBox,
 } from "@PhaserBox2D";
+
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
 import GameStartScreen from "@ui/GameStartScreen";
 import MobileControls from "@ui/MobileControls";
+
+import { generateLevel } from "../lib/levelGenerator";
 
 export default class GameScene extends Phaser.Scene {
   player!: Player;
@@ -47,8 +52,6 @@ export default class GameScene extends Phaser.Scene {
     this.player = new Player(this);
     this.deathSensor = new DeathSensor(this);
 
-    this.setupCollisions();
-
     if (this.input.keyboard) {
       this.controls = this.input.keyboard.createCursorKeys();
     }
@@ -57,7 +60,7 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
     this.createUI();
-    this.generateLevel();
+    generateLevel(this);
     this.setupInput();
 
     this.startScreen.show();
@@ -117,56 +120,6 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // No need for AddSpriteToWorld explicitly here, as SpriteToBox handles the linking
-  }
-
-  generateLevel() {
-    // Remove the old placeholder CreateBoxPolygon call
-    // Create a simple platform for testing
-    const platformY = 600;
-    const startX = 200;
-    const tileWidth = 26; // From assets.json
-    const numMiddleTiles = 5;
-
-    let currentX = startX;
-
-    // Left edge
-    this.createPlatformSegment(currentX, platformY, "left");
-    currentX += tileWidth;
-
-    // Middle segments
-    for (let i = 0; i < numMiddleTiles; i++) {
-      this.createPlatformSegment(currentX, platformY, "middle");
-      currentX += tileWidth;
-    }
-
-    // Right edge
-    this.createPlatformSegment(currentX, platformY, "right");
-  }
-
-  setupCollisions() {
-    if (this.matter?.world) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.matter.world.on("collisionstart", (event: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        event.pairs.forEach((pair: any) => {
-          const { bodyA, bodyB } = pair;
-          const gameObjectA = bodyA.gameObject;
-          const gameObjectB = bodyB.gameObject;
-
-          if (
-            gameObjectA instanceof Player &&
-            gameObjectB instanceof DeathSensor
-          ) {
-            gameObjectA.kill();
-          } else if (
-            gameObjectB instanceof Player &&
-            gameObjectA instanceof DeathSensor
-          ) {
-            gameObjectB.kill();
-          }
-        });
-      });
-    }
   }
 
   update(_time: number, delta: number) {
