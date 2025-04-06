@@ -1,7 +1,7 @@
 /**
  * @license
  * Phaser Box2D v1.1.0
- * Sunday, 6 April 2025 at 04:22
+ * Sunday, 6 April 2025 at 04:27
  * 
  * This library includes code that is ported from the original C version. The original C code is Copyright 2023 Erin Catto
  * and was released under the MIT license. The JavaScript port of the C code along with all additional code is
@@ -10587,8 +10587,16 @@ function b2Body_GetContactData(bodyId, contactData, capacity) {
     if (contact.flags & b2ContactFlags.b2_contactTouchingFlag) {
       const shapeA = world.shapeArray[contact.shapeIdA];
       const shapeB = world.shapeArray[contact.shapeIdB];
-      contactData[index].shapeIdA = new b2ShapeId(shapeA.id + 1, bodyId.world0, shapeA.revision);
-      contactData[index].shapeIdB = new b2ShapeId(shapeB.id + 1, bodyId.world0, shapeB.revision);
+      contactData[index].shapeIdA = new b2ShapeId(
+        shapeA.id + 1,
+        bodyId.world0,
+        shapeA.revision
+      );
+      contactData[index].shapeIdB = new b2ShapeId(
+        shapeB.id + 1,
+        bodyId.world0,
+        shapeB.revision
+      );
       const contactSim = b2GetContactSim(world, contact);
       contactData[index].manifold = contactSim.manifold;
       index += 1;
@@ -10605,7 +10613,12 @@ function b2Body_ComputeAABB(bodyId) {
   const body = b2GetBodyFullId(world, bodyId);
   if (body.headShapeId === B2_NULL_INDEX) {
     const transform = b2GetBodyTransform(world, body.id);
-    const aabb2 = new b2AABB(transform.p.x, transform.p.y, transform.p.x, transform.p.y);
+    const aabb2 = new b2AABB(
+      transform.p.x,
+      transform.p.y,
+      transform.p.x,
+      transform.p.y
+    );
     return aabb2;
   }
   let shape = world.shapeArray[body.headShapeId];
@@ -10667,7 +10680,10 @@ function b2UpdateBodyMassData(world, body) {
   bodySim.center = b2TransformPoint(bodySim.transform, bodySim.localCenter);
   const state = b2GetBodyState(world, body);
   if (state !== null) {
-    const deltaLinear = b2CrossSV(state.angularVelocity, b2Sub(bodySim.center, oldCenter));
+    const deltaLinear = b2CrossSV(
+      state.angularVelocity,
+      b2Sub(bodySim.center, oldCenter)
+    );
     state.linearVelocity = b2Add(state.linearVelocity, deltaLinear);
   }
   shapeId = body.headShapeId;
@@ -10853,7 +10869,11 @@ function b2Body_ApplyLinearImpulse(bodyId, impulse, point, wake) {
     const set = world.solverSetArray[b2SetType.b2_awakeSet];
     const state = set.states.data[localIndex];
     const bodySim = set.sims.data[localIndex];
-    state.linearVelocity = b2MulAdd(state.linearVelocity, bodySim.invMass, impulse);
+    state.linearVelocity = b2MulAdd(
+      state.linearVelocity,
+      bodySim.invMass,
+      impulse
+    );
     state.angularVelocity += bodySim.invInertia * b2Cross(b2Sub(point, bodySim.center), impulse);
   }
 }
@@ -10868,7 +10888,11 @@ function b2Body_ApplyLinearImpulseToCenter(bodyId, impulse, wake) {
     const set = world.solverSetArray[b2SetType.b2_awakeSet];
     const state = set.states.data[localIndex];
     const bodySim = set.sims.data[localIndex];
-    state.linearVelocity = b2MulAdd(state.linearVelocity, bodySim.invMass, impulse);
+    state.linearVelocity = b2MulAdd(
+      state.linearVelocity,
+      bodySim.invMass,
+      impulse
+    );
   }
 }
 function b2Body_ApplyAngularImpulse(bodyId, impulse, wake) {
@@ -10950,7 +10974,13 @@ function b2Body_SetType(bodyId, type) {
       b2DestroyShapeProxy(shape, world.broadPhase);
       const forcePairCreation = true;
       const proxyType = type;
-      b2CreateShapeProxy(shape, world.broadPhase, proxyType, transform, forcePairCreation);
+      b2CreateShapeProxy(
+        shape,
+        world.broadPhase,
+        proxyType,
+        transform,
+        forcePairCreation
+      );
     }
   } else if (type === b2BodyType.b2_staticBody) {
     const staticSet = world.solverSetArray[b2SetType.b2_staticSet];
@@ -10982,7 +11012,13 @@ function b2Body_SetType(bodyId, type) {
       shapeId = shape.nextShapeId;
       b2DestroyShapeProxy(shape, world.broadPhase);
       const forcePairCreation = true;
-      b2CreateShapeProxy(shape, world.broadPhase, b2BodyType.b2_staticBody, transform, forcePairCreation);
+      b2CreateShapeProxy(
+        shape,
+        world.broadPhase,
+        b2BodyType.b2_staticBody,
+        transform,
+        forcePairCreation
+      );
     }
   } else {
     const transform = b2GetBodyTransformQuick(world, body);
@@ -10993,7 +11029,13 @@ function b2Body_SetType(bodyId, type) {
       b2DestroyShapeProxy(shape, world.broadPhase);
       const proxyType = type;
       const forcePairCreation = true;
-      b2CreateShapeProxy(shape, world.broadPhase, proxyType, transform, forcePairCreation);
+      b2CreateShapeProxy(
+        shape,
+        world.broadPhase,
+        proxyType,
+        transform,
+        forcePairCreation
+      );
     }
   }
   {
@@ -11244,7 +11286,13 @@ function b2Body_Enable(bodyId) {
   while (shapeId !== B2_NULL_INDEX) {
     const shape = world.shapeArray[shapeId];
     shapeId = shape.nextShapeId;
-    b2CreateShapeProxy(shape, world.broadPhase, proxyType, transform, forcePairCreation);
+    b2CreateShapeProxy(
+      shape,
+      world.broadPhase,
+      proxyType,
+      transform,
+      forcePairCreation
+    );
   }
   if (setId !== b2SetType.b2_staticSet) {
     b2CreateIslandForBody(world, setId, body);
