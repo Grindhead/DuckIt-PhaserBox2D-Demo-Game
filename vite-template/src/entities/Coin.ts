@@ -4,15 +4,18 @@
  */
 import * as Phaser from "phaser";
 
-import { ASSETS } from "@constants";
+import { ASSETS, PHYSICS } from "@constants";
 import { gameState } from "@gameState";
 import {
   STATIC,
-  SpriteToBox,
   b2DefaultBodyDef,
   pxmVec2,
   AddSpriteToWorld,
   RemoveSpriteFromWorld,
+  b2CreateBody,
+  b2DefaultShapeDef,
+  b2MakeBox,
+  b2CreatePolygonShape,
 } from "@PhaserBox2D";
 
 export default class Coin extends Phaser.GameObjects.Sprite {
@@ -32,29 +35,47 @@ export default class Coin extends Phaser.GameObjects.Sprite {
   initPhysics() {
     const bodyDef = {
       ...b2DefaultBodyDef(),
-      type: STATIC, // Use STATIC type for sensor bodies
-      position: pxmVec2(this.x, this.y),
+      type: STATIC,
+      position: pxmVec2(this.x, -this.y),
+      userData: { type: "coin", coinInstance: this },
     };
 
-    // Use SpriteToBox to link the sprite with a sensor body
+    // Create the body directly
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = SpriteToBox(gameState.worldId as any, this, {
-      bodyDef,
-      density: 0, // Sensors don't need density/friction/restitution
+    const bodyId = b2CreateBody(gameState.worldId as any, bodyDef);
+    this.bodyId = bodyId;
+
+    if (!bodyId) {
+      console.error("Failed to create coin physics body!");
+      return;
+    }
+
+    // Define the shape
+    const shapeDef = {
+      ...b2DefaultShapeDef(),
+      isSensor: true,
+      enableContactEvents: true,
+      density: 0,
       friction: 0,
       restitution: 0,
-      isSensor: true, // Explicitly mark as sensor
-      userData: { type: "coin", coinInstance: this }, // Add reference to this instance
-      enableContactEvents: true, // Added
-    });
+      userData: { type: "coin", coinInstance: this },
+    };
 
-    this.bodyId = result.bodyId;
+    // Create the box geometry
+    const scaleX = this.scaleX;
+    const scaleY = this.scaleY;
+    const box = b2MakeBox(
+      (this.width * scaleX) / 2 / PHYSICS.SCALE,
+      (this.height * scaleY) / 2 / PHYSICS.SCALE
+    );
 
-    if (this.bodyId) {
-      // Pass an object with bodyId property
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      AddSpriteToWorld(gameState.worldId as any, this, { bodyId: this.bodyId });
-    }
+    // Create the polygon shape and attach it to the body
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    b2CreatePolygonShape(bodyId, shapeDef, box);
+
+    // Link the sprite to the body for rendering updates
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    AddSpriteToWorld(gameState.worldId as any, this, { bodyId: this.bodyId });
   }
 
   collect() {

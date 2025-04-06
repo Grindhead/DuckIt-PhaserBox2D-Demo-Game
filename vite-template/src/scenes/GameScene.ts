@@ -24,9 +24,8 @@ import {
   UpdateWorldSprites,
   ClearWorldSprites,
   AddSpriteToWorld,
-  b2World_GetContactEvents,
-  b2Body_GetUserData,
-  b2Shape_GetBody,
+  b2World_GetSensorEvents,
+  b2Shape_GetUserData,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -136,61 +135,58 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number) {
-    // Destroy bodies queued for removal from the *previous* frame
-    // BEFORE stepping physics or updating sprites for the current frame.
+    // Destroy bodies queued for removal
     if (this.bodiesToDestroy.length > 0) {
       for (const bodyId of this.bodiesToDestroy) {
         if (bodyId) {
-          // Ensure bodyId is not null/undefined
           b2DestroyBody(bodyId);
         }
       }
-      this.bodiesToDestroy.length = 0; // Clear the array
+      this.bodiesToDestroy.length = 0;
     }
 
-    // Add log to see if update is running and check state (using getters)
-    // console.log(`GameScene update - isPlaying: ${gameState.isPlaying}`);
     if (gameState.isPlaying) {
-      // Add log inside the isPlaying check
-      // console.log('Physics and player update running...'); // Remove log
       const timeStep = delta / 1000;
       const subStepCount = 3;
 
-      // Restore the physics step
       b2World_Step(gameState.worldId, timeStep, subStepCount);
 
       if (this.player && this.controls) {
         this.player.update(this.controls);
       }
       this.mobileControls.getState();
-      // Update the coin counter display
       this.coinCounter.updateCount();
 
       UpdateWorldSprites(gameState.worldId);
 
-      // --- Process Contact Events ---
-      const events = b2World_GetContactEvents(gameState.worldId);
+      // --- Process Sensor Events (Replaces Contact Events) ---
+      const sensorEvents = b2World_GetSensorEvents(gameState.worldId);
 
-      // Process Begin Contact Events
-      for (const event of events.beginEvents) {
-        const shapeIdA = event.shapeIdA;
-        const shapeIdB = event.shapeIdB;
+      // Process Begin Sensor Events
+      for (const event of sensorEvents.beginEvents) {
+        const sensorShapeId = event.sensorShapeId;
+        const visitorShapeId = event.visitorShapeId;
 
-        // Get the bodies associated with the shapes
-        const bodyIdA = b2Shape_GetBody(shapeIdA);
-        const bodyIdB = b2Shape_GetBody(shapeIdB);
+        // Get user data from the shapes involved
+        const sensorUserData = b2Shape_GetUserData(sensorShapeId);
+        const visitorUserData = b2Shape_GetUserData(visitorShapeId);
 
-        // Get user data from the bodies
-        const userDataA = b2Body_GetUserData(bodyIdA);
-        const userDataB = b2Body_GetUserData(bodyIdB);
-
-        // Check for player-coin collision
+        // Check for player-coin sensor collision
         let coinInstance: Coin | null = null;
 
-        if (userDataA?.type === "player" && userDataB?.type === "coin") {
-          coinInstance = userDataB.coinInstance as Coin;
-        } else if (userDataB?.type === "player" && userDataA?.type === "coin") {
-          coinInstance = userDataA.coinInstance as Coin;
+        if (
+          sensorUserData?.type === "coin" &&
+          visitorUserData?.type === "player"
+        ) {
+          coinInstance = sensorUserData.coinInstance as Coin;
+        } else if (
+          sensorUserData?.type === "player" &&
+          visitorUserData?.type === "coin"
+        ) {
+          // Player might also be a sensor in some cases, handle if needed
+          // This case shouldn't happen for coin collection based on current setup
+          // but included for completeness if player shape also becomes a sensor
+          coinInstance = visitorUserData.coinInstance as Coin;
         }
 
         // If it's a player-coin collision, collect the coin
@@ -198,13 +194,18 @@ export default class GameScene extends Phaser.Scene {
           coinInstance.collect();
         }
 
-        // TODO: Add checks for player-deathSensor collisions
-        // TODO: Add checks for player-enemy collisions
+        // TODO: Add checks for other sensor interactions if needed
       }
 
-      // TODO: Process endEvents, preSolveEvents, postSolveEvents if needed
-      // ... (existing TODO comments)
-      // ----------------------------------
+      // Process End Sensor Events (Optional: if logic is needed when player leaves coin area)
+      // for (const event of sensorEvents.endEvents) {
+      //   const sensorShapeId = event.sensorShapeId;
+      //   const visitorShapeId = event.visitorShapeId;
+      //   const sensorUserData = b2Shape_GetUserData(sensorShapeId);
+      //   const visitorUserData = b2Shape_GetUserData(visitorShapeId);
+      //   // ... logic for end overlap ...
+      // }
+      // -------------------------------------------------------
     }
   }
 
