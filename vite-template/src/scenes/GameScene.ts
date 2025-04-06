@@ -103,32 +103,12 @@ export default class GameScene extends Phaser.Scene {
       const timeStep = delta / 1000;
       const subStepCount = 3; // Example sub-step count
 
-      // ADDED: Log player position
-      if (this.player && this.player.bodyId) {
-        const playerVel = b2Body_GetLinearVelocity(this.player.bodyId);
-        console.log(
-          `Player Y Position: ${this.player.y}, Y Velocity: ${playerVel.y}`
-        );
-      }
-
       // 1. Step the physics world
       b2World_Step(worldId, timeStep, subStepCount);
 
       // 2. Process Events (Sensors & Contacts)
       // --- Process Sensor Events ---
       const sensorEvents = b2World_GetSensorEvents(worldId);
-
-      // ADDED: Log specific player info each frame for debugging
-      if (this.player && this.player.bodyId) {
-        const playerVel = b2Body_GetLinearVelocity(this.player.bodyId);
-        const onGround = this.player.playerState.isGrounded;
-        console.log(
-          `Player position: x=${this.player.x.toFixed(
-            1
-          )}, y=${this.player.y.toFixed(1)}, ` +
-            `velocityY=${playerVel.y.toFixed(2)}, onGround=${onGround}`
-        );
-      }
 
       for (const event of sensorEvents.beginEvents) {
         const sensorShapeId = event.sensorShapeId;

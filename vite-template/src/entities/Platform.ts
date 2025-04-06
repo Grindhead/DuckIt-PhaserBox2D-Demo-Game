@@ -63,15 +63,6 @@ export default class Platform {
     );
     tempRect.setVisible(false); // Make it invisible
 
-    // Log platform dimensions
-    console.log(
-      `Platform Initial Position (Box2D Coords): x=${pxm(centerX).toFixed(
-        3
-      )}, y=${pxm(centerY).toFixed(3)}, width=${hx.toFixed(
-        3
-      )}, height=${hy.toFixed(3)}`
-    );
-
     // Define the shape explicitly to ensure it's not a sensor
     const shapeDef = {
       ...b2DefaultShapeDef(), // Start with defaults
@@ -93,15 +84,7 @@ export default class Platform {
 
     // Log created shape details
     if (bodyResult?.shapeId) {
-      console.log(
-        `Platform Shape Created: ID=${JSON.stringify(
-          bodyResult.shapeId
-        )}, Set UserData=${JSON.stringify(
-          shapeDef.userData
-        )}, Retrieved UserData=${JSON.stringify(
-          b2Shape_GetUserData(bodyResult.shapeId)
-        )}`
-      );
+      b2Shape_GetUserData(bodyResult.shapeId);
     }
 
     // --- Visual Tiling ---
