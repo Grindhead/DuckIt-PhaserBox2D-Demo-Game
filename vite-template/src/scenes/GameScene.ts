@@ -171,6 +171,14 @@ export default class GameScene extends Phaser.Scene {
         const sensorUserData = b2Shape_GetUserData(sensorShapeId);
         const visitorUserData = b2Shape_GetUserData(visitorShapeId);
 
+        // Add console log for debugging sensor events
+        console.log(
+          "Sensor Begin Event - Sensor Data:",
+          sensorUserData,
+          "Visitor Data:",
+          visitorUserData
+        );
+
         // Check for player-coin sensor collision
         let coinInstance: Coin | null = null;
 
@@ -192,6 +200,7 @@ export default class GameScene extends Phaser.Scene {
         // If it's a player-coin collision, collect the coin
         if (coinInstance && !coinInstance.isCollected) {
           coinInstance.collect();
+          gameState.incrementCoins();
         }
 
         // TODO: Add checks for other sensor interactions if needed

@@ -12,7 +12,6 @@ import { gameState, GameStates } from "@gameState";
 // Runtime values only
 import {
   AddSpriteToWorld,
-  SpriteToBox,
   DYNAMIC,
   b2DefaultBodyDef,
   b2Vec2,
@@ -29,6 +28,10 @@ import {
   b2Rot_GetAngle,
   b2BodyId,
   b2DestroyBody,
+  b2CreateBody,
+  b2DefaultShapeDef,
+  b2MakeBox,
+  b2CreatePolygonShape,
 } from "@PhaserBox2D";
 
 // Define a simple interface for b2Vec2 instances
@@ -44,7 +47,9 @@ interface PlayerState {
 export default class Player extends Phaser.GameObjects.Sprite {
   scene: Phaser.Scene;
 
-  bodyId: typeof b2BodyId | null = null;
+  // Change type annotation to 'any | null' for consistency and to fix linter error
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  bodyId: any | null = null;
   playerState: PlayerState;
   jumpForce: number;
 
@@ -103,35 +108,46 @@ export default class Player extends Phaser.GameObjects.Sprite {
       fixedRotation: true,
     };
 
-    const result = SpriteToBox(gameState.worldId, this, {
-      bodyDef,
+    const bodyId = b2CreateBody(gameState.worldId, bodyDef);
+    this.bodyId = bodyId;
+
+    if (!bodyId) {
+      console.error("Failed to create player physics body!");
+      return;
+    }
+
+    const shapeDef = {
+      ...b2DefaultShapeDef(),
       density: PHYSICS.PLAYER.DENSITY,
       friction: PHYSICS.PLAYER.FRICTION,
       restitution: PHYSICS.PLAYER.RESTITUTION,
       userData: { type: "player" },
       enableContactEvents: true,
-    });
+    };
 
-    this.bodyId = result.bodyId;
+    const scaleX = this.scaleX;
+    const scaleY = this.scaleY;
+    const box = b2MakeBox(
+      (this.width * scaleX) / 2 / PHYSICS.SCALE,
+      (this.height * scaleY) / 2 / PHYSICS.SCALE
+    );
 
-    if (this.bodyId) {
-      const correctInitialPos = pxmVec2(this.x, this.y);
-      const initialRot = new b2Rot(1, 0);
-      b2Body_SetTransform(this.bodyId, correctInitialPos, initialRot);
-      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+    b2CreatePolygonShape(bodyId, shapeDef, box);
 
-      const initialMass = b2Body_GetMass(this.bodyId);
-      console.log(`Player Initial Mass: ${initialMass}`);
+    const correctInitialPos = pxmVec2(this.x, this.y);
+    const initialRot = new b2Rot(1, 0);
+    b2Body_SetTransform(this.bodyId, correctInitialPos, initialRot);
+    b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 
-      console.log(
-        `Player.initPhysics: Adding sprite to world with worldId: ${JSON.stringify(
-          gameState.worldId
-        )} and bodyId: ${JSON.stringify(this.bodyId)}`
-      );
-      AddSpriteToWorld(gameState.worldId, this, { bodyId: this.bodyId });
-    } else {
-      console.error("Failed to create player physics body!");
-    }
+    const initialMass = b2Body_GetMass(this.bodyId);
+    console.log(`Player Initial Mass: ${initialMass}`);
+
+    console.log(
+      `Player.initPhysics: Adding sprite to world with worldId: ${JSON.stringify(
+        gameState.worldId
+      )} and bodyId: ${JSON.stringify(this.bodyId)}`
+    );
+    AddSpriteToWorld(gameState.worldId, this, { bodyId: this.bodyId });
 
     console.log("Player initialized");
   }
