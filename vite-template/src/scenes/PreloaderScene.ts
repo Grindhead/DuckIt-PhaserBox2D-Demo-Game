@@ -68,7 +68,6 @@ export default class PreloaderScene extends Phaser.Scene {
         suffix: ".png",
       }),
       frameRate: ANIMATION.FRAME_RATE,
-      repeat: -1,
     });
 
     this.anims.create({

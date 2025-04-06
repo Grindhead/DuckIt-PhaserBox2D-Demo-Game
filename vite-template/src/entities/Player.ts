@@ -107,7 +107,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
           suffix: ".png",
         }),
         frameRate: ANIMATION.FRAME_RATE,
-        repeat: -1,
+        repeat: 0,
       });
     }
 
@@ -409,9 +409,19 @@ export default class Player extends Phaser.GameObjects.Sprite {
         }
       } else {
         // Idle
+        // Only play the IDLE animation if the current animation is not IDLE.
+        // This prevents restarting it if it has already played and stopped.
         if (currentAnimKey !== ASSETS.PLAYER.IDLE.KEY) {
-          this.play(ASSETS.PLAYER.IDLE.KEY);
+          // Only transition to IDLE from RUN, FALL, or a finished JUMP animation.
+          if (
+            currentAnimKey === ASSETS.PLAYER.RUN.KEY ||
+            currentAnimKey === ASSETS.PLAYER.FALL.KEY ||
+            (currentAnimKey === ASSETS.PLAYER.JUMP.KEY && !this.anims.isPlaying)
+          ) {
+            this.play(ASSETS.PLAYER.IDLE.KEY);
+          }
         }
+        // If currentAnimKey IS ASSETS.PLAYER.IDLE.KEY, do nothing, let it stay on the last frame.
       }
     }
 
