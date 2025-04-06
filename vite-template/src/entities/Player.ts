@@ -9,7 +9,6 @@ import * as Phaser from "phaser";
 
 import { ASSETS, PHYSICS } from "@constants";
 import { gameState, GameStates } from "@gameState";
-
 // Runtime values only
 import {
   AddSpriteToWorld,

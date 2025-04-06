@@ -2,7 +2,6 @@ import * as Phaser from "phaser";
 
 import { PHYSICS, WORLD } from "@constants";
 import { gameState } from "@gameState";
-
 // Import runtime values/functions via alias
 import {
   AddSpriteToWorld,

@@ -39,7 +39,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
-    const world = CreateWorld();
+    const world = CreateWorld({ x: 0, y: PHYSICS.GRAVITY.y });
     gameState.setWorldId(world.worldId);
 
     this.player = new Player(this);
@@ -109,7 +109,7 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  update(time: number, delta: number) {
+  update(_time: number, delta: number) {
     if (gameState.isPlaying) {
       const timeStep = delta / 1000;
       const subStepCount = 3;
