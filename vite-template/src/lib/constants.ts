@@ -22,7 +22,7 @@ export const PHYSICS = {
     /** Horizontal gravity (0 for no horizontal gravity) */
     x: 0,
     /** Vertical gravity (positive for downward force) */
-    y: 100,
+    y: 300,
   },
 
   /** Player physics properties */
@@ -37,8 +37,6 @@ export const PHYSICS = {
     FRICTION: 1.0,
     /** Bounce coefficient (0 for no bounce) */
     RESTITUTION: 0,
-    /** Air resistance factor */
-    LINEAR_DAMPING: 0.1,
     /** Initial spawn position */
     START_POSITION: {
       /** X coordinate in pixels */

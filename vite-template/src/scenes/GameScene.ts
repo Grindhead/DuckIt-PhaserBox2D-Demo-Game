@@ -22,9 +22,6 @@ import {
   b2World_GetSensorEvents,
   b2Shape_GetUserData,
   b2World_GetContactEvents,
-  AddSpriteToWorld,
-  pxm,
-  b2DefaultFilter,
   b2Shape_IsSensor,
   b2Body_GetLinearVelocity,
 } from "@PhaserBox2D";
@@ -52,7 +49,10 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
-    const world = CreateWorld({ x: 0, y: PHYSICS.GRAVITY.y });
+    const world = CreateWorld({
+      x: 0,
+      y: PHYSICS.GRAVITY.y / PHYSICS.SCALE, // Scale gravity to meters/s^2
+    });
     gameState.setWorldId(world.worldId);
 
     this.player = new Player(this);
@@ -77,9 +77,6 @@ export default class GameScene extends Phaser.Scene {
         this.bodiesToDestroy.push(bodyId);
       }
     });
-
-    // Make sure to manually check for grounded state every frame
-    this.events.on("update", this.checkGroundedState, this);
   }
 
   createUI() {
@@ -162,13 +159,18 @@ export default class GameScene extends Phaser.Scene {
           const userDataA = b2Shape_GetUserData(shapeIdA);
           const userDataB = b2Shape_GetUserData(shapeIdB);
 
-          // Handle player-platform hit contacts
-          if (
-            (userDataA?.type === "player" && userDataB?.type === "platform") ||
-            (userDataB?.type === "player" && userDataA?.type === "platform")
-          ) {
-            console.log("HIT CONTACT: Player and Platform");
-            this.player.setGrounded(true);
+          // Handle player-platform hit contacts (non-sensor only)
+          const isSensorA = b2Shape_IsSensor(shapeIdA);
+          const isSensorB = b2Shape_IsSensor(shapeIdB);
+          if (!isSensorA && !isSensorB) {
+            if (
+              (userDataA?.type === "player" &&
+                userDataB?.type === "platform") ||
+              (userDataB?.type === "player" && userDataA?.type === "platform")
+            ) {
+              // Player is currently hitting/resting on a platform
+              this.player.setGrounded(true);
+            }
           }
         }
       }
@@ -181,35 +183,19 @@ export default class GameScene extends Phaser.Scene {
         const isSensorA = b2Shape_IsSensor(shapeIdA);
         const isSensorB = b2Shape_IsSensor(shapeIdB);
 
-        console.log(
-          `CONTACT BEGIN - SHAPE IDs: A=${JSON.stringify(
-            shapeIdA
-          )} (Sensor: ${isSensorA}), B=${JSON.stringify(
-            shapeIdB
-          )} (Sensor: ${isSensorB})`
-        );
-
         const userDataA = b2Shape_GetUserData(shapeIdA);
         const userDataB = b2Shape_GetUserData(shapeIdB);
-
-        console.log(
-          `CONTACT BEGIN - USERDATA: A=${JSON.stringify(
-            userDataA
-          )}, B=${JSON.stringify(userDataB)}`
-        );
 
         // --- Player-Platform Physical Collision Check (Ignore Sensors) ---
         if (!isSensorA && !isSensorB) {
           if (userDataA?.type === "player" && userDataB?.type === "platform") {
-            console.log("PHYSICAL CONTACT: Player (A) and Platform (B)");
-            // Set player as grounded when on a platform
+            // Set player as grounded when contact begins
             this.player.setGrounded(true);
           } else if (
             userDataB?.type === "player" &&
             userDataA?.type === "platform"
           ) {
-            console.log("PHYSICAL CONTACT: Platform (A) and Player (B)");
-            // Set player as grounded when on a platform
+            // Set player as grounded when contact begins
             this.player.setGrounded(true);
           }
         }
@@ -248,9 +234,17 @@ export default class GameScene extends Phaser.Scene {
           (userDataA?.type === "player" && userDataB?.type === "platform") ||
           (userDataB?.type === "player" && userDataA?.type === "platform")
         ) {
-          console.log("END CONTACT: Player and Platform");
           // Player has left the platform, set grounded to false
-          this.player.setGrounded(false);
+          // Check velocity: only set to false if moving upwards or horizontally,
+          // otherwise, hit/begin contacts should keep it true.
+          const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
+          if (velocity.y < 0) {
+            // Moving upwards (or very slightly)
+            this.player.setGrounded(false);
+          }
+          // If velocity.y >= 0, we might still be on the platform or sliding off,
+          // rely on begin/hit events to maintain grounded status.
+          // A small delay or further checks might be needed if edge cases appear.
         }
       }
 
@@ -332,41 +326,6 @@ export default class GameScene extends Phaser.Scene {
 
       gameState.transition(GameStates.READY);
       this.startGame();
-    }
-  }
-
-  // Manual checking for ground collision when Box2D contact events aren't firing properly
-  checkGroundedState() {
-    if (!this.player || !this.player.bodyId || !gameState.isPlaying) return;
-
-    // Get player velocity - if moving downward and not already grounded, check below
-    const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
-
-    // Check if we've landed on a platform based on position
-    // We don't have full raycast, but we can check for collision at a small offset
-    const playerY = this.player.y;
-    const playerHeight = this.player.height * this.player.scaleY;
-    const groundCheckY = playerY + playerHeight / 2 + 2; // Just below player
-
-    // Find platforms at or just below the player
-    const possiblePlatforms = this.children.list.filter((child) => {
-      // Skip non-game objects
-      if (!(child instanceof Phaser.GameObjects.GameObject)) return false;
-
-      // Check if it's a platform (we'd need to tag platforms or have a way to identify them)
-      // For now, just look for rectangle game objects that might be platforms
-      if (child instanceof Phaser.GameObjects.Rectangle) {
-        const platformTop = child.y - child.height / 2;
-        // Check if player bottom is at or just above platform top
-        const bottomToTopDist = Math.abs(groundCheckY - platformTop);
-        return bottomToTopDist <= 5; // Tolerance of 5 pixels
-      }
-      return false;
-    });
-
-    if (possiblePlatforms.length > 0 && velocity.y >= 0) {
-      console.log("Manual ground detection found platform below player");
-      this.player.setGrounded(true);
     }
   }
 }

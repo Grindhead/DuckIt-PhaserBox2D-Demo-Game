@@ -177,16 +177,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
     const bodyMass = b2Body_GetMass(this.bodyId);
     let targetVelX = 0;
 
-    // Hack to help with platform detection issues:
-    // If we're moving downward and close to the normal platform height,
-    // sample to see if we should be considered on a platform
-    if (currentVelocity.y > 0 && !this.playerState.isGrounded) {
-      // Convert to Box2D coordinates and check for platforms below
-      const posBox2D = pxmVec2(this.x, this.y);
-      // We don't have direct access to world query methods here, but this
-      // check in GameScene should help with detecting platforms
-    }
-
     if (controls.left?.isDown) {
       targetVelX = -PHYSICS.PLAYER.SPEED / PHYSICS.SCALE;
     } else if (controls.right?.isDown) {
@@ -201,14 +191,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
       new b2Vec2(impulseX, 0),
       true
     );
-
-    const currentVel = b2Body_GetLinearVelocity(this.bodyId);
-    if (!controls.left?.isDown && !controls.right?.isDown) {
-      const stopThreshold = 0.1;
-      if (Math.abs(currentVel.x) < stopThreshold) {
-        b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, currentVel.y));
-      }
-    }
 
     const currentAnimKey = this.anims.currentAnim?.key;
     const canJump = this.playerState.isGrounded;

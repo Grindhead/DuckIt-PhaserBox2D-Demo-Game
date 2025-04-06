@@ -99,11 +99,7 @@ class GameState {
   transition(newState: (typeof GameStates)[keyof typeof GameStates]): boolean {
     const validTransitions =
       StateTransitions[this.currentState as keyof typeof StateTransitions];
-    console.log(
-      `Attempting transition: ${
-        this.currentState
-      } -> ${newState}. Valid: ${validTransitions?.includes(newState)}`
-    );
+
     if (!validTransitions?.includes(newState)) {
       console.warn(
         `Invalid state transition: ${this.currentState} -> ${newState}`
@@ -197,12 +193,6 @@ class GameState {
    * @param {any} id - The Box2D world ID
    */
   setWorldId(id: b2WorldIdInstance) {
-    // Add disable comment
-    console.log(
-      `Setting worldId: ${JSON.stringify(id)}. Current state: ${
-        this.currentState
-      }`
-    );
     this.worldId = id;
     if (this.isInitializing) {
       this.transition(GameStates.READY);
@@ -262,8 +252,6 @@ class GameState {
     // Renamed from addCoin for clarity
     if (this.isPlaying) {
       this.coins++;
-      // TODO: Add event emission or update UI callback here if needed
-      console.log(`Coin collected! Total: ${this.coins}`); // Simple log for now
       return true;
     }
     return false;
