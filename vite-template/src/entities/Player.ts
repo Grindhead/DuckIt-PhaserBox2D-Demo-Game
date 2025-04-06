@@ -220,7 +220,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       currentAnimKey !== ASSETS.PLAYER.FALL.KEY
     ) {
       const impulseMagnitude = this.jumpForce / PHYSICS.SCALE;
-      const impulseVec = new b2Vec2(0, impulseMagnitude);
+      const impulseVec = new b2Vec2(0, -impulseMagnitude);
       b2Body_ApplyLinearImpulseToCenter(this.bodyId, impulseVec, true);
       this.playerState.isGrounded = false;
 

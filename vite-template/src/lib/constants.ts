@@ -22,7 +22,7 @@ export const PHYSICS = {
     /** Horizontal gravity (0 for no horizontal gravity) */
     x: 0,
     /** Vertical gravity (positive for downward force) */
-    y: 9.81,
+    y: 100,
   },
 
   /** Player physics properties */
@@ -30,7 +30,7 @@ export const PHYSICS = {
     /** Horizontal movement speed in pixels/second */
     SPEED: 100,
     /** Vertical jump force (negative for upward force) */
-    JUMP_FORCE: -1400,
+    JUMP_FORCE: -300,
     /** Mass density for physics calculations */
     DENSITY: 1.0,
     /** Surface friction coefficient */
