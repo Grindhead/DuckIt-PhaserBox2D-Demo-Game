@@ -25,6 +25,7 @@
 
 ## 4. Known Issues / Blockers
 
+- **Level Generation:** Level elements (platforms, crates, etc.) are not currently appearing in the game scene.
 - Potential type errors during the TypeScript conversion process.
 - Need to verify the exact extent of implemented features in the existing JS code.
 

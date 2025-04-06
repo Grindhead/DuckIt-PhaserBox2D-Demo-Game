@@ -7,7 +7,7 @@
  */
 import * as Phaser from "phaser";
 
-import { PHYSICS, WORLD, SCENES } from "@constants";
+import { PHYSICS, WORLD, SCENES, ASSETS } from "@constants";
 import DeathSensor from "@entities/DeathSensor";
 import Player from "@entities/Player";
 import { gameState, GameStates } from "@gameState";
@@ -15,10 +15,12 @@ import {
   CreateBoxPolygon,
   CreateWorld,
   STATIC,
+  DYNAMIC,
   b2DefaultBodyDef,
   b2Vec2,
   pxmVec2,
   b2World_Step,
+  SpriteToBox,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -71,16 +73,74 @@ export default class GameScene extends Phaser.Scene {
     this.mobileControls = new MobileControls(this);
   }
 
-  generateLevel() {
-    CreateBoxPolygon({
-      worldId: gameState.worldId,
+  /**
+   * Creates a single platform segment (sprite and physics body).
+   *
+   * @param x The center x position in pixels.
+   * @param y The center y position in pixels.
+   * @param type The type of platform segment ('left', 'middle', 'right').
+   */
+  createPlatformSegment(
+    x: number,
+    y: number,
+    type: "left" | "middle" | "right"
+  ) {
+    let assetKey: string;
+    switch (type) {
+      case "left":
+        assetKey = ASSETS.PLATFORM.LEFT;
+        break;
+      case "middle":
+        assetKey = ASSETS.PLATFORM.MIDDLE;
+        break;
+      case "right":
+        assetKey = ASSETS.PLATFORM.RIGHT;
+        break;
+    }
+
+    const image = this.add.image(x, y, ASSETS.ATLAS, assetKey);
+
+    const bodyDef = {
+      ...b2DefaultBodyDef(),
       type: STATIC,
-      bodyDef: b2DefaultBodyDef(),
-      position: pxmVec2(500, 700),
-      size: new b2Vec2(50, 1),
+      position: pxmVec2(x, y),
+    };
+
+    // Use SpriteToBox to link the sprite with a static body
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    SpriteToBox(gameState.worldId as any, image, {
+      bodyDef,
+      density: 0, // Static bodies have 0 density
       friction: PHYSICS.PLATFORM.FRICTION,
-      updateBodyMass: false,
+      restitution: 0,
+      userData: { type: "platform" },
     });
+
+    // No need for AddSpriteToWorld explicitly here, as SpriteToBox handles the linking
+  }
+
+  generateLevel() {
+    // Remove the old placeholder CreateBoxPolygon call
+    // Create a simple platform for testing
+    const platformY = 600;
+    const startX = 200;
+    const tileWidth = 26; // From assets.json
+    const numMiddleTiles = 5;
+
+    let currentX = startX;
+
+    // Left edge
+    this.createPlatformSegment(currentX, platformY, "left");
+    currentX += tileWidth;
+
+    // Middle segments
+    for (let i = 0; i < numMiddleTiles; i++) {
+      this.createPlatformSegment(currentX, platformY, "middle");
+      currentX += tileWidth;
+    }
+
+    // Right edge
+    this.createPlatformSegment(currentX, platformY, "right");
   }
 
   setupCollisions() {

@@ -6,6 +6,8 @@ The primary focus is transitioning the existing JavaScript codebase within `vite
 
 ## 2. Recent Changes
 
+- Fixed `TypeError: Cannot read properties of undefined (reading 'worldDef')` by passing the gravity configuration to `CreateWorld` in `GameScene.create`.
+- Fixed player entity not rendering by adding `this.scene.add.existing(this)` to the `Player` constructor.
 - Identified that significant progress has been made on the JavaScript implementation in `vite-template/src`, contrary to the initial `progress.md`.
 - Installed TypeScript and `@types/node` as development dependencies within `vite-template`.
 - Created `vite-template/tsconfig.json` configured to:
@@ -16,11 +18,14 @@ The primary focus is transitioning the existing JavaScript codebase within `vite
 
 ## 3. Next Steps
 
-1.  **Rename `.js` files to `.ts`:** Convert all relevant JavaScript files in `vite-template/src` (and subdirectories like `scenes`, `entities`, `ui`, `lib`) to TypeScript files. Start with `main.js`.
-2.  **Add Types:** Incrementally add TypeScript types to the converted files, utilizing Phaser types and the custom Box2D types. Address type errors reported by `tsc`.
-3.  **Verify Imports:** Ensure all imports, especially the import of `PhaserBox2D.js`, function correctly in the `.ts` files.
-4.  **Update Build Scripts:** Modify `vite-template/package.json` to include a type-checking step in the build process.
-5.  **Test:** Thoroughly test the application after conversion to ensure no regressions were introduced.
+1.  **Verify Player Visibility:** Test the game to confirm the Player entity is now visible and controllable.
+2.  **Debug Level Generation:** Investigate why level elements (platforms, etc.) are not appearing. Review the `generateLevel` function in `GameScene.ts` and related entity creation logic.
+3.  **Continue TypeScript Transition:**
+    - Rename remaining `.js` files to `.ts`.
+    - Add Types incrementally.
+    - Verify Imports.
+    - Update Build Scripts.
+4.  **Test:** Thoroughly test the application after conversion to ensure no regressions were introduced.
 
 ## 4. Active Decisions and Considerations
 

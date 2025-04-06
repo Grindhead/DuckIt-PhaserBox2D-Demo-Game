@@ -40,6 +40,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
     this.scene = scene;
     this.playerState = { isJumping: false, isDead: false };
     this.jumpForce = PHYSICS.PLAYER.JUMP_FORCE;
+    this.scene.add.existing(this);
     this.initialize();
   }
 
