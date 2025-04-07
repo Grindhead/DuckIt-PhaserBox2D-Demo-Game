@@ -215,6 +215,15 @@ export default class GameScene extends Phaser.Scene {
             // Create a new physics body
             this.player.initPhysics();
 
+            // Reset any collected coins before resetting the player
+            this.coins.children.each((coinChild) => {
+              const coin = coinChild as Coin;
+              if (coin.isCollected) {
+                coin.reset(); // Makes coin visible and resets physics body if needed
+              }
+              return true; // Continue iteration
+            });
+
             // Make sure the player is registered in the bodyIdToSpriteMap
             if (this.player.bodyId) {
               this.bodyIdToSpriteMap.set(
