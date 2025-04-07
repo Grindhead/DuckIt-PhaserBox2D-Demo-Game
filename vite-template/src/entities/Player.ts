@@ -192,8 +192,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
    * @param resetGravity If true, resets gravity scale based on game state (default: true)
    */
   reset(resetGravity = true) {
-    console.log("Starting player reset at position:", this.startPosition);
-
     // Set sprite position first
     this.x = this.startPosition.x;
     this.y = this.startPosition.y - 50; // Increased from 30 to 50 for more clearance
@@ -216,12 +214,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
     this.setVisible(true);
     this.setActive(true);
     this.alpha = 1;
-
-    console.log("Player reset complete:", {
-      position: { x: this.x, y: this.y },
-      isPlaying: gameState.isPlaying,
-      bodyId: this.bodyId ? "valid" : "null",
-    });
   }
 
   initPhysics() {
@@ -234,13 +226,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
       b2DestroyBody(this.bodyId);
       this.bodyId = null;
     }
-
-    // Log current position before creating physics body
-    console.log("Player.initPhysics: Current position before physics", {
-      x: this.x,
-      y: this.y,
-      startPosition: this.startPosition,
-    });
 
     const bodyDef = {
       ...b2DefaultBodyDef(),
@@ -265,9 +250,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
     // Set gravity scale based on current game state
     const gravityScale = gameState.isPlaying ? 1.0 : 0.0;
     b2Body_SetGravityScale(bodyId, gravityScale);
-    console.log(
-      `Set initial gravity scale to ${gravityScale} (isPlaying: ${gameState.isPlaying})`
-    );
 
     // Create a box shape with scaled dimensions
     // Box2D uses half-width/height in meters
@@ -295,18 +277,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
     // Register this player's bodyId and sprite instance in the GameScene map
     if (this.bodyId && this.scene instanceof GameScene) {
       (this.scene as GameScene).bodyIdToSpriteMap.set(this.bodyId.index1, this);
-      console.log(
-        "Player registered in bodyIdToSpriteMap with index:",
-        this.bodyId.index1
-      );
-    } else if (this.bodyId) {
-      console.warn(
-        "Player added to a scene that is not GameScene. Cannot register in bodyIdToSpriteMap."
-      );
-    } else {
-      console.warn(
-        "Failed to register player in bodyIdToSpriteMap. BodyId invalid."
-      );
     }
 
     // Explicitly wake up the body to ensure it's active for immediate collision detection
@@ -316,18 +286,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
       // Zero velocity on initialization
       b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
     }
-
-    // Log shape creation
-    console.log("Player physics body and shape created:", {
-      bodyId,
-      width: this.width * 0.6, // Actual collision width being used
-      height: this.height * 0.8, // Actual collision height being used
-      halfWidth,
-      halfHeight,
-      scale: PHYSICS.SCALE,
-      density: shapeDef.density,
-      friction: shapeDef.friction,
-    });
   }
 
   /**
@@ -361,9 +319,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
         b2Body_ApplyLinearImpulseToCenter(this.bodyId, stabilizeImpulse, true);
       }
     }
-
-    // Log for debugging
-    console.log(`Player.setGrounded: ${grounded}`);
   }
 
   /**
@@ -373,7 +328,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
   jump(): boolean {
     // Only jump if we have a physics body and are grounded
     if (!this.bodyId || !this.playerState.isGrounded) {
-      console.log("Jump failed - not grounded or no body");
       return false;
     }
 
@@ -406,7 +360,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
    * Kill the player (called when hitting enemies or death sensor)
    */
   kill() {
-    console.log("killing player");
     if (!this.playerState.isDead) {
       this.playerState.isDead = true;
 
@@ -418,12 +371,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
       if (this.bodyId) {
         b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
       }
-
-      // Log for debugging
-      console.log("Player death state set:", {
-        position: { x: this.x, y: this.y },
-        hasPhysics: !!this.bodyId,
-      });
     }
   }
 

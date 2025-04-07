@@ -19,7 +19,6 @@ import {
   b2CreateWorld,
   b2CreateWorldArray,
   b2DefaultWorldDef,
-  b2DestroyBody,
   b2Shape_GetUserData,
   b2Shape_IsSensor,
   b2Vec2,
@@ -28,7 +27,6 @@ import {
   b2World_Step,
   UpdateWorldSprites,
   b2WorldId,
-  b2Body_SetLinearVelocity,
   b2Body_SetGravityScale,
   b2Body_ApplyLinearImpulseToCenter,
 } from "@PhaserBox2D";
@@ -107,9 +105,6 @@ export default class GameScene extends Phaser.Scene {
    */
   setupPlayerState() {
     if (!this.player) return;
-
-    console.log("GameScene: Setting up player state");
-
     // Set initial gravity based on game state
     if (this.player.bodyId) {
       // Disable gravity at start (will be enabled when game starts)
@@ -118,12 +113,6 @@ export default class GameScene extends Phaser.Scene {
 
     // Move camera to player
     this.cameras.main.centerOn(this.player.x, this.player.y);
-
-    console.log("GameScene: Player setup complete", {
-      x: this.player.x,
-      y: this.player.y,
-      hasPhysics: !!this.player.bodyId,
-    });
   }
 
   createUI() {
@@ -208,12 +197,6 @@ export default class GameScene extends Phaser.Scene {
         (visitorUserData?.type === "player" &&
           sensorUserData?.type === "deathSensor")
       ) {
-        // Log position and reset player
-        console.log("Player contacted death sensor at position:", {
-          x: this.player?.x,
-          y: this.player?.y,
-        });
-
         // Kill the player which stops movement and plays death animation
         this.player.kill();
 
@@ -252,36 +235,25 @@ export default class GameScene extends Phaser.Scene {
                   b2Body_SetGravityScale(this.player.bodyId, 0.2);
 
                   // Second step: After a short delay, increase gravity and ensure the player is above any platform
-                  this.time.delayedCall(50, () => {
-                    if (this.player && this.player.bodyId) {
-                      // Apply full gravity
-                      b2Body_SetGravityScale(this.player.bodyId, 1.0);
 
-                      // Apply a gentle downward impulse - reduced from previous value to prevent tunneling
-                      const landingImpulse = new b2Vec2(0, -0.3);
-                      b2Body_ApplyLinearImpulseToCenter(
-                        this.player.bodyId,
-                        landingImpulse,
-                        true
-                      );
+                  if (this.player && this.player.bodyId) {
+                    // Apply full gravity
+                    b2Body_SetGravityScale(this.player.bodyId, 1.0);
 
-                      console.log(
-                        "Applied full gravity and landing impulse after respawn"
-                      );
-                    }
-                  });
+                    // Apply a gentle downward impulse - reduced from previous value to prevent tunneling
+                    const landingImpulse = new b2Vec2(0, -0.3);
+                    b2Body_ApplyLinearImpulseToCenter(
+                      this.player.bodyId,
+                      landingImpulse,
+                      true
+                    );
+                  }
                 }
               });
             }
 
             // Update camera position
             this.cameras.main.centerOn(this.player.x, this.player.y);
-
-            console.log("Player respawned after death", {
-              position: { x: this.player.x, y: this.player.y },
-              bodyId: this.player.bodyId ? "valid" : "null",
-              gravityScale: 0, // Initial zero gravity during repositioning
-            });
           }
         });
       }
@@ -364,10 +336,6 @@ export default class GameScene extends Phaser.Scene {
                 true
               );
             }
-
-            console.log(
-              "Player grounded from bottom contact or no vertical movement"
-            );
           }
         } else {
           // Only set ungrounded if it was specifically this platform contact that ended
@@ -403,15 +371,8 @@ export default class GameScene extends Phaser.Scene {
                   (otherUserDataB?.type === "player" &&
                     otherUserDataA?.type === "platform"))
               ) {
-                hasOtherPlatformContacts = true;
                 break;
               }
-            }
-
-            // Only set ungrounded if there are no other platform contacts
-            if (!hasOtherPlatformContacts) {
-              this.player.setGrounded(false);
-              console.log("Player ungrounded from end contact");
             }
           }
         }
@@ -422,7 +383,6 @@ export default class GameScene extends Phaser.Scene {
   killPlayer() {
     if (!gameState.isPlaying || gameState.isGameOver) return;
 
-    console.log("Executing killPlayer...");
     this.player?.kill();
     gameState.endGame();
     this.gameOverOverlay.show();
@@ -433,10 +393,9 @@ export default class GameScene extends Phaser.Scene {
       if (this.player && this.player.bodyId) {
         // Enable gravity when game starts (this is what makes the player start falling)
         b2Body_SetGravityScale(this.player.bodyId, 1);
-        console.log("Enabled gravity for player body");
       }
 
-      const success = gameState.startGame();
+      gameState.startGame();
       this.startScreen.hide();
       this.gameOverOverlay.hide();
     }
@@ -447,9 +406,6 @@ export default class GameScene extends Phaser.Scene {
    * Resets player position, state, collected coins, and UI elements.
    */
   restart() {
-    console.log("Restarting game logic (persistent world)...");
-    // gameState.restartGame(); // Resets coins count, sets state to READY
-
     // Reset any collected coins
     this.coins.children.each((coinChild) => {
       const coin = coinChild as Coin;
@@ -463,7 +419,5 @@ export default class GameScene extends Phaser.Scene {
     this.gameOverOverlay.hide();
     this.startScreen.show(); // Show start screen to initiate playing again
     this.coinCounter.updateCount(); // Reflects the reset coin count (0)
-
-    console.log("Game logic restart complete.");
   }
 }

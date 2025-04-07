@@ -94,8 +94,32 @@ export default class Coin extends Phaser.GameObjects.Sprite {
     if (this.isCollected) return;
     this.isCollected = true;
 
-    this.setVisible(false);
-    this.setActive(false); // Also set inactive
+    // Stop the idle animation if it's playing
+    this.stop();
+
+    // Play the collect animation
+    this.play(ASSETS.COIN.COLLECT.KEY);
+
+    // Listen for animation completion
+    this.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      // Increment coin count in gameState
+      gameState.incrementCoins();
+
+      // Remove the physics body from the world
+      if (this.bodyId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        RemoveSpriteFromWorld(gameState.worldId as any, this.bodyId);
+        // Optional: Nullify bodyId if needed for garbage collection checks
+        // this.bodyId = null;
+      }
+
+      // Make the sprite inactive and invisible after animation
+      this.setActive(false);
+      this.setVisible(false);
+
+      // Optional: Could destroy the sprite here if coins are never reset
+      // this.destroy();
+    });
   }
 
   /**

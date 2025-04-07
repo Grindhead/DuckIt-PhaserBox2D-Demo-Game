@@ -109,7 +109,6 @@ class GameState {
 
     this._executeExitActions(this.currentState);
     this.currentState = newState;
-    console.log(`Transition successful. New state: ${this.currentState}`);
     this._executeEntryActions(newState);
 
     return true;
@@ -237,7 +236,6 @@ class GameState {
    * @returns {boolean} Whether the transition was successful
    */
   restartGame() {
-    console.log("restarting game");
     if (this.isGameOver) {
       return this.transition(GameStates.READY);
     }
