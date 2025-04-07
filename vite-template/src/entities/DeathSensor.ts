@@ -30,107 +30,129 @@ interface InitialConfig {
   height: number;
 }
 
-export default class DeathSensor extends Phaser.GameObjects.Rectangle {
+export default class DeathSensor {
   scene: Phaser.Scene;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  bodyId: any | null = null;
-  initialConfig: InitialConfig | null = null;
+  bodyId: ReturnType<typeof b2CreateBody> | null = null;
+  marker: Phaser.GameObjects.Rectangle | null = null;
 
+  /**
+   * Creates a new death sensor at the specified position
+   * @param scene The scene to add the sensor to
+   */
   constructor(scene: Phaser.Scene) {
-    super(
-      scene,
-      WORLD.WIDTH / 2,
-      WORLD.DEATH_SENSOR_Y,
-      WORLD.WIDTH,
-      PHYSICS.DEATH_SENSOR.HEIGHT
-    );
     this.scene = scene;
-    this.initialize();
+
+    const { x, y, width, height } = this.calculateInitialConfig();
+
+    // Create the body
+    this.createPhysicsBody(x, y, width, height);
+
+    // Optionally create a visual marker for debugging
+    this.createDebugMarker(x, y, width, height);
   }
 
-  initialize() {
-    this.initialConfig = {
-      x: this.x,
-      y: this.y,
-      width: this.width,
-      height: this.height,
+  /**
+   * Calculate the initial configuration for the death sensor
+   * @returns The initial configuration
+   */
+  private calculateInitialConfig(): InitialConfig {
+    // Position the death sensor 200px below the lowest platform
+    // The lowest platform is at y = 600 (as defined in the levelGenerator)
+    const lowestPlatformY = 600;
+    const sensorY = lowestPlatformY + 200; // 200px below the platform
+
+    return {
+      x: WORLD.WIDTH / 2,
+      y: sensorY,
+      width: WORLD.WIDTH, // Cover the entire width of the world
+      height: PHYSICS.DEATH_SENSOR.HEIGHT,
     };
-
-    this.scene.add.existing(this);
-
-    this.createSensor();
   }
 
-  destroySensor() {
-    if (this.bodyId) {
-      console.log(
-        `DeathSensor.destroySensor: Destroying body ${JSON.stringify(
-          this.bodyId
-        )} in world ${JSON.stringify(gameState.worldId)}`
-      );
-      b2DestroyBody(this.bodyId);
-      this.bodyId = null;
-    }
-  }
-
-  reset() {
-    this.destroySensor();
-    this.createSensor();
-
-    if (!this.bodyId) {
-      console.error("DeathSensor.reset: Failed to recreate sensor body!");
-      return;
-    }
-  }
-
-  createSensor() {
-    if (!this.initialConfig) {
-      console.error("DeathSensor.createSensor: initialConfig is null!");
-      return;
-    }
-    this.setPosition(this.initialConfig.x, this.initialConfig.y);
-    this.setSize(this.initialConfig.width, this.initialConfig.height);
-
+  /**
+   * Create the Box2D physics body for the death sensor
+   * @param x X position
+   * @param y Y position
+   * @param width Width of the sensor
+   * @param height Height of the sensor
+   */
+  private createPhysicsBody(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) {
+    // Create body definition
     const bodyDef = {
       ...b2DefaultBodyDef(),
       type: STATIC,
-      position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE), // Scale and negate Y for Box2D
+      position: new b2Vec2(x / PHYSICS.SCALE, -y / PHYSICS.SCALE),
+      allowSleep: false,
     };
 
-    // Create the body directly
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const bodyId = b2CreateBody(gameState.worldId as any, bodyDef);
-    this.bodyId = bodyId;
+    // Create the body
+    this.bodyId = b2CreateBody(gameState.worldId, bodyDef);
 
-    if (!bodyId) {
-      console.error("Failed to create death sensor physics body!");
+    if (!this.bodyId) {
+      console.error("Failed to create death sensor body");
       return;
     }
 
-    // Define the shape
+    // Create shape definition
     const shapeDef = {
       ...b2DefaultShapeDef(),
-      isSensor: true,
-      enableContactEvents: true,
       density: PHYSICS.DEATH_SENSOR.DENSITY,
       friction: PHYSICS.DEATH_SENSOR.FRICTION,
       restitution: PHYSICS.DEATH_SENSOR.RESTITUTION,
-      userData: { type: "deathSensor" },
+      isSensor: true, // Important: this is a sensor, not a solid body
+      userData: { type: "deathSensor" }, // Used to identify collisions
     };
 
-    // Create the box geometry with proper scaling (in meters)
-    const halfWidth = this.width / (2 * PHYSICS.SCALE);
-    const halfHeight = this.height / (2 * PHYSICS.SCALE);
-
+    // Create box shape
+    const halfWidth = width / (2 * PHYSICS.SCALE);
+    const halfHeight = height / (2 * PHYSICS.SCALE);
     const box = b2MakeBox(halfWidth, halfHeight);
 
-    // Create the polygon shape and attach it to the body
-    b2CreatePolygonShape(bodyId, shapeDef, box);
+    // Create the shape
+    b2CreatePolygonShape(this.bodyId, shapeDef, box);
 
-    if (bodyId) {
-      // Pass an object with bodyId property
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      AddSpriteToWorld(gameState.worldId as any, this, { bodyId });
+    console.log(
+      `Death sensor created at y=${y} (${
+        y / PHYSICS.SCALE
+      }m), width=${width}, height=${height}`
+    );
+  }
+
+  /**
+   * Create a visual marker for debugging
+   * @param x X position
+   * @param y Y position
+   * @param width Width of the sensor
+   * @param height Height of the sensor
+   */
+  private createDebugMarker(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) {
+    // Create a visual marker for debugging (optional - can be removed in production)
+    this.marker = this.scene.add.rectangle(x, y, width, height, 0xff0000, 0.3);
+    this.marker.setDepth(100); // Make sure it's visible above other elements
+  }
+
+  /**
+   * Clean up the death sensor (called when the scene is destroyed)
+   */
+  destroy() {
+    if (this.bodyId) {
+      b2DestroyBody(this.bodyId);
+      this.bodyId = null;
+    }
+
+    if (this.marker) {
+      this.marker.destroy();
+      this.marker = null;
     }
   }
 }

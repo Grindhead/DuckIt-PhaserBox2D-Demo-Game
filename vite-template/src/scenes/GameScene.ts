@@ -81,14 +81,9 @@ export default class GameScene extends Phaser.Scene {
     this.playerStartPosition = playerPos;
 
     this.player = new Player(this, playerPos.x, playerPos.y);
-    console.log("GameScene: Player re-enabled", {
-      x: this.player.x,
-      y: this.player.y,
-    });
 
-    if (this.player.bodyId) {
-      b2Body_SetGravityScale(this.player.bodyId, 0);
-    }
+    // Initial setup of player after creation
+    this.setupPlayerState();
 
     this.deathSensor = new DeathSensor(this);
 
@@ -103,6 +98,31 @@ export default class GameScene extends Phaser.Scene {
     this.createUI();
     this.setupInput();
     this.startScreen.show();
+  }
+
+  /**
+   * Reusable method to reset and setup the player's initial state
+   * Works for both initial spawn and respawn after death
+   */
+  setupPlayerState() {
+    if (!this.player) return;
+
+    console.log("GameScene: Setting up player state");
+
+    // Set initial gravity based on game state
+    if (this.player.bodyId) {
+      // Disable gravity at start (will be enabled when game starts)
+      b2Body_SetGravityScale(this.player.bodyId, 0);
+    }
+
+    // Move camera to player
+    this.cameras.main.centerOn(this.player.x, this.player.y);
+
+    console.log("GameScene: Player setup complete", {
+      x: this.player.x,
+      y: this.player.y,
+      hasPhysics: !!this.player.bodyId,
+    });
   }
 
   createUI() {
@@ -123,27 +143,23 @@ export default class GameScene extends Phaser.Scene {
 
     UpdateWorldSprites(worldId);
 
-    if (this.player && this.player.bodyId) {
-      const playerY = this.player.y;
-      const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
-
-      if (
-        playerY >= 500 &&
-        playerY <= 620 &&
-        velocity.y < 0 &&
-        velocity.y > -5
-      ) {
-        if (!this.player.playerState.isGrounded) {
-          this.player.setGrounded(true);
-        }
-      }
-    }
-
     if (gameState.isPlaying) {
       this.processPhysicsEvents(worldId);
 
       if (this.player && this.controls) {
         this.player.update(this.controls);
+
+        // Ensure camera is properly following the player every frame
+        this.cameras.main.scrollX = Phaser.Math.Linear(
+          this.cameras.main.scrollX,
+          this.player.x - this.cameras.main.width / 2,
+          0.1
+        );
+        this.cameras.main.scrollY = Phaser.Math.Linear(
+          this.cameras.main.scrollY,
+          this.player.y - this.cameras.main.height / 2,
+          0.1
+        );
       }
 
       this.mobileControls.getState();
@@ -151,7 +167,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     if (gameState.isGameOver && this.input.activePointer.isDown) {
-      this.restart();
+      this.startGame();
     }
   }
 
@@ -191,59 +207,137 @@ export default class GameScene extends Phaser.Scene {
         (visitorUserData?.type === "player" &&
           sensorUserData?.type === "deathSensor")
       ) {
-        this.killPlayer();
+        // Log position and reset player
+        console.log("Player contacted death sensor at position:", {
+          x: this.player?.x,
+          y: this.player?.y,
+        });
+
+        // Reset the player position and state
+        if (this.player) {
+          // Reset player but don't change gravity scale (maintain current gravity)
+          this.player.reset(false);
+
+          // Update camera position without changing other player state
+          this.cameras.main.centerOn(this.player.x, this.player.y);
+        }
       }
     }
 
     const contactEvents = b2World_GetContactEvents(worldId);
-    const allContactEvents = [
-      ...(contactEvents.beginEvents || []),
-      ...(contactEvents.hitEvents || []),
-    ];
 
-    let isPlayerTouchingPlatform = false;
-    for (const event of allContactEvents) {
-      const shapeIdA = event.shapeIdA;
-      const shapeIdB = event.shapeIdB;
-      const userDataA = b2Shape_GetUserData(shapeIdA) as ShapeUserData;
-      const userDataB = b2Shape_GetUserData(shapeIdB) as ShapeUserData;
-      const isSensorA = b2Shape_IsSensor(shapeIdA);
-      const isSensorB = b2Shape_IsSensor(shapeIdB);
+    if (this.player && this.player.bodyId) {
+      // First, check for begin/hit contact events
+      for (const event of contactEvents.beginEvents) {
+        this.processContactEvent(event, true);
+      }
 
-      if (!isSensorA && !isSensorB) {
-        if (
-          (userDataA?.type === "player" && userDataB?.type === "platform") ||
-          (userDataB?.type === "player" && userDataA?.type === "platform")
-        ) {
-          isPlayerTouchingPlatform = true;
-          break;
-        }
+      for (const event of contactEvents.hitEvents) {
+        this.processContactEvent(event, true);
+      }
+
+      // Then check for end contact events
+      for (const event of contactEvents.endEvents) {
+        this.processContactEvent(event, false);
       }
     }
+  }
 
-    if (this.player) {
-      const velocity = this.player.bodyId
-        ? b2Body_GetLinearVelocity(this.player.bodyId)
-        : { y: 0 };
+  /**
+   * Process a single contact event to determine player grounding
+   * @param event The contact event to process
+   * @param isBeginningContact Whether this is a beginning/continuing contact (true) or ending contact (false)
+   */
+  private processContactEvent(
+    event: {
+      shapeIdA: unknown;
+      shapeIdB: unknown;
+      normal?: { x: number; y: number };
+    },
+    isBeginningContact: boolean
+  ) {
+    if (!this.player || !this.player.bodyId) return;
 
-      if (isPlayerTouchingPlatform) {
-        if (velocity.y <= PHYSICS.PLAYER.JUMP_THRESHOLD) {
-          if (!this.player.playerState.isGrounded) {
+    const shapeIdA = event.shapeIdA;
+    const shapeIdB = event.shapeIdB;
+    const userDataA = b2Shape_GetUserData(shapeIdA) as ShapeUserData;
+    const userDataB = b2Shape_GetUserData(shapeIdB) as ShapeUserData;
+    const isSensorA = b2Shape_IsSensor(shapeIdA);
+    const isSensorB = b2Shape_IsSensor(shapeIdB);
+
+    // Only check solid collisions (not sensors)
+    if (!isSensorA && !isSensorB) {
+      // Check for player-platform contact
+      if (
+        (userDataA?.type === "player" && userDataB?.type === "platform") ||
+        (userDataB?.type === "player" && userDataA?.type === "platform")
+      ) {
+        // Determine if player is above the platform
+        // For Box2D, we need to look at the contact normal
+        const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
+
+        // Contact normal check - in Box2D a positive y normal means contact from above
+        let isBottomContact = false;
+        if (event.normal) {
+          // Check if the player feet are contacting platform (y normal > 0)
+          // or if player is standing still (y velocity close to 0)
+          const normalY = event.normal.y;
+          isBottomContact = normalY > 0;
+        }
+
+        // If this is a new contact and player is contacting platform from bottom/feet
+        if (isBeginningContact) {
+          // Beginning or continuing contact with platform
+          if (isBottomContact || Math.abs(velocity.y) < 0.1) {
             this.player.setGrounded(true);
+            console.log(
+              "Player grounded from bottom contact or no vertical movement"
+            );
           }
         } else {
-          if (this.player.playerState.isGrounded) {
-            this.player.setGrounded(false);
-          }
-        }
-      } else {
-        const airborneThreshold = 0.1;
-        if (
-          Math.abs(velocity.y) > airborneThreshold ||
-          !this.player.playerState.isGrounded
-        ) {
-          if (this.player.playerState.isGrounded) {
-            this.player.setGrounded(false);
+          // Only set ungrounded if it was specifically this platform contact that ended
+          // and the player was previously grounded
+          if (this.player.playerState.isGrounded && isBottomContact) {
+            // Check if there are any other platform contacts still active
+            let hasOtherPlatformContacts = false;
+
+            // Look through current begin/hit events to see if there are other platforms
+            for (const otherEvent of [
+              ...(b2World_GetContactEvents(gameState.worldId).beginEvents ||
+                []),
+              ...(b2World_GetContactEvents(gameState.worldId).hitEvents || []),
+            ]) {
+              // Skip if it's the same event
+              if (otherEvent === event) continue;
+
+              const otherShapeIdA = otherEvent.shapeIdA;
+              const otherShapeIdB = otherEvent.shapeIdB;
+              const otherUserDataA = b2Shape_GetUserData(
+                otherShapeIdA
+              ) as ShapeUserData;
+              const otherUserDataB = b2Shape_GetUserData(
+                otherShapeIdB
+              ) as ShapeUserData;
+
+              // Check if this is another platform contact
+              if (
+                !b2Shape_IsSensor(otherShapeIdA) &&
+                !b2Shape_IsSensor(otherShapeIdB) &&
+                ((otherUserDataA?.type === "player" &&
+                  otherUserDataB?.type === "platform") ||
+                  (otherUserDataB?.type === "player" &&
+                    otherUserDataA?.type === "platform"))
+              ) {
+                hasOtherPlatformContacts = true;
+                break;
+              }
+            }
+
+            // Only set ungrounded if there are no other platform contacts
+            if (!hasOtherPlatformContacts) {
+              this.player.setGrounded(false);
+              console.log("Player ungrounded from end contact");
+            }
           }
         }
       }
@@ -262,6 +356,7 @@ export default class GameScene extends Phaser.Scene {
   startGame() {
     if (gameState.isReady) {
       if (this.player && this.player.bodyId) {
+        // Enable gravity when game starts (this is what makes the player start falling)
         b2Body_SetGravityScale(this.player.bodyId, 1);
         console.log("Enabled gravity for player body");
       }
@@ -272,50 +367,28 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Restarts the game logic without reloading the scene or destroying the Box2D world.
+   * Resets player position, state, collected coins, and UI elements.
+   */
   restart() {
-    console.log("Restarting game scene...");
-    gameState.restartGame();
+    console.log("Restarting game logic (persistent world)...");
+    // gameState.restartGame(); // Resets coins count, sets state to READY
 
-    this.bodyIdToSpriteMap.clear();
-    this.coins.clear(true, true);
-
-    if (this.player && this.player.bodyId) {
-      try {
-        b2DestroyBody(this.player.bodyId);
-        this.player.bodyId = null;
-      } catch (e) {
-        console.error("Error destroying old player body on restart:", e);
+    // Reset any collected coins
+    this.coins.children.each((coinChild) => {
+      const coin = coinChild as Coin;
+      if (coin.isCollected) {
+        coin.reset(); // Makes coin visible and resets physics body if needed
       }
-    }
+      return true; // Continue iteration
+    });
 
-    if (this.player) {
-      this.player.destroy();
-    }
-
-    const playerPos = generateLevel(this, this.coins);
-    this.playerStartPosition = playerPos;
-
-    this.player = new Player(this, playerPos.x, playerPos.y);
-    if (this.player.bodyId) {
-      b2Body_SetGravityScale(this.player.bodyId, 0);
-      this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-    } else {
-      console.error("Failed to create player body on restart!");
-    }
-
-    this.deathSensor?.reset();
-
+    // Update UI
     this.gameOverOverlay.hide();
-    this.startScreen.show();
-    this.coinCounter.updateCount();
+    this.startScreen.show(); // Show start screen to initiate playing again
+    this.coinCounter.updateCount(); // Reflects the reset coin count (0)
 
-    if (this.playerStartPosition) {
-      this.cameras.main.centerOn(
-        this.playerStartPosition.x,
-        this.playerStartPosition.y
-      );
-    }
-
-    console.log("Game scene restart complete.");
+    console.log("Game logic restart complete.");
   }
 }

@@ -185,28 +185,65 @@ export default class Player extends Phaser.GameObjects.Sprite {
     }
   }
 
-  reset() {
-    this.destroyPhysics();
-    this.initPhysics();
-
+  /**
+   * Resets the player to initial position and state.
+   * This is called during both initial spawn and when respawning after death.
+   * @param resetGravity If true, resets gravity scale based on game state (default: true)
+   */
+  reset(resetGravity = true) {
     if (!this.bodyId) {
-      console.error("Player.reset: Failed to recreate physics body!");
+      console.error("Cannot reset player: no physics body");
       return;
     }
+
+    // Reset physical position - convert from pixels to Box2D coordinates (meters)
     const pos = new b2Vec2(
       this.startPosition.x / PHYSICS.SCALE,
-      -this.startPosition.y / PHYSICS.SCALE // Negate Y for Box2D
+      -(this.startPosition.y - 15) / PHYSICS.SCALE // More clearance above start position
     );
-    b2Body_SetTransform(this.bodyId, pos, new b2Rot(0, 0));
+    const angle = new b2Rot(0, 0);
+
+    // Set position and ensure sprite position matches physics body
+    b2Body_SetTransform(this.bodyId, pos, angle);
+    this.x = this.startPosition.x;
+    this.y = this.startPosition.y - 15; // Start higher above actual position
+
+    // Zero out velocity entirely
     b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 
+    // Reset gravity scale if requested
+    if (resetGravity) {
+      // Match gravity to game state (0 = no gravity during READY, 1 = normal gravity during PLAYING)
+      const gravityScale = gameState.isPlaying ? 1.0 : 0.0;
+      b2Body_SetGravityScale(this.bodyId, gravityScale);
+      console.log(
+        `Player: Reset gravity scale to ${gravityScale} (isPlaying: ${gameState.isPlaying})`
+      );
+    }
+
+    // Reset internal state
     this.playerState = {
       isDead: false,
-      isGrounded: false,
+      isGrounded: false, // Start as not grounded, let physics determine this in the next update
     };
-    this.setActive(true);
-    this.setVisible(true);
+
+    // Ensure the body is awake to detect collisions immediately
+    if (this.bodyId && gameState.worldId) {
+      // Apply a small downward impulse to ensure the player will contact the platform
+      // This helps with collision detection in Box2D
+      const wakeImpulse = new b2Vec2(0, -0.1); // Stronger downward impulse
+      b2Body_ApplyLinearImpulseToCenter(this.bodyId, wakeImpulse, true);
+
+      console.log("Applied impulse to ensure platform collision detection");
+    }
+
+    // Reset animation
     this.play(ASSETS.PLAYER.IDLE.KEY);
+
+    console.log("Player reset complete:", {
+      position: { x: this.x, y: this.y },
+      isPlaying: gameState.isPlaying,
+    });
   }
 
   initPhysics() {
@@ -226,7 +263,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       enableContactListener: true, // Make sure contact events are enabled
       allowSleep: false, // Prevent the body from sleeping
       bullet: true, // Enable continuous collision detection for accurate collisions
-      linearDamping: 0.1, // Decreased damping for better movement
+      linearDamping: 0.5, // Increased damping for better platform landing
     };
 
     const bodyId = b2CreateBody(gameState.worldId, bodyDef);
@@ -242,14 +279,14 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     // Create a box shape with scaled dimensions
     // Box2D uses half-width/height in meters
-    const halfWidth = (this.width * 0.7) / 2 / PHYSICS.SCALE; // Slightly smaller than sprite width
-    const halfHeight = (this.height * 0.9) / 2 / PHYSICS.SCALE; // Slightly smaller than sprite height
+    const halfWidth = (this.width * 0.6) / 2 / PHYSICS.SCALE; // Slightly smaller than sprite width
+    const halfHeight = (this.height * 0.8) / 2 / PHYSICS.SCALE; // Slightly smaller than sprite height
 
     // Create the shape definition
     const shapeDef = {
       ...b2DefaultShapeDef(),
       density: 1.0, // Normal density
-      friction: 0.3, // Moderate friction to prevent sticking to walls
+      friction: 0.6, // Increased friction to prevent sliding off platforms
       restitution: 0.0, // No bounce
       userData: { type: "player" }, // Important for collision identification
       isSensor: false, // Explicitly ensure it's not a sensor
@@ -263,8 +300,8 @@ export default class Player extends Phaser.GameObjects.Sprite {
     // Log shape creation
     console.log("Player physics body and shape created:", {
       bodyId,
-      width: this.width * 0.7, // Actual collision width being used
-      height: this.height * 0.9, // Actual collision height being used
+      width: this.width * 0.6, // Actual collision width being used
+      height: this.height * 0.8, // Actual collision height being used
       halfWidth,
       halfHeight,
       scale: PHYSICS.SCALE,
@@ -300,6 +337,27 @@ export default class Player extends Phaser.GameObjects.Sprite {
     // Set the internal state
     this.playerState.isGrounded = grounded;
 
+    // If we just landed, make sure animations reflect this immediately
+    if (grounded && this.bodyId) {
+      const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
+      const isMoving =
+        Math.abs(currentVelocity.x) >
+        PHYSICS.PLAYER.MOVE_THRESHOLD / PHYSICS.SCALE;
+
+      // Set appropriate animation when landing
+      if (isMoving) {
+        this.play(ASSETS.PLAYER.RUN.KEY);
+      } else {
+        this.play(ASSETS.PLAYER.IDLE.KEY);
+      }
+
+      // When we land, apply a small downward force to ensure stable contact
+      if (this.bodyId) {
+        const stabilizeImpulse = new b2Vec2(0, -0.05);
+        b2Body_ApplyLinearImpulseToCenter(this.bodyId, stabilizeImpulse, true);
+      }
+    }
+
     // Log for debugging
     console.log(`Player.setGrounded: ${grounded}`);
   }
@@ -311,6 +369,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
   jump(): boolean {
     // Only jump if we have a physics body and are grounded
     if (!this.bodyId || !this.playerState.isGrounded) {
+      console.log("Jump failed - not grounded or no body");
       return false;
     }
 
@@ -319,8 +378,8 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     // Only jump if we're not already moving upward significantly
     if (velocity.y < PHYSICS.PLAYER.JUMP_THRESHOLD) {
-      // Apply jump impulse
-      const jumpImpulse = new b2Vec2(0, PHYSICS.PLAYER.JUMP_FORCE);
+      // Apply jump impulse - slightly stronger to ensure good platform clearance
+      const jumpImpulse = new b2Vec2(0, PHYSICS.PLAYER.JUMP_FORCE * 1.3);
       b2Body_ApplyLinearImpulseToCenter(this.bodyId, jumpImpulse, true);
 
       // Set grounded to false since we're jumping
@@ -329,6 +388,10 @@ export default class Player extends Phaser.GameObjects.Sprite {
       // Play jump animation
       this.play(ASSETS.PLAYER.JUMP.KEY);
 
+      console.log(
+        "Player jumped with impulse:",
+        PHYSICS.PLAYER.JUMP_FORCE * 1.3
+      );
       return true;
     }
 
@@ -343,14 +406,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
     if (!this.playerState.isDead) {
       this.playerState.isDead = true;
       this.play(ASSETS.PLAYER.DEAD.KEY);
-
-      this.destroyPhysics();
-
-      this.scene.time.delayedCall(1000, () => {
-        gameState.transition(GameStates.GAME_OVER);
-        this.setActive(false);
-        this.setVisible(false);
-      });
     }
   }
 
@@ -359,6 +414,15 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
     const bodyMass = b2Body_GetMass(this.bodyId);
+
+    // Log velocity for debugging (every ~1 second)
+    if (this.scene.time.now % 1000 < 20) {
+      console.log("Player velocity:", {
+        x: currentVelocity.x * PHYSICS.SCALE,
+        y: currentVelocity.y * PHYSICS.SCALE,
+        isGrounded: this.playerState.isGrounded,
+      });
+    }
 
     let targetVelX = 0;
 
@@ -412,70 +476,30 @@ export default class Player extends Phaser.GameObjects.Sprite {
         }
       }
     } else {
-      // We're on the ground
+      // We're on the ground - just landed or already walking/idle
       const isMoving =
         Math.abs(currentVelocity.x) >
         PHYSICS.PLAYER.MOVE_THRESHOLD / PHYSICS.SCALE;
 
+      // Just landed from a fall or jump
+      const justLanded =
+        currentAnimKey === ASSETS.PLAYER.FALL.KEY ||
+        (currentAnimKey === ASSETS.PLAYER.JUMP.KEY && !this.anims.isPlaying);
+
       if (isMoving) {
         // Running
-        if (currentAnimKey !== ASSETS.PLAYER.RUN.KEY) {
+        if (currentAnimKey !== ASSETS.PLAYER.RUN.KEY || justLanded) {
           this.play(ASSETS.PLAYER.RUN.KEY);
         }
       } else {
-        // Idle
-        // Only play the IDLE animation if the current animation is not IDLE.
-        // This prevents restarting it if it has already played and stopped.
-        if (currentAnimKey !== ASSETS.PLAYER.IDLE.KEY) {
-          // Only transition to IDLE from RUN, FALL, or a finished JUMP animation.
-          if (
-            currentAnimKey === ASSETS.PLAYER.RUN.KEY ||
-            currentAnimKey === ASSETS.PLAYER.FALL.KEY ||
-            (currentAnimKey === ASSETS.PLAYER.JUMP.KEY && !this.anims.isPlaying)
-          ) {
-            this.play(ASSETS.PLAYER.IDLE.KEY);
-          }
+        // Idle - play immediately when landing or transitioning from run
+        if (
+          currentAnimKey !== ASSETS.PLAYER.IDLE.KEY &&
+          (justLanded || currentAnimKey === ASSETS.PLAYER.RUN.KEY)
+        ) {
+          this.play(ASSETS.PLAYER.IDLE.KEY);
         }
-        // If currentAnimKey IS ASSETS.PLAYER.IDLE.KEY, do nothing, let it stay on the last frame.
       }
-    }
-
-    // Check if player has fallen below platforms (y > 700)
-    if (this.y > 700 && gameState.isPlaying) {
-      console.log("Player fell below platforms, resetting position");
-      // Reset position to starting point
-      const pos = new b2Vec2(
-        this.startPosition.x / PHYSICS.SCALE,
-        -this.startPosition.y / PHYSICS.SCALE
-      );
-      // Set rotation to 0 (Box2D expects b2Rot)
-      const angle = new b2Rot(0, 0);
-
-      // --- Add Logging Before SetTransform ---
-      console.log("Player.update: Attempting SetTransform", {
-        startPositionX: this.startPosition?.x,
-        startPositionY: this.startPosition?.y,
-        scale: PHYSICS.SCALE,
-        calculatedPosX: pos?.x,
-        calculatedPosY: pos?.y,
-        intendedAngle: 0, // We know we are setting angle to 0
-        bodyIdValid: !!this.bodyId,
-      });
-      // --------------------------------------
-
-      b2Body_SetTransform(this.bodyId, pos, angle);
-      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
-
-      // Log physics state when falling
-      console.log("Player physics state when falling:", {
-        position: { x: this.x, y: this.y },
-        box2dPosition: {
-          x: this.x / PHYSICS.SCALE,
-          y: -this.y / PHYSICS.SCALE,
-        },
-        velocity: { x: currentVelocity.x, y: currentVelocity.y },
-        grounded: this.playerState.isGrounded,
-      });
     }
   }
 }

@@ -54,8 +54,8 @@ export default class Platform {
     // Get world ID from game state
     const worldId = gameState.worldId;
     // Calculate offset for better collision detection
-    // Move the body upward to better align with the platform top surface
-    const offsetY = (tileHeight * 0.15) / PHYSICS.SCALE; // Reduced offset for better top alignment
+    // Move the collision box slightly upward to create a better surface for the player
+    const offsetY = (tileHeight * 0.25) / PHYSICS.SCALE; // Increased offset for better top collision
 
     // Create body definition with the position offset applied directly
     const bodyDef = {
@@ -78,7 +78,7 @@ export default class Platform {
     const shapeDef = {
       ...b2DefaultShapeDef(),
       density: 0, // Static bodies have 0 density
-      friction: 4.0, // High friction for better stability (reduced from 8.0 to prevent sticking)
+      friction: 5.0, // Higher friction for better stability
       restitution: 0.0, // No bounce at all
       userData: { type: "platform" }, // Important for collision identification
       isSensor: false, // Explicitly ensure it's not a sensor
@@ -91,7 +91,7 @@ export default class Platform {
 
     // Increase the collision height to prevent tunneling
     // Use a more moderate height scale to avoid over-extension
-    const heightScale = 1.5; // Make collision box 1.5x taller than visual (reduced from 2.5x)
+    const heightScale = 1.2; // Slightly smaller height scale to focus on top surface
     const halfHeight = (tileHeight * heightScale) / (2 * PHYSICS.SCALE);
 
     // Create a standard box shape (no offset in the shape itself)

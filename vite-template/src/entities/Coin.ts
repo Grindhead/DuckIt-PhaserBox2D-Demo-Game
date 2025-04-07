@@ -95,21 +95,7 @@ export default class Coin extends Phaser.GameObjects.Sprite {
     this.isCollected = true;
 
     this.setVisible(false);
-
-    if (this.bodyId) {
-      // Immediately remove from GameScene map upon collection
-      if (this.scene instanceof GameScene) {
-        (this.scene as GameScene).bodyIdToSpriteMap.delete(this.bodyId.index1);
-      } else {
-        console.warn("Cannot remove coin from map: Scene is not GameScene.");
-      }
-
-      // Nullify the reference to the orphaned body
-      this.bodyId = null;
-    }
-
-    // Increment score
-    gameState.incrementCoins();
+    this.setActive(false); // Also set inactive
   }
 
   /**
@@ -119,27 +105,7 @@ export default class Coin extends Phaser.GameObjects.Sprite {
     this.isCollected = false;
     this.setVisible(true);
     this.setActive(true);
-    // Re-initialize physics if the body was orphaned on collect
-    if (!this.bodyId) {
-      this.initPhysics(); // This will create a new body and register it
-    }
+    // No need to re-initialize physics as the body was never destroyed/orphaned
     this.play(ASSETS.COIN.IDLE.KEY);
-  }
-
-  // Override destroy to clean up the physics body
-  destroy(fromScene?: boolean): void {
-    // Properly remove the sprite-body link and destroy the body
-    if (this.bodyId) {
-      // Remove from map if it exists (might be destroyed without collecting)
-      if (this.scene instanceof GameScene) {
-        (this.scene as GameScene).bodyIdToSpriteMap.delete(this.bodyId.index1);
-      }
-
-      // Nullify the reference
-      this.bodyId = null;
-    }
-
-    // Destroy the Phaser GameObject itself
-    super.destroy(fromScene);
   }
 }
