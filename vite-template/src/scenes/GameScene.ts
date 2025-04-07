@@ -12,10 +12,9 @@ import { PHYSICS, WORLD, SCENES } from "@constants";
 import Coin from "@entities/Coin";
 import DeathSensor from "@entities/DeathSensor";
 import Player from "@entities/Player";
-import { gameState, GameStates } from "@gameState";
+import { gameState } from "@gameState";
 import {
   b2Body_GetLinearVelocity,
-  b2BodyId,
   b2CreateWorld,
   b2CreateWorldArray,
   b2DefaultWorldDef,
@@ -39,7 +38,6 @@ import { generateLevel } from "../lib/levelGenerator";
 
 type b2WorldIdInstance = InstanceType<typeof b2WorldId>;
 type MappedSprite = Phaser.GameObjects.Sprite;
-type b2BodyIdInstance = InstanceType<typeof b2BodyId>;
 
 interface ShapeUserData {
   type: string;
@@ -235,7 +233,7 @@ export default class GameScene extends Phaser.Scene {
               b2Body_SetGravityScale(this.player.bodyId, 0);
 
               // Reset player position and state
-              this.player.reset(false); // Don't reset gravity from inside reset
+              this.player.reset(); // Don't reset gravity from inside reset
 
               // After a longer delay to ensure body position is stabilized, gradually introduce physics
               this.time.delayedCall(50, () => {
@@ -351,7 +349,6 @@ export default class GameScene extends Phaser.Scene {
           // and the player was previously grounded
           if (this.player.playerState.isGrounded && isBottomContact) {
             // Check if there are any other platform contacts still active
-            let hasOtherPlatformContacts = false;
 
             // Look through current begin/hit events to see if there are other platforms
             for (const otherEvent of [

@@ -8,18 +8,16 @@
 import * as Phaser from "phaser";
 
 import { ASSETS, PHYSICS, ANIMATION } from "@constants";
-import { gameState, GameStates } from "@gameState";
+import { gameState } from "@gameState";
 // Runtime values only
 import {
   AddSpriteToWorld,
   DYNAMIC,
   b2DefaultBodyDef,
   b2Vec2,
-  b2Rot,
   b2Body_GetLinearVelocity,
   b2Body_SetLinearVelocity,
   b2Body_ApplyLinearImpulseToCenter,
-  b2Body_SetTransform,
   b2Body_GetMass,
   b2DestroyBody,
   b2CreateBody,
@@ -32,12 +30,6 @@ import {
 } from "@PhaserBox2D";
 // Add import for GameScene
 import GameScene from "@scenes/GameScene";
-
-// Define a simple interface for b2Vec2 instances
-interface IB2Vec2 {
-  x: number;
-  y: number;
-}
 
 // Player state interface
 interface PlayerState {
@@ -191,7 +183,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
    * This is called during both initial spawn and when respawning after death.
    * @param resetGravity If true, resets gravity scale based on game state (default: true)
    */
-  reset(resetGravity = true) {
+  reset() {
     // Set sprite position first
     this.x = this.startPosition.x;
     this.y = this.startPosition.y - 50; // Increased from 30 to 50 for more clearance
