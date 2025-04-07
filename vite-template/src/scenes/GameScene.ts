@@ -30,6 +30,7 @@ import {
   b2WorldId,
   b2Body_SetLinearVelocity,
   b2Body_SetGravityScale,
+  b2Body_ApplyLinearImpulseToCenter,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -213,14 +214,76 @@ export default class GameScene extends Phaser.Scene {
           y: this.player?.y,
         });
 
-        // Reset the player position and state
-        if (this.player) {
-          // Reset player but don't change gravity scale (maintain current gravity)
-          this.player.reset(false);
+        // Kill the player which stops movement and plays death animation
+        this.player.kill();
 
-          // Update camera position without changing other player state
-          this.cameras.main.centerOn(this.player.x, this.player.y);
-        }
+        // Wait a short time before respawning to allow death animation to play
+        this.time.delayedCall(300, () => {
+          if (this.player) {
+            // First, update the startPosition to the original spawn point
+            if (this.playerStartPosition) {
+              this.player.startPosition.x = this.playerStartPosition.x;
+              this.player.startPosition.y = this.playerStartPosition.y;
+            }
+
+            // Destroy the existing physics body
+            this.player.destroyPhysics();
+
+            // Create a new physics body
+            this.player.initPhysics();
+
+            // Make sure the player is registered in the bodyIdToSpriteMap
+            if (this.player.bodyId) {
+              this.bodyIdToSpriteMap.set(
+                this.player.bodyId.index1,
+                this.player
+              );
+
+              // Temporarily disable gravity completely during repositioning
+              b2Body_SetGravityScale(this.player.bodyId, 0);
+
+              // Reset player position and state
+              this.player.reset(false); // Don't reset gravity from inside reset
+
+              // After a longer delay to ensure body position is stabilized, gradually introduce physics
+              this.time.delayedCall(50, () => {
+                if (this.player && this.player.bodyId) {
+                  // First step: Apply mild gravity to start controlled descent
+                  b2Body_SetGravityScale(this.player.bodyId, 0.2);
+
+                  // Second step: After a short delay, increase gravity and ensure the player is above any platform
+                  this.time.delayedCall(50, () => {
+                    if (this.player && this.player.bodyId) {
+                      // Apply full gravity
+                      b2Body_SetGravityScale(this.player.bodyId, 1.0);
+
+                      // Apply a gentle downward impulse - reduced from previous value to prevent tunneling
+                      const landingImpulse = new b2Vec2(0, -0.3);
+                      b2Body_ApplyLinearImpulseToCenter(
+                        this.player.bodyId,
+                        landingImpulse,
+                        true
+                      );
+
+                      console.log(
+                        "Applied full gravity and landing impulse after respawn"
+                      );
+                    }
+                  });
+                }
+              });
+            }
+
+            // Update camera position
+            this.cameras.main.centerOn(this.player.x, this.player.y);
+
+            console.log("Player respawned after death", {
+              position: { x: this.player.x, y: this.player.y },
+              bodyId: this.player.bodyId ? "valid" : "null",
+              gravityScale: 0, // Initial zero gravity during repositioning
+            });
+          }
+        });
       }
     }
 
@@ -280,16 +343,28 @@ export default class GameScene extends Phaser.Scene {
         let isBottomContact = false;
         if (event.normal) {
           // Check if the player feet are contacting platform (y normal > 0)
-          // or if player is standing still (y velocity close to 0)
           const normalY = event.normal.y;
-          isBottomContact = normalY > 0;
+          // More tolerant bottom contact detection
+          isBottomContact = normalY > 0.1;
         }
 
         // If this is a new contact and player is contacting platform from bottom/feet
         if (isBeginningContact) {
           // Beginning or continuing contact with platform
-          if (isBottomContact || Math.abs(velocity.y) < 0.1) {
+          // More tolerant vertical velocity check (0.1 → 0.2)
+          if (isBottomContact || Math.abs(velocity.y) < 0.2) {
             this.player.setGrounded(true);
+
+            // Apply a small additional downward impulse to stabilize on platform
+            if (this.player.bodyId) {
+              const stabilizeImpulse = new b2Vec2(0, -0.1);
+              b2Body_ApplyLinearImpulseToCenter(
+                this.player.bodyId,
+                stabilizeImpulse,
+                true
+              );
+            }
+
             console.log(
               "Player grounded from bottom contact or no vertical movement"
             );

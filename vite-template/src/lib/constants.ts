@@ -30,7 +30,7 @@ export const PHYSICS = {
     /** Horizontal movement speed in pixels/second */
     SPEED: 160,
     /** Vertical jump force (positive for upward force) */
-    JUMP_FORCE: 50,
+    JUMP_FORCE: 30,
     /** Mass density for physics calculations */
     DENSITY: 1.0,
     /** Surface friction coefficient */

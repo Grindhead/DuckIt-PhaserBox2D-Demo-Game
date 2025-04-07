@@ -28,6 +28,7 @@ import {
   b2CreatePolygonShape,
   b2Body_SetGravityScale,
   b2BodyId,
+  b2Body_SetAwake,
 } from "@PhaserBox2D";
 // Add import for GameScene
 import GameScene from "@scenes/GameScene";
@@ -191,35 +192,15 @@ export default class Player extends Phaser.GameObjects.Sprite {
    * @param resetGravity If true, resets gravity scale based on game state (default: true)
    */
   reset(resetGravity = true) {
-    if (!this.bodyId) {
-      console.error("Cannot reset player: no physics body");
-      return;
-    }
+    console.log("Starting player reset at position:", this.startPosition);
 
-    // Reset physical position - convert from pixels to Box2D coordinates (meters)
-    const pos = new b2Vec2(
-      this.startPosition.x / PHYSICS.SCALE,
-      -(this.startPosition.y - 15) / PHYSICS.SCALE // More clearance above start position
-    );
-    const angle = new b2Rot(0, 0);
-
-    // Set position and ensure sprite position matches physics body
-    b2Body_SetTransform(this.bodyId, pos, angle);
+    // Set sprite position first
     this.x = this.startPosition.x;
-    this.y = this.startPosition.y - 15; // Start higher above actual position
+    this.y = this.startPosition.y - 50; // Increased from 30 to 50 for more clearance
 
-    // Zero out velocity entirely
-    b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
-
-    // Reset gravity scale if requested
-    if (resetGravity) {
-      // Match gravity to game state (0 = no gravity during READY, 1 = normal gravity during PLAYING)
-      const gravityScale = gameState.isPlaying ? 1.0 : 0.0;
-      b2Body_SetGravityScale(this.bodyId, gravityScale);
-      console.log(
-        `Player: Reset gravity scale to ${gravityScale} (isPlaying: ${gameState.isPlaying})`
-      );
-    }
+    // Completely recreate physics body to ensure all properties are properly reset
+    this.destroyPhysics();
+    this.initPhysics();
 
     // Reset internal state
     this.playerState = {
@@ -227,26 +208,33 @@ export default class Player extends Phaser.GameObjects.Sprite {
       isGrounded: false, // Start as not grounded, let physics determine this in the next update
     };
 
-    // Ensure the body is awake to detect collisions immediately
-    if (this.bodyId && gameState.worldId) {
-      // Apply a small downward impulse to ensure the player will contact the platform
-      // This helps with collision detection in Box2D
-      const wakeImpulse = new b2Vec2(0, -0.1); // Stronger downward impulse
-      b2Body_ApplyLinearImpulseToCenter(this.bodyId, wakeImpulse, true);
-
-      console.log("Applied impulse to ensure platform collision detection");
-    }
-
     // Reset animation
+    this.anims.stop();
     this.play(ASSETS.PLAYER.IDLE.KEY);
+
+    // Set the player to be visible again
+    this.setVisible(true);
+    this.setActive(true);
+    this.alpha = 1;
 
     console.log("Player reset complete:", {
       position: { x: this.x, y: this.y },
       isPlaying: gameState.isPlaying,
+      bodyId: this.bodyId ? "valid" : "null",
     });
   }
 
   initPhysics() {
+    // Remove any existing physics body first
+    if (this.bodyId) {
+      // Unregister from the map first
+      if (this.scene instanceof GameScene) {
+        (this.scene as GameScene).bodyIdToSpriteMap.delete(this.bodyId.index1);
+      }
+      b2DestroyBody(this.bodyId);
+      this.bodyId = null;
+    }
+
     // Log current position before creating physics body
     console.log("Player.initPhysics: Current position before physics", {
       x: this.x,
@@ -274,8 +262,12 @@ export default class Player extends Phaser.GameObjects.Sprite {
       return;
     }
 
-    // Set gravity scale to 0 initially (will be set to 1 when game starts)
-    b2Body_SetGravityScale(bodyId, 0);
+    // Set gravity scale based on current game state
+    const gravityScale = gameState.isPlaying ? 1.0 : 0.0;
+    b2Body_SetGravityScale(bodyId, gravityScale);
+    console.log(
+      `Set initial gravity scale to ${gravityScale} (isPlaying: ${gameState.isPlaying})`
+    );
 
     // Create a box shape with scaled dimensions
     // Box2D uses half-width/height in meters
@@ -297,6 +289,34 @@ export default class Player extends Phaser.GameObjects.Sprite {
     const box = b2MakeBox(halfWidth, halfHeight);
     b2CreatePolygonShape(bodyId, shapeDef, box);
 
+    // Add the sprite to the physics world for updates
+    AddSpriteToWorld(gameState.worldId, this, { bodyId });
+
+    // Register this player's bodyId and sprite instance in the GameScene map
+    if (this.bodyId && this.scene instanceof GameScene) {
+      (this.scene as GameScene).bodyIdToSpriteMap.set(this.bodyId.index1, this);
+      console.log(
+        "Player registered in bodyIdToSpriteMap with index:",
+        this.bodyId.index1
+      );
+    } else if (this.bodyId) {
+      console.warn(
+        "Player added to a scene that is not GameScene. Cannot register in bodyIdToSpriteMap."
+      );
+    } else {
+      console.warn(
+        "Failed to register player in bodyIdToSpriteMap. BodyId invalid."
+      );
+    }
+
+    // Explicitly wake up the body to ensure it's active for immediate collision detection
+    if (this.bodyId) {
+      b2Body_SetAwake(this.bodyId, true);
+
+      // Zero velocity on initialization
+      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+    }
+
     // Log shape creation
     console.log("Player physics body and shape created:", {
       bodyId,
@@ -308,22 +328,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
       density: shapeDef.density,
       friction: shapeDef.friction,
     });
-
-    // Add the sprite to the physics world for updates
-    AddSpriteToWorld(gameState.worldId, this, { bodyId });
-
-    // Register this player's bodyId and sprite instance in the GameScene map
-    if (this.bodyId && this.scene instanceof GameScene) {
-      (this.scene as GameScene).bodyIdToSpriteMap.set(this.bodyId.index1, this);
-    } else if (this.bodyId) {
-      console.warn(
-        "Player added to a scene that is not GameScene. Cannot register in bodyIdToSpriteMap."
-      );
-    } else {
-      console.warn(
-        "Failed to register player in bodyIdToSpriteMap. BodyId invalid."
-      );
-    }
   }
 
   /**
@@ -405,7 +409,21 @@ export default class Player extends Phaser.GameObjects.Sprite {
     console.log("killing player");
     if (!this.playerState.isDead) {
       this.playerState.isDead = true;
+
+      // Stop any ongoing animations and play death animation
+      this.anims.stop();
       this.play(ASSETS.PLAYER.DEAD.KEY);
+
+      // If the physics body exists, disable movement by setting velocity to zero
+      if (this.bodyId) {
+        b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+      }
+
+      // Log for debugging
+      console.log("Player death state set:", {
+        position: { x: this.x, y: this.y },
+        hasPhysics: !!this.bodyId,
+      });
     }
   }
 
