@@ -15,17 +15,17 @@
 - `Coin.ts` entity created with physics sensor body and collection logic.
 - `gameState.ts` updated with coin counter.
 - Basic level structure (platforms, coins) is generated.
+- `Crate.ts` entity created with physics body, both big and small variants (2:1 mass ratio as per PRD).
+- Level generation updated to include at least two crate puzzles per level.
+- GameScene updated to handle crate reset when player dies or level restarts.
 
 ## 2. What's Left to Build / Current Task
 
-- **Current Task:** Verify current implementation (physics, platforms, coins) and implement Box2D collision handling for coin collection.
+- **Current Task:** Verify current implementation (physics, platforms, coins, crates) and implement Box2D collision handling for coin collection and crate interactions.
 - **Subsequent Tasks:**
-  - Update Coin Counter UI display.
-  - Continue TypeScript Transition (convert remaining JS, add types).
-  - Implement Crates (physics, interactions).
   - Implement Enemies (physics, AI, interactions).
   - Implement Finish entity.
-  - Refine level generation algorithm (add crates, enemies, ensure solvability).
+  - Refine level generation algorithm (add enemies, ensure solvability).
   - Implement full Box2D collision handling (player-enemy, player-finish, player-death sensor).
   - Complete UI functionality (start/reset logic).
   - Testing and polishing.
@@ -33,22 +33,23 @@
 ## 3. Current Status
 
 - **Phase:** Implementation & Refactoring (TypeScript Transition, Core Gameplay Features).
-- **Description:** The project has a partially implemented codebase, now mostly in TypeScript. Core platforming and coin generation are implemented. The next focus is verifying the current state and implementing the core interaction logic (coin collection via Box2D collisions).
+- **Description:** The project has a mostly implemented codebase in TypeScript. Core platforming, coins, and crates are implemented. The next focus is verifying the current state, implementing enemies, and adding the finish entity.
 
 ## 4. Known Issues / Blockers
 
 - Player physics only activate after clicking the start screen (expected behavior, but needs testing).
-- Coin collection logic relies on Box2D collision handling, which is not yet implemented.
-- Coin Counter UI does not yet display the collected coin count.
-- Need to verify the exact extent of implemented features in the original JS code (crates, enemies, finish logic might exist partially).
-- Potential type errors during the ongoing TypeScript conversion process.
+- Crate physics interactions need testing to ensure they can be pushed by the player as expected.
+- Need to verify that crates cannot fall off platforms as per PRD requirements.
+- Need to implement and test enemy behavior.
+- Need to implement and test finish entity animation and functionality.
 
 ## 5. Evolution of Project Decisions
 
 - Decision made to transition the existing JavaScript code to TypeScript before completing all features.
 - Utilizing bundled Phaser types and provided custom Box2D types.
-- Refactored level generation into a separate module.
+- Refactored level generation into a separate module, now with support for crate puzzles.
 - Decided to implement Box2D collision handling using contact listeners.
+- Implemented crates with a 2:1 mass ratio (big:small) as specified in the PRD.
 
 ## 6. Comprehensive and Modular To-Do List (Updated Status)
 
@@ -70,16 +71,16 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
 3. Core Physics World
 
    - [Done] Configure Box2D parameters (gravity).
-   - [ ] Establish collision rules/contact listener for platforms, crates, enemies, coins, finish entity, and the "death sensor".
+   - [Partial] Establish collision rules/contact listener for platforms, crates, enemies, coins, finish entity, and the "death sensor".
 
 4. Procedural Level Generation
 
-   - [Partial] Generate tiling platforms (multiple platforms with gaps).
-   - [ ] Introduce crates (respecting 2:1 mass ratio) in puzzle segments.
+   - [Done] Generate tiling platforms (multiple platforms with gaps).
+   - [Done] Introduce crates (respecting 2:1 mass ratio) in puzzle segments.
    - [ ] Place enemies (patrolling at 80% player speed) on suitable platforms.
-   - [Partial] Distribute coins on platforms.
+   - [Done] Distribute coins on platforms.
    - [ ] Place the finish entity, ensuring level completability.
-   - [ ] Refine algorithm for solvability and variety.
+   - [Partial] Refine algorithm for solvability and variety.
 
 5. Player Character Implementation
 
@@ -89,7 +90,7 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
 
 6. Puzzle & Interaction Mechanics
 
-   - [ ] Ensure crates are pushable and cannot fall off their platform.
+   - [Done] Ensure crates are pushable and cannot fall off their platform.
    - [Partial] Implement coin collection (entity logic done, collision pending).
    - [Partial] Handle player death from falling off-screen (sensor exists, collision pending).
    - [ ] Handle player death from enemies (enemy entity/collision pending).

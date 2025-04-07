@@ -1,48 +1,60 @@
-# Active Context: DuckIt - TypeScript Transition & Level Gen
+# Active Context: DuckIt - TypeScript Transition & Entity Implementation
 
 ## 1. Current Work Focus
 
-The primary focus is transitioning the existing JavaScript codebase within `vite-template/src` to TypeScript and implementing core gameplay features, starting with level generation (platforms, coins) and physics setup.
+The primary focus is continuing to implement core gameplay features from the PRD, specifically:
+
+1. Testing and refining the recently added Crate entity and crate puzzles in level generation
+2. Implementing the Enemy entity with proper patrolling behavior and collision handling
+3. Implementing the Finish entity with its multiple animation states
+4. Ensuring all Box2D collision handling works correctly for player-platform, player-crate, player-coin, player-enemy, and player-finish interactions
 
 ## 2. Recent Changes
 
-- Refactored platform generation logic from `GameScene.ts` into `vite-template/src/lib/levelGenerator.ts`.
-- Implemented basic procedural platform generation (multiple platforms with gaps) in `levelGenerator.ts`.
-- Removed incorrect Matter.js collision setup from `GameScene.ts`.
-- Created `Coin.ts` entity with sprite, physics sensor (Box2D), and basic `collect` method.
-- Added `coins` counter and `incrementCoins` method to `gameState.ts`.
-- Added coin asset constants to `constants.ts`.
-- Updated `levelGenerator.ts` to place `Coin` instances on generated platforms.
-- Fixed various import order and linter issues in `GameScene.ts` and `levelGenerator.ts`.
-- Addressed issues with player physics initialization related to the game starting in a paused state (requires user interaction with start screen).
+- Created `Crate.ts` entity with both big and small variants, implementing the 2:1 mass ratio as specified in the PRD.
+- Updated `levelGenerator.ts` to place crates on specific platforms to create at least two puzzle scenarios per level.
+- Enhanced level generation to create platforms at different heights occasionally to make the level more interesting.
+- Updated `GameScene.ts` to handle crate reset when the player dies or the level is restarted.
+- Added crate-related constants to `constants.ts` (both physics and asset definitions).
+- Added proper TypeScript typing for crates throughout the codebase.
+- Updated progress tracking in the memory bank.
 
 ## 3. Next Steps
 
 1.  **Test Current Implementation:** Run the game to verify:
-    - Player physics are active after starting the game.
-    - Multiple platforms with gaps are generated.
-    - Coins are visible on the platforms.
-2.  **Implement Box2D Collision Handling:** Set up a contact listener in `GameScene.ts` (or a dedicated physics manager) to handle collisions between the player and coins (triggering `coin.collect()`).
-3.  **Update Coin Counter UI:** Connect the `gameState.coins` value to the `CoinCounter` UI element so it updates visually.
-4.  **Continue TypeScript Transition:** Incrementally convert remaining JS files and add types.
-5.  **Implement Other Entities:** Add Crates and Enemies as per PRD.
+    - Crates can be pushed by the player.
+    - Crates have the correct physics properties (big crates heavier than small).
+    - Crate puzzles are functional and allow reaching higher platforms.
+2.  **Implement Enemy Entity:**
+    - Create `Enemy.ts` with patrolling AI (moving at 80% player speed).
+    - Add enemy placement to level generation (never on platforms with crates).
+    - Implement collision detection to kill the player on contact.
+3.  **Implement Finish Entity:**
+    - Create `Finish.ts` with the three animation states (Idle, Activated, Active).
+    - Place the finish entity at the end of the level.
+    - Implement collision handling to trigger state changes and level completion.
+4.  **Refine Box2D Collision Handling:**
+    - Test and ensure all entity interactions work correctly.
+    - Address any issues with physics behavior or collision detection.
 
 ## 4. Active Decisions and Considerations
 
-- Level generation logic is now separated for better organization.
-- Coins use Box2D sensors for collection detection.
-- `gameState` manages the coin count.
-- Need to implement Box2D contact listeners for interactions (player-coin, player-enemy, etc.) instead of Phaser's Matter integration.
+- Level generation now creates platforms at different heights to facilitate crate puzzles.
+- Crates have been designed to be physics objects that can be pushed but not rotated for better gameplay.
+- Need to ensure crates do not fall off their initial platforms as specified in the PRD.
+- Need to decide on the best approach for implementing enemy patrolling behavior.
 
 ## 5. Important Patterns and Preferences
 
-- Keep core logic (like level generation) in separate, reusable modules within `src/lib`.
-- Use `gameState` for managing global game state variables like score.
-- Entities manage their own physics bodies and state (e.g., `Coin.isCollected`).
+- Continue using separate entity classes for each game object (Player, Coin, Crate, etc.).
+- Maintain consistent approach to physics initialization and collision handling across entities.
+- Use Box2D sensors for non-physical collision detection (coins, finish, death sensor).
+- Use dynamic Box2D bodies with appropriate physics properties for interactive objects (player, crates).
+- Keep entity-specific logic within their respective classes.
 
 ## 6. Learnings and Project Insights
 
-- Linter rules for import order can be very specific and require careful manual adjustment.
-- Physics simulation (`b2World_Step`) needs to be called explicitly in the game loop and is tied to the `gameState` (only runs when `isPlaying`).
-- Separating concerns (like level generation) improves maintainability.
-- Box2D sensors are appropriate for non-physical collision detection (like coin pickup).
+- Box2D physics bodies need careful tuning to achieve desired behavior (e.g., crates that can be pushed but don't behave erratically).
+- Procedural level generation with physics bodies requires careful consideration of platform placement and object interactions.
+- Separating concerns (level generation, entity logic) improves maintainability.
+- Using TypeScript with proper types helps catch potential issues early.

@@ -10,6 +10,7 @@ import * as Phaser from "phaser";
 
 import { PHYSICS, WORLD, SCENES } from "@constants";
 import Coin from "@entities/Coin";
+import Crate from "@entities/Crate";
 import DeathSensor from "@entities/DeathSensor";
 import Player from "@entities/Player";
 import { gameState } from "@gameState";
@@ -54,6 +55,7 @@ export default class GameScene extends Phaser.Scene {
   mobileControls!: MobileControls;
   playerStartPosition: { x: number; y: number } | null = null;
   coins!: Phaser.GameObjects.Group;
+  crates!: Phaser.GameObjects.Group;
 
   bodyIdToSpriteMap = new Map<number, MappedSprite>();
 
@@ -222,41 +224,93 @@ export default class GameScene extends Phaser.Scene {
               return true; // Continue iteration
             });
 
-            // Make sure the player is registered in the bodyIdToSpriteMap
-            if (this.player.bodyId) {
-              this.bodyIdToSpriteMap.set(
-                this.player.bodyId.index1,
-                this.player
-              );
-
-              // Temporarily disable gravity completely during repositioning
-              b2Body_SetGravityScale(this.player.bodyId, 0);
-
-              // Reset player position and state
-              this.player.reset(); // Don't reset gravity from inside reset
-
-              // After a longer delay to ensure body position is stabilized, gradually introduce physics
-              this.time.delayedCall(50, () => {
-                if (this.player && this.player.bodyId) {
-                  // First step: Apply mild gravity to start controlled descent
-                  b2Body_SetGravityScale(this.player.bodyId, 0.2);
-
-                  // Second step: After a short delay, increase gravity and ensure the player is above any platform
-
-                  if (this.player && this.player.bodyId) {
-                    // Apply full gravity
-                    b2Body_SetGravityScale(this.player.bodyId, 1.0);
-
-                    // Apply a gentle downward impulse - reduced from previous value to prevent tunneling
-                    const landingImpulse = new b2Vec2(0, -0.3);
-                    b2Body_ApplyLinearImpulseToCenter(
-                      this.player.bodyId,
-                      landingImpulse,
-                      true
-                    );
-                  }
-                }
+            // Reset all crates to their original positions if they exist
+            if (this.crates) {
+              this.crates.children.each((crateChild) => {
+                const crate = crateChild as Crate;
+                crate.reset(); // Always reset all crates, not just active ones
+                return true; // Continue iteration
               });
+
+              // Wait another moment to ensure crates have properly reset
+              this.time.delayedCall(20, () => {
+                // Make sure the player is registered in the bodyIdToSpriteMap
+                if (this.player && this.player.bodyId) {
+                  this.bodyIdToSpriteMap.set(
+                    this.player.bodyId.index1,
+                    this.player
+                  );
+
+                  // Temporarily disable gravity completely during repositioning
+                  b2Body_SetGravityScale(this.player.bodyId, 0);
+
+                  // Reset player position and state
+                  this.player.reset(); // Don't reset gravity from inside reset
+
+                  // After a longer delay to ensure body position is stabilized, gradually introduce physics
+                  this.time.delayedCall(50, () => {
+                    if (this.player && this.player.bodyId) {
+                      // First step: Apply mild gravity to start controlled descent
+                      b2Body_SetGravityScale(this.player.bodyId, 0.2);
+
+                      // Second step: After a short delay, increase gravity and ensure the player is above any platform
+
+                      if (this.player && this.player.bodyId) {
+                        // Apply full gravity
+                        b2Body_SetGravityScale(this.player.bodyId, 1.0);
+
+                        // Apply a gentle downward impulse - reduced from previous value to prevent tunneling
+                        const landingImpulse = new b2Vec2(0, -0.3);
+                        b2Body_ApplyLinearImpulseToCenter(
+                          this.player.bodyId,
+                          landingImpulse,
+                          true
+                        );
+                      }
+                    }
+                  });
+                }
+
+                // Update camera position
+                this.cameras.main.centerOn(this.player.x, this.player.y);
+              });
+            } else {
+              // Make sure the player is registered in the bodyIdToSpriteMap
+              if (this.player && this.player.bodyId) {
+                this.bodyIdToSpriteMap.set(
+                  this.player.bodyId.index1,
+                  this.player
+                );
+
+                // Temporarily disable gravity completely during repositioning
+                b2Body_SetGravityScale(this.player.bodyId, 0);
+
+                // Reset player position and state
+                this.player.reset(); // Don't reset gravity from inside reset
+
+                // After a longer delay to ensure body position is stabilized, gradually introduce physics
+                this.time.delayedCall(50, () => {
+                  if (this.player && this.player.bodyId) {
+                    // First step: Apply mild gravity to start controlled descent
+                    b2Body_SetGravityScale(this.player.bodyId, 0.2);
+
+                    // Second step: After a short delay, increase gravity and ensure the player is above any platform
+
+                    if (this.player && this.player.bodyId) {
+                      // Apply full gravity
+                      b2Body_SetGravityScale(this.player.bodyId, 1.0);
+
+                      // Apply a gentle downward impulse - reduced from previous value to prevent tunneling
+                      const landingImpulse = new b2Vec2(0, -0.3);
+                      b2Body_ApplyLinearImpulseToCenter(
+                        this.player.bodyId,
+                        landingImpulse,
+                        true
+                      );
+                    }
+                  }
+                });
+              }
             }
 
             // Update camera position
@@ -412,17 +466,32 @@ export default class GameScene extends Phaser.Scene {
    * Resets player position, state, collected coins, and UI elements.
    */
   restart() {
+    // Reset the game state
+    gameState.reset(); // Reset everything including coins
+    gameState.startGame();
+
+    // Hide overlays
+    this.gameOverOverlay.hide();
+
     // Reset any collected coins
     this.coins.children.each((coinChild) => {
       const coin = coinChild as Coin;
       if (coin.isCollected) {
-        coin.reset(); // Makes coin visible and resets physics body if needed
+        coin.reset();
       }
       return true; // Continue iteration
     });
 
+    // Reset all crates to their original positions if they exist
+    if (this.crates) {
+      this.crates.children.each((crateChild) => {
+        const crate = crateChild as Crate;
+        crate.reset(); // Always reset all crates, not just active ones
+        return true; // Continue iteration
+      });
+    }
+
     // Update UI
-    this.gameOverOverlay.hide();
     this.startScreen.show(); // Show start screen to initiate playing again
     this.coinCounter.updateCount(); // Reflects the reset coin count (0)
   }

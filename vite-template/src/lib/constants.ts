@@ -49,6 +49,18 @@ export const PHYSICS = {
     FRICTION: 1.5,
   },
 
+  /** Crate physics properties */
+  CRATE: {
+    /** Big crate density (2x small crate for 2:1 mass ratio) */
+    BIG_DENSITY: 1.0,
+    /** Small crate density */
+    SMALL_DENSITY: 0.5,
+    /** Surface friction coefficient */
+    FRICTION: 0.3,
+    /** Bounce coefficient (low to prevent bouncing) */
+    RESTITUTION: 0.0,
+  },
+
   /** Death sensor properties */
   DEATH_SENSOR: {
     /** Height in pixels */
@@ -220,6 +232,20 @@ export const ASSETS = {
     MIDDLE: "platforms/platform-middle.png",
     /** Right edge sprite key */
     RIGHT: "platforms/platform-right.png",
+  },
+
+  /** Crate assets */
+  CRATE: {
+    /** Big crate sprite key */
+    BIG: {
+      /** Frame identifier */
+      FRAME: "crate/crate-big.png",
+    },
+    /** Small crate sprite key */
+    SMALL: {
+      /** Frame identifier */
+      FRAME: "crate/crate-small.png",
+    },
   },
 
   /** UI element assets */
