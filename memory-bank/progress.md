@@ -22,15 +22,20 @@
 - `platformGenerator.ts` updated to return platform physics boundaries (`minX`, `maxX`).
 - `crateGenerator.ts` module created to handle probabilistic placement of crates on platforms.
 - `levelGenerator.ts` updated to orchestrate crate generation using `crateGenerator.ts`, skipping the first platform.
+- Player grounding logic (`processContactEvent` in `GameScene.ts`) updated to correctly handle standing on crates (stabilizing impulse made platform-specific, bottom contact inferred if normal is missing but velocity is low).
+- Player state logic (`update` in `Player.ts`) handles transitions based on `isGrounded` and velocity, with corrected scaling for velocity threshold checks.
+- Adjusted `PHYSICS.PLAYER.JUMP_THRESHOLD` in `constants.ts` in an attempt to improve landing animation transitions.
+- Player state logic (`update` in `Player.ts`) refactored to improve Jump -> Fall -> Land (Idle/Run) animation transitions, including simplified airborne logic.
+- Player state logic (`Player.ts`) updated to use `ANIMATION_COMPLETE` event on JUMP animation to reliably trigger FALL animation, ensuring correct Jump -> Fall -> Land sequence.
 
 ## 2. What's Left to Build / Current Task
 
-- **Current Task:** Test Crate generation and interaction (pushing, boundary constraints).
+- **Current Task:** Test Crate generation and interaction (pushing, boundary constraints, player grounding).
 - **Subsequent Tasks:**
   - Verify refactored level generation (platforms, coins, gaps).
   - Implement Box2D collision handling for coin collection.
   - Update Coin Counter UI display.
-  - Test crate pushing physics and boundary constraints.
+  - Test crate pushing physics, boundary constraints, and player grounding on crates.
   - Continue TypeScript Transition (convert remaining JS, add types).
   - Implement Enemies (physics, AI, interactions).
   - Implement Finish entity.
@@ -49,7 +54,9 @@
 - Player physics only activate after clicking the start screen (expected behavior, but needs testing).
 - Coin collection logic relies on Box2D collision handling, which is not yet implemented.
 - Coin Counter UI does not yet display the collected coin count.
-- Need to verify the exact extent of implemented features in the original JS code (crates, enemies, finish logic might exist partially).
+- Box2D sometimes reports player-crate contacts without a normal vector (`event.normal` is undefined), but grounding logic now handles this by inferring bottom contact based on low velocity.
+- Player animation landing transition potentially fixed by event-driven Jump->Fall logic, pending testing.
+- Need to verify the exact extent of implemented features in the original JS code (enemies, finish logic might exist partially).
 - Potential type errors during the ongoing TypeScript conversion process.
 
 ## 5. Evolution of Project Decisions
@@ -101,7 +108,7 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
 
 6. Puzzle & Interaction Mechanics
 
-   - [Partial] Ensure crates are pushable and cannot fall off their platform.
+   - [Partial] Ensure crates are pushable, cannot fall off their platform, and act as groundable surfaces.
    - [Partial] Implement coin collection (entity logic done, collision pending).
    - [Partial] Handle player death from falling off-screen (sensor exists, collision pending).
    - [ ] Handle player death from enemies (enemy entity/collision pending).

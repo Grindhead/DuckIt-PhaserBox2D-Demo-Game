@@ -39,7 +39,7 @@ flowchart TD
   - `Boot`: Basic setup (scaling, background).
   - `Preloader`: Asset loading (texture atlas).
   - `Game`: Contains core gameplay logic, physics world setup, entity management, UI, and orchestrates level generation.
-- **Physics:** Integrated via `PhaserBox2D.js`. Handles collisions, movement constraints (player, crates, enemies), and interactions (coin collection, enemy contact, finish activation).
+- **Physics:** Integrated via `PhaserBox2D.js`. Handles collisions (via contact listeners), movement constraints (player, crates, enemies), player grounding (on platforms and crates, with a small stabilization impulse applied only for platform contacts; infers bottom contact if normal is missing but velocity is low), and interactions (coin collection, enemy contact, finish activation).
 - **Entity Management:** The `Game` scene manages all game objects (player, platforms, crates, coins, enemies, finish). Entities are created either directly or via the level generation modules (`platformGenerator`, `coinGenerator`, `crateGenerator`).
 - **Level Generation:** A modular approach orchestrated by `levelGenerator.ts`, which uses `platformGenerator.ts`, `coinGenerator.ts`, `crateGenerator.ts`, and `gapGenerator.ts` to create the level layout (platforms, coins, crates) according to PRD rules. Crate generation intentionally skips the first platform. Logic for placing enemies and the finish entity will be added later.
 - **Rendering:** Handled by Phaser's rendering engine.
@@ -59,7 +59,8 @@ flowchart TD
 ## 3. Design Patterns in Use
 
 - **Scene Management:** Phaser's built-in scene manager organizes game flow.
-- **State Pattern:** Player character uses states (`Idle`, `Run`, `Jump`, `Fall`, `Dead`). The finish entity also uses states.
+- **State Pattern:** Player character uses states (`Idle`, `Run`, `Jump`, `Fall`, `Dead`). The finish entity also uses states. State transitions are handled in the Player's `update` method based on `isGrounded` and velocity checks.
+- **State Pattern:** Player character uses states (`Idle`, `Run`, `Jump`, `Fall`, `Dead`). The finish entity also uses states. State transitions (including Jump -> Fall -> Land logic with simplified airborne checks) are handled in the Player's `update` method based on `isGrounded` and velocity checks.
 - **Entity Component System (Implicit):** Phaser's GameObjects with physics bodies and custom logic.
 - **Observer Pattern:** Used for animation events.
 - **Module Pattern:** Level generation logic is broken down into distinct, reusable modules.
@@ -70,7 +71,7 @@ flowchart TD
 - The `Game` scene is the central coordinator.
 - The `PhaserBox2D` world interacts with all physics-enabled entities.
 - Player input affects the player entity.
-- Box2D collision/sensor contacts trigger game logic.
+- Box2D collision/sensor contacts trigger game logic (managed in `GameScene.processContactEvent` and `GameScene.processPhysicsEvents`), including player grounding (on platforms/crates), coin collection, and death sensor activation.
 - The `levelGenerator.ts` orchestrates calls to the `platformGenerator`, `coinGenerator`, `crateGenerator`, and `gapGenerator` modules.
 - These generator modules create platform, coin, and crate entities and return data needed for further generation steps.
 - The `crateGenerator` uses platform boundary data (from `platformGenerator` via `levelGenerator`) to instantiate `Crate` entities correctly.

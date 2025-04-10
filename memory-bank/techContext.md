@@ -46,3 +46,7 @@
 - **Texture Packer:** Used externally to generate the texture atlas from source PNGs in the `assets` folder.
 - **Git:** Used for version control throughout development.
 - **Cursor/Gemini:** Used for code generation, refactoring (JS to TS), documentation, and pair programming.
+
+## 6. Physics Tuning (Added Section)
+
+- `PHYSICS.PLAYER.JUMP_THRESHOLD` in `constants.ts` was increased from 0.5 to 1.0 to attempt to resolve animation issues when landing on dynamic crates.

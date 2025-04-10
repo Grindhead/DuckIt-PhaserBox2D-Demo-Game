@@ -324,7 +324,8 @@ export default class Player extends Phaser.GameObjects.Sprite {
     // Set the internal state
     this.playerState.isGrounded = grounded;
 
-    // If we just landed, make sure animations reflect this immediately
+    // Remove animation logic from here - let the update loop handle it.
+    /*
     if (grounded && this.bodyId) {
       const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
       const isMoving =
@@ -344,6 +345,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
         b2Body_ApplyLinearImpulseToCenter(this.bodyId, stabilizeImpulse, true);
       }
     }
+    */
 
     // Log for debugging
     console.log(`Player.setGrounded: ${grounded}`);
@@ -374,6 +376,19 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
       // Play jump animation
       this.play(ASSETS.PLAYER.JUMP.KEY);
+
+      // --- Add Event Listener for Jump Completion --- Start
+      this.once(
+        `${Phaser.Animations.Events.ANIMATION_COMPLETE_KEY}${ASSETS.PLAYER.JUMP.KEY}`,
+        () => {
+          // When jump animation finishes, transition to fall if still airborne
+          if (!this.playerState.isGrounded) {
+            this.play(ASSETS.PLAYER.FALL.KEY);
+            console.log("Jump anim complete, transitioned to FALL");
+          }
+        }
+      );
+      // --- Add Event Listener for Jump Completion --- End
 
       console.log(
         "Player jumped with impulse:",
@@ -458,7 +473,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
       true
     );
 
-    const currentAnimKey = this.anims.currentAnim?.key;
     const canJump = this.playerState.isGrounded;
 
     // Handle jump input
@@ -466,53 +480,73 @@ export default class Player extends Phaser.GameObjects.Sprite {
       this.jump();
     }
 
-    // Determine animation based on state and velocity
+    // --- Animation State Logic --- //
+    const currentAnimKey = this.anims.currentAnim?.key;
+
+    // Check if DEAD
     if (this.playerState.isDead) {
-      // Play death animation if not already playing
       if (currentAnimKey !== ASSETS.PLAYER.DEAD.KEY) {
         this.play(ASSETS.PLAYER.DEAD.KEY);
       }
-    } else if (!this.playerState.isGrounded) {
-      // We're in the air
-      if (currentVelocity.y > 0) {
-        // Moving upward (jumping)
-        if (currentAnimKey !== ASSETS.PLAYER.JUMP.KEY) {
-          this.play(ASSETS.PLAYER.JUMP.KEY);
-        }
-      } else {
-        // Moving downward (falling)
+      // Stop horizontal movement when dead
+      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, currentVelocity.y));
+      return; // No further updates if dead
+    }
+
+    // Check if GROUNDED
+    if (this.playerState.isGrounded) {
+      // If we were FALLING, transition to IDLE or RUN now
+      if (currentAnimKey === ASSETS.PLAYER.FALL.KEY) {
+        console.log("Landed from Fall, checking Idle/Run");
         if (
-          currentAnimKey !== ASSETS.PLAYER.FALL.KEY &&
-          (!this.anims.isPlaying || currentAnimKey !== ASSETS.PLAYER.JUMP.KEY)
+          Math.abs(currentVelocity.x) >
+          PHYSICS.PLAYER.MOVE_THRESHOLD / PHYSICS.SCALE
         ) {
-          this.play(ASSETS.PLAYER.FALL.KEY);
-        }
-      }
-    } else {
-      // We're on the ground - just landed or already walking/idle
-      const isMoving =
-        Math.abs(currentVelocity.x) >
-        PHYSICS.PLAYER.MOVE_THRESHOLD / PHYSICS.SCALE;
-
-      // Just landed from a fall or jump
-      const justLanded =
-        currentAnimKey === ASSETS.PLAYER.FALL.KEY ||
-        (currentAnimKey === ASSETS.PLAYER.JUMP.KEY && !this.anims.isPlaying);
-
-      if (isMoving) {
-        // Running
-        if (currentAnimKey !== ASSETS.PLAYER.RUN.KEY || justLanded) {
           this.play(ASSETS.PLAYER.RUN.KEY);
-        }
-      } else {
-        // Idle - play immediately when landing or transitioning from run
-        if (
-          currentAnimKey !== ASSETS.PLAYER.IDLE.KEY &&
-          (justLanded || currentAnimKey === ASSETS.PLAYER.RUN.KEY)
-        ) {
+          console.log("Landed into RUN");
+        } else {
           this.play(ASSETS.PLAYER.IDLE.KEY);
+          console.log("Landed into IDLE");
         }
       }
+      // If already grounded (IDLE/RUN), continue normal ground logic
+      else {
+        if (
+          Math.abs(currentVelocity.x) >
+          PHYSICS.PLAYER.MOVE_THRESHOLD / PHYSICS.SCALE
+        ) {
+          // Running
+          if (currentAnimKey !== ASSETS.PLAYER.RUN.KEY) {
+            this.play(ASSETS.PLAYER.RUN.KEY);
+            console.log("Grounded state changed to RUN");
+          }
+        } else {
+          // Idle
+          if (currentAnimKey !== ASSETS.PLAYER.IDLE.KEY) {
+            this.play(ASSETS.PLAYER.IDLE.KEY);
+            console.log("Grounded state changed to IDLE");
+          }
+        }
+      }
+    }
+    // Check if AIRBORNE
+    else {
+      // If airborne, play FALL animation unless JUMP is currently playing
+      // (JUMP completion event will handle transition to FALL)
+      if (
+        currentAnimKey !== ASSETS.PLAYER.FALL.KEY &&
+        currentAnimKey !== ASSETS.PLAYER.JUMP.KEY
+      ) {
+        this.play(ASSETS.PLAYER.FALL.KEY);
+        console.log("Airborne state initiated FALL");
+      }
+    }
+
+    // Flip sprite based on horizontal movement direction
+    if (targetVelX > 0) {
+      this.setFlipX(false);
+    } else if (targetVelX < 0) {
+      this.setFlipX(true);
     }
   }
 }

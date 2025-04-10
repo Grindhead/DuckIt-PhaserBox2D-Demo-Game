@@ -30,23 +30,46 @@ The primary focus is on testing the newly implemented Crate generation and inter
   - Imported `generateCratesForPlatform`.
   - Called `generateCratesForPlatform` after generating subsequent platforms (but _not_ the first one) within the loop, passing necessary data (`scene`, `physicsMinX`, `physicsMaxX`, `platformY`).
   - Commented out the call to `generateCratesForPlatform` for the initial platform to provide a clear starting area.
+- Updated `GameScene.ts` - `processContactEvent`:
+  - Modified logic to check for contacts with `userData.type === "crate"` in addition to `"platform"` when determining player `isGrounded` state.
+  - Updated checks for both starting and ending contacts to correctly handle grounding on crates.
+  - Removed the small downward stabilization impulse when the contact is with a `"crate"` (kept it for `"platform"`) to attempt to fix clipping issue.
+  - Added logic to infer `isBottomContact = true` if `event.normal` is undefined during initial contact but player vertical velocity is near zero, ensuring correct grounding state for player animation, especially on large crates.
+  - Added and then removed debug logging related to contact normals.
+- Updated `Player.ts` - `setGrounded` and `update` methods:
+  - Simplified `setGrounded` to only set the `isGrounded` state variable, removing animation logic.
+  - Refactored `update` method's animation logic to prioritize grounded state check, explicitly handle transition from FALL animation to IDLE/RUN upon landing, and simplify airborne logic to transition reliably from JUMP to FALL when upward motion ceases.
+  - Corrected horizontal velocity checks in `update` to use properly scaled `MOVE_THRESHOLD`.
+  - Removed the `wasGrounded` / 'just landed' specific check.
+- Increased `PHYSICS.PLAYER.JUMP_THRESHOLD` in `constants.ts` from 0.5 to 1.0 to potentially stabilize landing animation transitions.
+- Refactored `Player.ts` `update` method animation logic:
+  - Prioritizes grounded state check.
+  - Explicitly handles transition from FALL animation to IDLE/RUN upon landing.
+  - Simplified airborne logic to transition reliably from JUMP to FALL when upward motion ceases.
+- Updated `Player.ts` (`jump` and `update` methods):
+  - Added `ANIMATION_COMPLETE` listener for JUMP animation in the `jump` method.
+  - Listener callback plays FALL animation if player is still airborne when JUMP completes.
+  - Simplified airborne logic in `update` to mainly ensure FALL plays if not JUMPing.
 
 ## 3. Next Steps
 
-1.  **Test Crate Functionality:** Run the game to verify:
-    - Crates are generated probabilistically on platforms.
-    - Crates have correct sizes (visual and physics density/mass).
-    - Crates can be pushed by the player.
-    - Crates stop at the edges of their platform and do not fall off.
-2.  **Test Refactored Level Generation:** Verify:
+1.  **Test Animation Transitions:** Run the game to verify:
+    - Player correctly transitions JUMP -> FALL -> LAND (Idle/Run) on platforms.
+    - Player correctly transitions JUMP -> FALL -> LAND (Idle/Run) on small crates.
+    - Player correctly transitions JUMP -> FALL -> LAND (Idle/Run) on large crates.
+    - Running animation still works correctly on platforms.
+2.  **Test Crate Physics:** Re-verify:
+    - Crates are pushable.
+    - Crates stop at platform edges.
+3.  **Test Refactored Level Generation:** Verify:
     - Player physics are active after starting the game.
     - Multiple platforms with gaps are generated correctly using the new modules.
     - Coins are visible on the platforms.
     - UI elements (Counter, Start/Game Over, Controls) render _above_ the player.
-3.  **Implement Box2D Collision Handling:** Set up a contact listener in `GameScene.ts` (or a dedicated physics manager) to handle collisions between the player and coins (triggering `coin.collect()`).
-4.  **Update Coin Counter UI:** Connect the `gameState.coins` value to the `CoinCounter` UI element so it updates visually.
-5.  **Continue TypeScript Transition:** Incrementally convert remaining JS files and add types.
-6.  **Implement Other Entities:** Add Enemies as per PRD.
+4.  **Implement Box2D Collision Handling:** Set up a contact listener in `GameScene.ts` (or a dedicated physics manager) to handle collisions between the player and coins (triggering `coin.collect()`).
+5.  **Update Coin Counter UI:** Connect the `gameState.coins` value to the `CoinCounter` UI element so it updates visually.
+6.  **Continue TypeScript Transition:** Incrementally convert remaining JS files and add types.
+7.  **Implement Other Entities:** Add Enemies as per PRD.
 
 ## 4. Active Decisions and Considerations
 

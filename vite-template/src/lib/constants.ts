@@ -38,7 +38,7 @@ export const PHYSICS = {
     /** Bounce coefficient (0 for no bounce) */
     RESTITUTION: 0.0,
     /** Vertical velocity threshold for jump/fall detection */
-    JUMP_THRESHOLD: 0.5,
+    JUMP_THRESHOLD: 1.0,
     /** Horizontal velocity threshold for movement detection */
     MOVE_THRESHOLD: 10,
   },

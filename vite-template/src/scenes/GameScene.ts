@@ -268,33 +268,64 @@ export default class GameScene extends Phaser.Scene {
 
     // Only check solid collisions (not sensors)
     if (!isSensorA && !isSensorB) {
-      // Check for player-platform contact
-      if (
-        (userDataA?.type === "player" && userDataB?.type === "platform") ||
-        (userDataB?.type === "player" && userDataA?.type === "platform")
-      ) {
-        // Determine if player is above the platform
-        // For Box2D, we need to look at the contact normal
-        const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
+      // Check for player-platform or player-crate contact
+      let playerUserData: ShapeUserData | null = null;
+      let otherUserData: ShapeUserData | null = null;
 
-        // Contact normal check - in Box2D a positive y normal means contact from above
+      if (userDataA?.type === "player") {
+        playerUserData = userDataA;
+        otherUserData = userDataB;
+      } else if (userDataB?.type === "player") {
+        playerUserData = userDataB;
+        otherUserData = userDataA;
+      }
+
+      // Check if player is contacting a groundable surface
+      const isGroundableContact =
+        playerUserData &&
+        (otherUserData?.type === "platform" || otherUserData?.type === "crate");
+
+      if (isGroundableContact) {
+        // --- Add Logging --- Start
+        if (otherUserData?.type === "crate") {
+          console.log(
+            `Player-Crate Contact Detected. UserData:`,
+            otherUserData,
+            `EventNormal:`,
+            event.normal
+          );
+        }
+        // --- Add Logging --- End
+
+        // Determine if player is above the surface
+        const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
         let isBottomContact = false;
-        if (event.normal) {
+        let normalY = 0; // Added for logging
+
+        // --- Check for missing normal but low velocity --- Start
+        if (!event.normal && isBeginningContact && Math.abs(velocity.y) < 0.2) {
+          console.log(
+            "Grounding player due to low velocity despite missing contact normal."
+          );
+          isBottomContact = true; // Infer bottom contact
+        }
+        // --- Check for missing normal but low velocity --- End
+
+        // Existing check for when normal IS defined
+        else if (event.normal) {
+          normalY = event.normal.y; // Store for logging
           // Check if the player feet are contacting platform (y normal > 0)
-          const normalY = event.normal.y;
-          // More tolerant bottom contact detection
           isBottomContact = normalY > 0.1;
         }
 
         // If this is a new contact and player is contacting platform from bottom/feet
         if (isBeginningContact) {
-          // Beginning or continuing contact with platform
-          // More tolerant vertical velocity check (0.1 → 0.2)
+          // The condition below now works correctly even if normal was initially undefined
           if (isBottomContact || Math.abs(velocity.y) < 0.2) {
             this.player.setGrounded(true);
 
-            // Apply a small additional downward impulse to stabilize on platform
-            if (this.player.bodyId) {
+            // Apply a small additional downward impulse ONLY for platforms to stabilize
+            if (this.player.bodyId && otherUserData?.type === "platform") {
               const stabilizeImpulse = new b2Vec2(0, -0.1);
               b2Body_ApplyLinearImpulseToCenter(
                 this.player.bodyId,
@@ -304,17 +335,16 @@ export default class GameScene extends Phaser.Scene {
             }
 
             console.log(
-              "Player grounded from bottom contact or no vertical movement"
+              "Player grounded from bottom contact or no vertical movement on platform/crate"
             );
           }
         } else {
-          // Only set ungrounded if it was specifically this platform contact that ended
-          // and the player was previously grounded
+          // Ending contact
           if (this.player.playerState.isGrounded && isBottomContact) {
-            // Check if there are any other platform contacts still active
-            let hasOtherPlatformContacts = false;
+            // Check if there are any other groundable contacts still active
+            let hasOtherGroundableContact = false;
 
-            // Look through current begin/hit events to see if there are other platforms
+            // Look through current begin/hit events
             for (const otherEvent of [
               ...(b2World_GetContactEvents(gameState.worldId).beginEvents ||
                 []),
@@ -332,24 +362,36 @@ export default class GameScene extends Phaser.Scene {
                 otherShapeIdB
               ) as ShapeUserData;
 
-              // Check if this is another platform contact
+              // Check if this is another groundable contact
+              let otherEventPlayerUserData: ShapeUserData | null = null;
+              let otherEventOtherUserData: ShapeUserData | null = null;
+
+              if (otherUserDataA?.type === "player") {
+                otherEventPlayerUserData = otherUserDataA;
+                otherEventOtherUserData = otherUserDataB;
+              } else if (otherUserDataB?.type === "player") {
+                otherEventPlayerUserData = otherUserDataB;
+                otherEventOtherUserData = otherUserDataA;
+              }
+
               if (
                 !b2Shape_IsSensor(otherShapeIdA) &&
                 !b2Shape_IsSensor(otherShapeIdB) &&
-                ((otherUserDataA?.type === "player" &&
-                  otherUserDataB?.type === "platform") ||
-                  (otherUserDataB?.type === "player" &&
-                    otherUserDataA?.type === "platform"))
+                otherEventPlayerUserData &&
+                (otherEventOtherUserData?.type === "platform" ||
+                  otherEventOtherUserData?.type === "crate")
               ) {
-                hasOtherPlatformContacts = true;
+                hasOtherGroundableContact = true;
                 break;
               }
             }
 
-            // Only set ungrounded if there are no other platform contacts
-            if (!hasOtherPlatformContacts) {
+            // Only set ungrounded if there are no other groundable contacts
+            if (!hasOtherGroundableContact) {
               this.player.setGrounded(false);
-              console.log("Player ungrounded from end contact");
+              console.log(
+                "Player ungrounded from end contact with platform/crate"
+              );
             }
           }
         }

@@ -16,13 +16,6 @@ interface CrateGenerationConfig {
   cratePlacementProbability?: number; // Probability (0-1) of placing a crate
 }
 
-// Define approximate heights needed above platform for each crate size (in pixels)
-// These values should be slightly larger than the actual crate height to prevent spawning stuck
-const CRATE_PLACEMENT_BUFFER_Y: { [key: string]: number } = {
-  BIG: 100, // Example value, adjust based on BIG crate sprite size
-  SMALL: 60, // Example value, adjust based on SMALL crate sprite size
-};
-
 /**
  * Generates crates for a given platform based on configuration.
  * Currently places at most one crate per platform, near the center.
