@@ -4,7 +4,7 @@
  */
 import * as Phaser from "phaser";
 
-import { WORLD } from "@constants";
+import { WORLD, TEST_CRATES } from "@constants";
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
 
 // Import generator modules
@@ -92,17 +92,6 @@ export function generateLevel(
   };
   generateCoins(firstCoinConfig);
 
-  /* // Removed crate generation for the first platform for a clear start
-  // --- Crates for First Platform --- //
-  generateCratesForPlatform({
-    scene: config.scene,
-    platformPhysicsMinX: firstPlatformData.physicsMinX,
-    platformPhysicsMaxX: firstPlatformData.physicsMaxX,
-    platformY: config.platformY,
-    // cratePlacementProbability: 0.5 // Optionally override probability
-  });
-  */
-
   // Update currentX after the first platform
   currentX += firstPlatformData.platformPixelWidth;
 
@@ -113,6 +102,8 @@ export function generateLevel(
     maxGapWidthTiles: config.maxGapWidthTiles,
   };
   currentX += generateGap(gapConfig);
+
+  let platformIndex = 0; // Initialize platform counter for the loop
 
   // --- Generate Remaining Level --- //
   while (currentX < WORLD.WIDTH - config.edgePadding) {
@@ -143,13 +134,19 @@ export function generateLevel(
     };
     generateCoins(coinConfig);
 
-    // --- Generate Crates --- //
-    generateCratesForPlatform({
-      scene: config.scene,
-      platformPhysicsMinX: platformData.physicsMinX,
-      platformPhysicsMaxX: platformData.physicsMaxX,
-      platformY: config.platformY,
-    });
+    platformIndex++; // Increment platform counter
+
+    // --- Generate Crates (Conditionally on the Second Platform) --- //
+    if (TEST_CRATES && platformIndex === 1) {
+      // Generate crates only if TEST_CRATES is true AND it's the second platform (first loop iteration)
+      generateCratesForPlatform({
+        scene: config.scene,
+        platformPhysicsMinX: platformData.physicsMinX,
+        platformPhysicsMaxX: platformData.physicsMaxX,
+        platformY: config.platformY,
+        cratePlacementProbability: 1, // Ensure crates always spawn for testing
+      });
+    }
 
     // Update currentX after this platform
     currentX += platformData.platformPixelWidth;

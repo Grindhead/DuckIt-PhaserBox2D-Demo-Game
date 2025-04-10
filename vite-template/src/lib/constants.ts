@@ -7,6 +7,7 @@
  * @module constants
  */
 
+export const TEST_CRATES: boolean = true;
 /**
  * Physics configuration for Box2D integration
  * All forces and velocities should use these scales
@@ -171,7 +172,7 @@ export const ASSETS = {
       FRICTION: 0.2,
       RESTITUTION: 0.0,
       WIDTH: 72,
-      HEIGHT: 70,
+      HEIGHT: 40,
     },
     /** Small crate sprite key */
     SMALL: {
