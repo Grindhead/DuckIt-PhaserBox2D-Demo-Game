@@ -22,6 +22,8 @@ import {
   b2Body_SetAngularVelocity,
   b2Body_SetTransform,
   b2Body_SetAwake,
+  b2Body_GetPosition,
+  b2Body_GetLinearVelocity,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
 
@@ -35,7 +37,9 @@ export default class Crate extends Phaser.GameObjects.Sprite {
   bodyId: InstanceType<typeof b2BodyId> | null = null;
   size: CrateSize;
   private originalPosition: { x: number; y: number };
-  private platformId: number | null = null;
+  private platformMinX: number;
+  private platformMaxX: number;
+  private halfWidthMeters: number = 0;
 
   /**
    * Creates a new crate entity
@@ -43,14 +47,16 @@ export default class Crate extends Phaser.GameObjects.Sprite {
    * @param x The initial x position
    * @param y The initial y position
    * @param size The size of the crate ('big' or 'small')
-   * @param platformId Optional ID of the platform this crate is on (for reset purposes)
+   * @param platformMinX The minimum x-coordinate (in physics world units) of the platform the crate is on
+   * @param platformMaxX The maximum x-coordinate (in physics world units) of the platform the crate is on
    */
   constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
     size: CrateSize,
-    platformId: number | null = null
+    platformMinX: number,
+    platformMaxX: number
   ) {
     // Select the correct frame data based on size
     const frameData: string = ASSETS.CRATE[size].FRAME;
@@ -59,7 +65,8 @@ export default class Crate extends Phaser.GameObjects.Sprite {
     this.scene = scene;
     this.size = size;
     this.originalPosition = { x, y };
-    this.platformId = platformId;
+    this.platformMinX = platformMinX;
+    this.platformMaxX = platformMaxX;
 
     // Add to scene
     this.scene.add.existing(this);
@@ -102,12 +109,13 @@ export default class Crate extends Phaser.GameObjects.Sprite {
 
     // Define the shape
 
-    // Create box geometry with proper scaling for Box2D (in meters)
-    const scaleX = this.scaleX;
-    const scaleY = this.scaleY;
-    // Make the collision box slightly smaller than the visual to prevent getting stuck on edges
-    const halfWidth = (this.width * scaleX * 0.9) / (2 * PHYSICS.SCALE);
-    const halfHeight = (this.height * scaleY * 0.9) / (2 * PHYSICS.SCALE);
+    // Create box geometry using dimensions from constants, scaled for Box2D (meters)
+    const constWidth = ASSETS.CRATE[this.size].WIDTH;
+    const constHeight = ASSETS.CRATE[this.size].HEIGHT;
+
+    const halfWidth = constWidth / (2 * PHYSICS.SCALE);
+    const halfHeight = constHeight / (2 * PHYSICS.SCALE);
+    this.halfWidthMeters = halfWidth; // Store accurate half-width in meters
 
     const box = b2MakeBox(halfWidth, halfHeight);
 
@@ -129,11 +137,33 @@ export default class Crate extends Phaser.GameObjects.Sprite {
    */
   update() {
     if (this.bodyId) {
-      // Additional logic could be added here if needed
-      // For example, preventing the crate from falling off platforms
-      // Note: to make the crates feel more natural, we don't need
-      // to artificially limit their horizontal velocity during normal gameplay.
-      // Box2D will handle the physics appropriately.
+      const pos = b2Body_GetPosition(this.bodyId);
+      const vel = b2Body_GetLinearVelocity(this.bodyId);
+
+      const crateLeftEdge = pos.x - this.halfWidthMeters;
+      const crateRightEdge = pos.x + this.halfWidthMeters;
+
+      // Check left boundary
+      if (vel.x < 0 && crateLeftEdge <= this.platformMinX) {
+        // Stop horizontal movement and slightly adjust position to prevent sticking
+        b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, vel.y));
+        b2Body_SetTransform(
+          this.bodyId,
+          new b2Vec2(this.platformMinX + this.halfWidthMeters + 0.01, pos.y),
+          0
+        );
+      }
+
+      // Check right boundary
+      if (vel.x > 0 && crateRightEdge >= this.platformMaxX) {
+        // Stop horizontal movement and slightly adjust position
+        b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, vel.y));
+        b2Body_SetTransform(
+          this.bodyId,
+          new b2Vec2(this.platformMaxX - this.halfWidthMeters - 0.01, pos.y),
+          0
+        );
+      }
     }
   }
 

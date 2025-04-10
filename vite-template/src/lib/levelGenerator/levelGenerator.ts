@@ -9,6 +9,7 @@ import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
 
 // Import generator modules
 import { generateCoins, CoinConfig } from "./coinGenerator";
+import { generateCratesForPlatform } from "./crateGenerator";
 import { generateGap, GapConfig } from "./gapGenerator";
 import {
   generatePlatform,
@@ -91,6 +92,17 @@ export function generateLevel(
   };
   generateCoins(firstCoinConfig);
 
+  /* // Removed crate generation for the first platform for a clear start
+  // --- Crates for First Platform --- //
+  generateCratesForPlatform({
+    scene: config.scene,
+    platformPhysicsMinX: firstPlatformData.physicsMinX,
+    platformPhysicsMaxX: firstPlatformData.physicsMaxX,
+    platformY: config.platformY,
+    // cratePlacementProbability: 0.5 // Optionally override probability
+  });
+  */
+
   // Update currentX after the first platform
   currentX += firstPlatformData.platformPixelWidth;
 
@@ -130,6 +142,14 @@ export function generateLevel(
       tileWidth: config.tileWidth,
     };
     generateCoins(coinConfig);
+
+    // --- Generate Crates --- //
+    generateCratesForPlatform({
+      scene: config.scene,
+      platformPhysicsMinX: platformData.physicsMinX,
+      platformPhysicsMaxX: platformData.physicsMaxX,
+      platformY: config.platformY,
+    });
 
     // Update currentX after this platform
     currentX += platformData.platformPixelWidth;

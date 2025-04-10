@@ -30,7 +30,7 @@ export const PHYSICS = {
     /** Horizontal movement speed in pixels/second */
     SPEED: 160,
     /** Vertical jump force (positive for upward force) */
-    JUMP_FORCE: 30,
+    JUMP_FORCE: 40,
     /** Mass density for physics calculations */
     DENSITY: 1.0,
     /** Surface friction coefficient */
@@ -167,16 +167,20 @@ export const ASSETS = {
     /** Big crate sprite key */
     BIG: {
       FRAME: "crate/crate-big.png",
-      DENSITY: 2.0,
-      FRICTION: 0.8,
+      DENSITY: 1.0,
+      FRICTION: 0.2,
       RESTITUTION: 0.0,
+      WIDTH: 72,
+      HEIGHT: 70,
     },
     /** Small crate sprite key */
     SMALL: {
       FRAME: "crate/crate-small.png",
       DENSITY: 1.0,
-      FRICTION: 0.8,
+      FRICTION: 0.2,
       RESTITUTION: 0.0,
+      WIDTH: 48,
+      HEIGHT: 48,
     },
   },
 

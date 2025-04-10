@@ -18,17 +18,23 @@
 - UI elements are created, but initially rendered under the player.
 - UI layering fixed with `setDepth`.
 - Level generation logic refactored into separate modules (`platformGenerator.ts`, `coinGenerator.ts`, `gapGenerator.ts`).
+- Crate entity (`Crate.ts`) created with Box2D physics, size variations (BIG/SMALL), and logic to prevent falling off platform boundaries.
+- `platformGenerator.ts` updated to return platform physics boundaries (`minX`, `maxX`).
+- `crateGenerator.ts` module created to handle probabilistic placement of crates on platforms.
+- `levelGenerator.ts` updated to orchestrate crate generation using `crateGenerator.ts`, skipping the first platform.
 
 ## 2. What's Left to Build / Current Task
 
-- **Current Task:** Verify refactored level generation and implement Box2D collision handling for coin collection.
+- **Current Task:** Test Crate generation and interaction (pushing, boundary constraints).
 - **Subsequent Tasks:**
+  - Verify refactored level generation (platforms, coins, gaps).
+  - Implement Box2D collision handling for coin collection.
   - Update Coin Counter UI display.
+  - Test crate pushing physics and boundary constraints.
   - Continue TypeScript Transition (convert remaining JS, add types).
-  - Implement Crates (physics, interactions).
   - Implement Enemies (physics, AI, interactions).
   - Implement Finish entity.
-  - Refine level generation algorithm (add crates, enemies, ensure solvability).
+  - Refine level generation algorithm (add enemies, ensure solvability, potentially refine crate placement).
   - Implement full Box2D collision handling (player-enemy, player-finish, player-death sensor).
   - Complete UI functionality (start/reset logic).
   - Testing and polishing.
@@ -80,7 +86,7 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
 4. Procedural Level Generation
 
    - [Done] Generate tiling platforms (multiple platforms with gaps) via `platformGenerator.ts`.
-   - [ ] Introduce crates (respecting 2:1 mass ratio) in puzzle segments.
+   - [Partial] Introduce crates (respecting 2:1 mass ratio) in puzzle segments.
    - [ ] Place enemies (patrolling at 80% player speed) on suitable platforms.
    - [Done] Distribute coins on platforms via `coinGenerator.ts`.
    - [ ] Place the finish entity, ensuring level completability.
@@ -95,7 +101,7 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
 
 6. Puzzle & Interaction Mechanics
 
-   - [ ] Ensure crates are pushable and cannot fall off their platform.
+   - [Partial] Ensure crates are pushable and cannot fall off their platform.
    - [Partial] Implement coin collection (entity logic done, collision pending).
    - [Partial] Handle player death from falling off-screen (sensor exists, collision pending).
    - [ ] Handle player death from enemies (enemy entity/collision pending).

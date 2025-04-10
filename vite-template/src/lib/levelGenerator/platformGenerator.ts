@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 
+import { PHYSICS } from "@constants"; // Moved up
 import Platform from "@entities/Platform";
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
 
@@ -24,6 +25,8 @@ export interface GeneratedPlatform {
   platformCenterX: number; // The center X coordinate of the platform
   platformStartX: number; // The starting X coordinate of the platform
   totalTiles: number; // Total number of tiles (edges + middle)
+  physicsMinX: number; // Minimum X in physics units
+  physicsMaxX: number; // Maximum X in physics units
 }
 
 /**
@@ -54,11 +57,17 @@ export function generatePlatform(config: PlatformConfig): GeneratedPlatform {
     platformMiddleTiles
   );
 
+  // Calculate physics boundaries (scaled to Box2D units)
+  const physicsMinX = config.currentX / PHYSICS.SCALE;
+  const physicsMaxX = (config.currentX + platformPixelWidth) / PHYSICS.SCALE;
+
   return {
     platform: platform,
     platformPixelWidth: platformPixelWidth,
     platformCenterX: platformCenterX,
     platformStartX: config.currentX, // Use the passed currentX as startX
     totalTiles: totalTiles,
+    physicsMinX: physicsMinX,
+    physicsMaxX: physicsMaxX,
   };
 }
