@@ -1,11 +1,11 @@
 /**
  * @license
- * Phaser Box2D v1.0.0
- * Monday, 23 December 2024 at 16:45
- * 
+ * Phaser Box2D v1.1.0
+ * Sunday, 6 April 2025 at 03:26
+ *
  * This library includes code that is ported from the original C version. The original C code is Copyright 2023 Erin Catto
  * and was released under the MIT license. The JavaScript port of the C code along with all additional code is
- * Copyright 2024 Phaser Studio Inc and is released under the MIT license.
+ * Copyright 2025 Phaser Studio Inc and is released under the MIT license.
  */
 
 // src/math_functions_c.js
@@ -19,7 +19,7 @@ function b2GetLengthAndNormalize(v) {
 }
 
 // src/include/math_functions_h.js
-var b2_pi = 3.14159265359;
+var B2_PI = 3.14159265359;
 var eps = 1e-10;
 var epsSqr = eps * eps;
 var GlobalDebug = {
@@ -32,16 +32,16 @@ var GlobalDebug = {
   b2ContactSimCount: 0,
   b2TOIInputCount: 0,
   b2ShapeCastPairInputCount: 0,
-  b2SweepCount: 0
+  b2SweepCount: 0,
 };
 var b2Vec2Where = {
-  calls: {}
+  calls: {},
 };
 var b2Rot2Where = {
-  calls: {}
+  calls: {},
 };
 var b2ManifoldPointWhere = {
-  calls: {}
+  calls: {},
 };
 var b2Vec2 = class _b2Vec2 {
   constructor(x = 0, y = 0) {
@@ -190,10 +190,7 @@ function b2Max(a, b) {
   return new b2Vec2(Math.max(a.x, b.x), Math.max(a.y, b.y));
 }
 function b2Clamp(v, a, b) {
-  return new b2Vec2(
-    b2ClampFloat(v.x, a.x, b.x),
-    b2ClampFloat(v.y, a.y, b.y)
-  );
+  return new b2Vec2(b2ClampFloat(v.x, a.x, b.x), b2ClampFloat(v.y, a.y, b.y));
 }
 function b2Length(v) {
   return Math.sqrt(v.x * v.x + v.y * v.y);
@@ -233,10 +230,7 @@ function b2IsNormalized(q3) {
 }
 function b2NLerp(q12, q22, t) {
   const omt = 1 - t;
-  const q3 = new b2Rot(
-    omt * q12.c + t * q22.c,
-    omt * q12.s + t * q22.s
-  );
+  const q3 = new b2Rot(omt * q12.c + t * q22.c, omt * q12.s + t * q22.s);
   return b2NormalizeRot(q3);
 }
 function b2IntegrateRotation(q12, deltaAngle) {
@@ -267,10 +261,7 @@ function b2Rot_GetYAxis(q3) {
   return new b2Vec2(-q3.s, q3.c);
 }
 function b2MulRot(q3, r) {
-  return new b2Rot(
-    q3.c * r.c - q3.s * r.s,
-    q3.s * r.c + q3.c * r.s
-  );
+  return new b2Rot(q3.c * r.c - q3.s * r.s, q3.s * r.c + q3.c * r.s);
 }
 function b2MulRotC(q3, r) {
   return q3.c * r.c - q3.s * r.s;
@@ -279,10 +270,7 @@ function b2MulRotS(q3, r) {
   return q3.s * r.c + q3.c * r.s;
 }
 function b2InvMulRot(q3, r) {
-  return new b2Rot(
-    q3.c * r.c + q3.s * r.s,
-    q3.c * r.s - q3.s * r.c
-  );
+  return new b2Rot(q3.c * r.c + q3.s * r.s, q3.c * r.s - q3.s * r.c);
 }
 function b2RelativeAngle(b, a) {
   const s = b.s * a.c - b.c * a.s;
@@ -290,10 +278,10 @@ function b2RelativeAngle(b, a) {
   return Math.atan2(s, c2);
 }
 function b2UnwindAngle(angle) {
-  if (angle < -b2_pi) {
-    return angle + 2 * b2_pi;
-  } else if (angle > b2_pi) {
-    return angle - 2 * b2_pi;
+  if (angle < -B2_PI) {
+    return angle + 2 * B2_PI;
+  } else if (angle > B2_PI) {
+    return angle - 2 * B2_PI;
   }
   return angle;
 }
@@ -351,13 +339,13 @@ function b2InvMulTransformsOut(A, B, out) {
   C.p.y = -A.q.s * subX + A.q.c * subY;
 }
 function b2MulMV(A, v) {
-  return new b2Vec2(
-    A.cx.x * v.x + A.cy.x * v.y,
-    A.cx.y * v.x + A.cy.y * v.y
-  );
+  return new b2Vec2(A.cx.x * v.x + A.cy.x * v.y, A.cx.y * v.x + A.cy.y * v.y);
 }
 function b2GetInverse22(A) {
-  const a = A.cx.x, b = A.cy.x, c2 = A.cx.y, d = A.cy.y;
+  const a = A.cx.x,
+    b = A.cy.x,
+    c2 = A.cx.y,
+    d = A.cy.y;
   let det = a * d - b * c2;
   if (det !== 0) {
     det = 1 / det;
@@ -368,7 +356,10 @@ function b2GetInverse22(A) {
   );
 }
 function b2Solve22(A, b) {
-  const a11 = A.cx.x, a12 = A.cy.x, a21 = A.cx.y, a22 = A.cy.y;
+  const a11 = A.cx.x,
+    a12 = A.cy.x,
+    a21 = A.cx.y,
+    a22 = A.cy.y;
   let det = a11 * a22 - a12 * a21;
   if (det !== 0) {
     det = 1 / det;
@@ -379,7 +370,12 @@ function b2Solve22(A, b) {
   );
 }
 function b2AABB_Contains(a, b) {
-  return a.lowerBoundX <= b.lowerBoundX && a.lowerBoundY <= b.lowerBoundY && b.upperBoundX <= a.upperBoundX && b.upperBoundY <= a.upperBoundY;
+  return (
+    a.lowerBoundX <= b.lowerBoundX &&
+    a.lowerBoundY <= b.lowerBoundY &&
+    b.upperBoundX <= a.upperBoundX &&
+    b.upperBoundY <= a.upperBoundY
+  );
 }
 function b2AABB_Center(a) {
   return new b2Vec2(
@@ -417,7 +413,13 @@ function b2AABB_IsValid(aabb) {
   const dx = aabb.upperBoundX - aabb.lowerBoundX;
   const dy = aabb.upperBoundY - aabb.lowerBoundY;
   const valid = dx >= 0 && dy >= 0;
-  return valid && b2IsValid(aabb.lowerBoundX) && b2IsValid(aabb.lowerBoundY) && b2IsValid(aabb.upperBoundX) && b2IsValid(aabb.upperBoundY);
+  return (
+    valid &&
+    b2IsValid(aabb.lowerBoundX) &&
+    b2IsValid(aabb.lowerBoundY) &&
+    b2IsValid(aabb.upperBoundX) &&
+    b2IsValid(aabb.upperBoundY)
+  );
 }
 function b2Normalize(v) {
   if (!v) {
@@ -453,37 +455,28 @@ function b2SetLengthUnitsPerMeter(lengthUnits) {
 function b2GetLengthUnitsPerMeter() {
   return b2_lengthUnitsPerMeter;
 }
-function b2SetAssertFcn(assertFcn) {
-}
+function b2SetAssertFcn(assertFcn) {}
 function b2GetVersion() {
-  return new b2Version(3, 0, 0);
+  return new b2Version(3, 1, 0);
 }
 
 // src/include/core_h.js
 var b2_lengthUnitsPerMeter2 = 1;
-var b2_huge = 1e5 * b2_lengthUnitsPerMeter2;
+var B2_HUGE = 1e5 * b2_lengthUnitsPerMeter2;
 var b2_graphColorCount = 2;
 var b2_linearSlop = 5e-3 * b2_lengthUnitsPerMeter2;
-var b2_maxRotation = 0.25 * Math.PI;
+var B2_MAX_ROTATION = 0.25 * Math.PI;
 var b2_speculativeDistance = 4 * b2_linearSlop;
 var b2_aabbMargin = 0.1 * b2_lengthUnitsPerMeter2;
 var b2_timeToSleep = 0.5;
-function b2SetAllocator() {
-}
-function b2GetByteCount() {
-}
-function b2CreateTimer() {
-}
-function b2GetTicks() {
-}
-function b2GetMilliseconds() {
-}
-function b2GetMillisecondsAndReset(timer) {
-}
-function b2SleepMilliseconds(ms) {
-}
-function b2Yield() {
-}
+function b2SetAllocator() {}
+function b2GetByteCount() {}
+function b2CreateTimer() {}
+function b2GetTicks() {}
+function b2GetMilliseconds() {}
+function b2GetMillisecondsAndReset(timer) {}
+function b2SleepMilliseconds(ms) {}
+function b2Yield() {}
 
 // src/include/id_h.js
 var b2WorldId = class {
@@ -527,8 +520,353 @@ function B2_IS_NON_NULL(id) {
   return id.index1 !== 0;
 }
 function B2_ID_EQUALS(id1, id2) {
-  return id1.index1 === id2.index1 && id1.world0 === id2.world0 && id1.revision === id2.revision;
+  return (
+    id1.index1 === id2.index1 &&
+    id1.world0 === id2.world0 &&
+    id1.revision === id2.revision
+  );
 }
+
+// src/include/collision_h.js
+var B2_MAX_POLYGON_VERTICES = 8;
+var B2_DEFAULT_MASK_BITS = 4294967295;
+var b2RayCastInput = class {
+  constructor() {
+    this.origin = null;
+    this.translation = null;
+    this.maxFraction = 0;
+  }
+};
+var b2ShapeCastInput = class {
+  constructor() {
+    this.points = [];
+    this.count = 0;
+    this.radius = 0;
+    this.translation = null;
+    this.maxFraction = 0;
+  }
+};
+var b2CastOutput = class {
+  constructor(normal = null, point = null) {
+    this.normal = normal;
+    this.point = point;
+    this.fraction = 0;
+    this.iterations = 0;
+    this.hit = false;
+  }
+};
+var b2MassData = class {
+  constructor() {
+    this.mass = 0;
+    this.center = null;
+    this.rotationalInertia = 0;
+  }
+};
+var b2Circle = class {
+  constructor(center = null, radius = 0) {
+    this.center = center;
+    if (!this.center) {
+      this.center = new b2Vec2(0, 0);
+    }
+    this.radius = radius;
+  }
+};
+var b2Capsule = class {
+  constructor() {
+    this.center1 = null;
+    this.center2 = null;
+    this.radius = 0;
+  }
+};
+var b2Polygon = class {
+  constructor(vertices) {
+    if (vertices > 0) {
+      this.vertices = new Array(vertices).fill().map(() => new b2Vec2(0, 0));
+      this.normals = new Array(vertices).fill().map(() => new b2Vec2(0, 0));
+    } else {
+      this.vertices = [];
+      this.normals = [];
+    }
+    this.centroid = null;
+    this.radius = 0;
+    this.count = 0;
+  }
+};
+var b2Segment = class {
+  constructor(point1 = null, point2 = null) {
+    this.point1 = point1;
+    this.point2 = point2;
+  }
+};
+var b2ChainSegment = class {
+  constructor() {
+    this.ghost1 = null;
+    this.segment = null;
+    this.ghost2 = null;
+    this.chainId = 0;
+  }
+};
+var b2Hull = class {
+  constructor() {
+    this.points = [];
+    this.count = 0;
+  }
+};
+var b2SegmentDistanceResult = class {
+  constructor() {
+    this.closest1 = null;
+    this.closest2 = null;
+    this.fraction1 = 0;
+    this.fraction2 = 0;
+    this.distanceSquared = 0;
+  }
+};
+var b2DistanceProxy = class _b2DistanceProxy {
+  constructor(points = [], count = null, radius = 0) {
+    this.points = points;
+    this.count = count;
+    this.radius = radius;
+  }
+  clone() {
+    const points = [];
+    for (let i = 0, l = this.points.length; i < l; i++) {
+      points.push(this.points[i]);
+    }
+    return new _b2DistanceProxy(points, this.count, this.radius);
+  }
+};
+var b2DistanceCache = class _b2DistanceCache {
+  constructor() {
+    this.count = 0;
+    this.indexA = [0, 0, 0];
+    this.indexB = [0, 0, 0];
+  }
+  clone() {
+    const cache = new _b2DistanceCache();
+    cache.count = this.count;
+    cache.indexA = [...this.indexA];
+    cache.indexB = [...this.indexB];
+    return cache;
+  }
+};
+var b2DistanceInput = class {
+  constructor() {
+    this.proxyA = new b2DistanceProxy();
+    this.proxyB = new b2DistanceProxy();
+    this.transformA = new b2Transform(new b2Vec2(0, 0), new b2Rot(0, 0));
+    this.transformB = new b2Transform(new b2Vec2(0, 0), new b2Rot(0, 0));
+    this.useRadii = false;
+  }
+};
+var b2DistanceOutput = class {
+  constructor() {
+    this.pointA = new b2Vec2(0, 0);
+    this.pointB = new b2Vec2(0, 0);
+    this.distance = 0;
+    this.iterations = 0;
+    this.simplexCount = 0;
+  }
+};
+var b2SimplexVertex = class _b2SimplexVertex {
+  constructor() {
+    this.wA = null;
+    this.wB = null;
+    this.w = null;
+    this.a = 0;
+    this.indexA = 0;
+    this.indexB = 0;
+  }
+  clone() {
+    const sv = new _b2SimplexVertex();
+    sv.wA = this.wA.clone();
+    sv.wB = this.wB.clone();
+    sv.w = this.w.clone();
+    sv.a = this.a;
+    sv.indexA = this.indexA;
+    sv.indexB = this.indexB;
+    return sv;
+  }
+};
+var b2Simplex = class {
+  constructor() {
+    this.v1 = new b2SimplexVertex();
+    this.v2 = new b2SimplexVertex();
+    this.v3 = new b2SimplexVertex();
+    this.count = 0;
+  }
+};
+var b2ShapeCastPairInput = class {
+  constructor() {
+    this.proxyA = new b2DistanceProxy();
+    this.proxyB = new b2DistanceProxy();
+    this.transformA = new b2Transform(new b2Vec2(0, 0), new b2Rot(0, 0));
+    this.transformB = new b2Transform(new b2Vec2(0, 0), new b2Rot(0, 0));
+    this.translationB = new b2Vec2(0, 0);
+    this.maxFraction = 0;
+  }
+};
+var b2Sweep = class _b2Sweep {
+  constructor(c2 = null, v1 = null, v2 = null, r1 = null, r2 = null) {
+    this.localCenter = c2;
+    this.c1 = v1;
+    this.c2 = v2;
+    this.q1 = r1;
+    this.q2 = r2;
+  }
+  clone() {
+    return new _b2Sweep(
+      this.localCenter.clone(),
+      this.c1.clone(),
+      this.c2.clone(),
+      this.q1.clone(),
+      this.q2.clone()
+    );
+  }
+};
+var b2TOIInput = class _b2TOIInput {
+  constructor(
+    proxyA = null,
+    proxyB = null,
+    sweepA = null,
+    sweepB = null,
+    tMax = 0
+  ) {
+    this.proxyA = proxyA;
+    this.proxyB = proxyB;
+    this.sweepA = sweepA;
+    this.sweepB = sweepB;
+    this.tMax = tMax;
+  }
+  clone() {
+    return new _b2TOIInput(
+      this.proxyA.clone(),
+      this.proxyB.clone(),
+      this.sweepA.clone(),
+      this.sweepB.clone(),
+      this.tMax
+    );
+  }
+};
+var b2TOIState = {
+  b2_toiStateUnknown: 0,
+  b2_toiStateFailed: 1,
+  b2_toiStateOverlapped: 2,
+  b2_toiStateHit: 3,
+  b2_toiStateSeparated: 4,
+};
+var b2TOIOutput = class {
+  constructor() {
+    this.state = b2TOIState.b2_toiStateUnknown;
+    this.t = 0;
+  }
+};
+var b2ManifoldPoint = class _b2ManifoldPoint {
+  constructor() {
+    this.pointX = 0;
+    this.pointY = 0;
+    this.anchorAX = 0;
+    this.anchorAY = 0;
+    this.anchorBX = 0;
+    this.anchorBY = 0;
+    this.separation = 0;
+    this.normalImpulse = 0;
+    this.tangentImpulse = 0;
+    this.maxNormalImpulse = 0;
+    this.normalVelocity = 0;
+    this.id = 0;
+    this.persisted = false;
+  }
+  clone() {
+    const clone = new _b2ManifoldPoint();
+    clone.pointX = this.pointX;
+    clone.pointY = this.pointY;
+    clone.anchorAX = this.anchorAX;
+    clone.anchorAY = this.anchorAY;
+    clone.anchorBX = this.anchorBX;
+    clone.anchorBY = this.anchorBY;
+    clone.separation = this.separation;
+    clone.normalImpulse = this.normalImpulse;
+    clone.tangentImpulse = this.tangentImpulse;
+    clone.maxNormalImpulse = this.maxNormalImpulse;
+    clone.normalVelocity = this.normalVelocity;
+    clone.id = this.id;
+    clone.persisted = this.persisted;
+    return clone;
+  }
+  clear() {
+    this.pointX = 0;
+    this.pointY = 0;
+    this.anchorAX = 0;
+    this.anchorAY = 0;
+    this.anchorBX = 0;
+    this.anchorBY = 0;
+    this.separation = 0;
+    this.normalImpulse = 0;
+    this.tangentImpulse = 0;
+    this.maxNormalImpulse = 0;
+    this.normalVelocity = 0;
+    this.id = 0;
+    this.persisted = false;
+    return this;
+  }
+  copyTo(mp) {
+    mp.pointX = this.pointX;
+    mp.pointY = this.pointY;
+    mp.anchorAX = this.anchorAX;
+    mp.anchorAY = this.anchorAY;
+    mp.anchorBX = this.anchorBX;
+    mp.anchorBY = this.anchorBY;
+    mp.separation = this.separation;
+    mp.normalImpulse = this.normalImpulse;
+    mp.tangentImpulse = this.tangentImpulse;
+    mp.maxNormalImpulse = this.maxNormalImpulse;
+    mp.normalVelocity = this.normalVelocity;
+    mp.id = this.id;
+    mp.persisted = this.persisted;
+  }
+};
+var b2Manifold = class _b2Manifold {
+  constructor(p14 = new b2ManifoldPoint(), p23 = new b2ManifoldPoint()) {
+    this.points = [p14, p23];
+    this.normalX = this.normalY = 0;
+    this.pointCount = 0;
+  }
+  clone() {
+    const clone = new _b2Manifold();
+    this.copyTo(clone);
+    return clone;
+  }
+  clear() {
+    if (this.points[0]) {
+      this.points[0].clear();
+    }
+    if (this.points[1]) {
+      this.points[1].clear();
+    }
+    this.normalX = this.normalY = 0;
+    this.pointCount = 0;
+    return this;
+  }
+  copyTo(manifold) {
+    this.points[0].copyTo(manifold.points[0]);
+    this.points[1].copyTo(manifold.points[1]);
+    manifold.normalX = this.normalX;
+    manifold.normalY = this.normalY;
+    manifold.pointCount = this.pointCount;
+  }
+};
+var b2TreeNode = class {
+  constructor() {
+    this.aabb = null;
+    this.categoryBits = 0;
+    this.parent_next = B2_NULL_INDEX;
+    this.child1 = B2_NULL_INDEX;
+    this.child2 = B2_NULL_INDEX;
+    this.userData = 0;
+    this.height = -1;
+    this.enlarged = false;
+  }
+};
 
 // src/table_c.js
 function b2CreateSet() {
@@ -555,7 +893,8 @@ function b2RemoveKey(set, key) {
 }
 
 // src/include/table_h.js
-var B2_SHAPE_PAIR_KEY = (K1, K2) => K1 < K2 ? BigInt(K1) << 32n | BigInt(K2) : BigInt(K2) << 32n | BigInt(K1);
+var B2_SHAPE_PAIR_KEY = (K1, K2) =>
+  K1 < K2 ? (BigInt(K1) << 32n) | BigInt(K2) : (BigInt(K2) << 32n) | BigInt(K1);
 
 // src/stack_allocator_c.js
 var b2StackAllocator = class {
@@ -656,7 +995,7 @@ function b2DefaultBodyDef() {
   def.fixedRotation = false;
   def.isBullet = false;
   def.isEnabled = true;
-  def.automaticMass = true;
+  def.updateBodyMass = true;
   def.allowFastRotation = false;
   return def;
 }
@@ -695,15 +1034,15 @@ var b2BodyType = {
   b2_staticBody: 0,
   b2_kinematicBody: 1,
   b2_dynamicBody: 2,
-  b2_bodyTypeCount: 3
+  b2_bodyTypeCount: 3,
 };
 var b2ShapeType = {
   b2_circleShape: 0,
   b2_capsuleShape: 1,
   b2_segmentShape: 2,
   b2_polygonShape: 3,
-  b2_smoothSegmentShape: 4,
-  b2_shapeTypeCount: 5
+  b2_chainSegmentShape: 4,
+  b2_shapeTypeCount: 5,
 };
 var b2JointType = {
   b2_distanceJoint: 0,
@@ -713,7 +1052,7 @@ var b2JointType = {
   b2_revoluteJoint: 4,
   b2_weldJoint: 5,
   b2_wheelJoint: 6,
-  b2_unknown: -1
+  b2_unknown: -1,
 };
 var b2RayResult = class {
   constructor() {
@@ -757,7 +1096,7 @@ var b2BodyDef = class {
     this.fixedRotation = false;
     this.isBullet = false;
     this.isEnabled = false;
-    this.automaticMass = false;
+    this.updateBodyMass = false;
     this.allowFastRotation = false;
   }
 };
@@ -1144,7 +1483,7 @@ var b2HexColor = {
   b2_colorBox2DRed: 14430514,
   b2_colorBox2DBlue: 3190463,
   b2_colorBox2DGreen: 9226532,
-  b2_colorBox2DYellow: 16772748
+  b2_colorBox2DYellow: 16772748,
 };
 var b2DebugDraw = class {
   constructor() {
@@ -1228,329 +1567,6 @@ function b2GetIdCount(pool) {
   return pool.nextIndex - pool.freeArray.length;
 }
 
-// src/include/collision_h.js
-var b2_maxPolygonVertices = 8;
-var b2_defaultMaskBits = 4294967295;
-var b2RayCastInput = class {
-  constructor() {
-    this.origin = null;
-    this.translation = null;
-    this.maxFraction = 0;
-  }
-};
-var b2ShapeCastInput = class {
-  constructor() {
-    this.points = [];
-    this.count = 0;
-    this.radius = 0;
-    this.translation = null;
-    this.maxFraction = 0;
-  }
-};
-var b2CastOutput = class {
-  constructor() {
-    this.normal = null;
-    this.point = null;
-    this.fraction = 0;
-    this.iterations = 0;
-    this.hit = false;
-  }
-};
-var b2MassData = class {
-  constructor() {
-    this.mass = 0;
-    this.center = null;
-    this.rotationalInertia = 0;
-  }
-};
-var b2Circle = class {
-  constructor(center = null, radius = 0) {
-    this.center = center;
-    if (!this.center) {
-      this.center = new b2Vec2(0, 0);
-    }
-    this.radius = radius;
-  }
-};
-var b2Capsule = class {
-  constructor() {
-    this.center1 = null;
-    this.center2 = null;
-    this.radius = 0;
-  }
-};
-var b2Polygon = class {
-  constructor(vertices) {
-    if (vertices > 0) {
-      this.vertices = new Array(vertices).fill().map(() => new b2Vec2(0, 0));
-      this.normals = new Array(vertices).fill().map(() => new b2Vec2(0, 0));
-    } else {
-      this.vertices = [];
-      this.normals = [];
-    }
-    this.centroid = null;
-    this.radius = 0;
-    this.count = 0;
-  }
-};
-var b2Segment = class {
-  constructor(point1 = null, point2 = null) {
-    this.point1 = point1;
-    this.point2 = point2;
-  }
-};
-var b2SmoothSegment = class {
-  constructor() {
-    this.ghost1 = null;
-    this.segment = null;
-    this.ghost2 = null;
-    this.chainId = 0;
-  }
-};
-var b2Hull = class {
-  constructor() {
-    this.points = [];
-    this.count = 0;
-  }
-};
-var b2SegmentDistanceResult = class {
-  constructor() {
-    this.closest1 = null;
-    this.closest2 = null;
-    this.fraction1 = 0;
-    this.fraction2 = 0;
-    this.distanceSquared = 0;
-  }
-};
-var b2DistanceProxy = class _b2DistanceProxy {
-  constructor(points = [], count = null, radius = 0) {
-    this.points = points;
-    this.count = count;
-    this.radius = radius;
-  }
-  clone() {
-    const points = [];
-    for (let i = 0, l = this.points.length; i < l; i++) {
-      points.push(this.points[i]);
-    }
-    return new _b2DistanceProxy(points, this.count, this.radius);
-  }
-};
-var b2DistanceCache = class _b2DistanceCache {
-  constructor() {
-    this.count = 0;
-    this.indexA = [0, 0, 0];
-    this.indexB = [0, 0, 0];
-  }
-  clone() {
-    const cache = new _b2DistanceCache();
-    cache.count = this.count;
-    cache.indexA = [...this.indexA];
-    cache.indexB = [...this.indexB];
-    return cache;
-  }
-};
-var b2DistanceInput = class {
-  constructor() {
-    this.proxyA = new b2DistanceProxy();
-    this.proxyB = new b2DistanceProxy();
-    this.transformA = new b2Transform(new b2Vec2(0, 0), new b2Rot(0, 0));
-    this.transformB = new b2Transform(new b2Vec2(0, 0), new b2Rot(0, 0));
-    this.useRadii = false;
-  }
-};
-var b2DistanceOutput = class {
-  constructor() {
-    this.pointA = new b2Vec2(0, 0);
-    this.pointB = new b2Vec2(0, 0);
-    this.distance = 0;
-    this.iterations = 0;
-    this.simplexCount = 0;
-  }
-};
-var b2SimplexVertex = class _b2SimplexVertex {
-  constructor() {
-    this.wA = null;
-    this.wB = null;
-    this.w = null;
-    this.a = 0;
-    this.indexA = 0;
-    this.indexB = 0;
-  }
-  clone() {
-    const sv = new _b2SimplexVertex();
-    sv.wA = this.wA.clone();
-    sv.wB = this.wB.clone();
-    sv.w = this.w.clone();
-    sv.a = this.a;
-    sv.indexA = this.indexA;
-    sv.indexB = this.indexB;
-    return sv;
-  }
-};
-var b2Simplex = class {
-  constructor() {
-    this.v1 = new b2SimplexVertex();
-    this.v2 = new b2SimplexVertex();
-    this.v3 = new b2SimplexVertex();
-    this.count = 0;
-  }
-};
-var b2ShapeCastPairInput = class {
-  constructor() {
-    this.proxyA = new b2DistanceProxy();
-    this.proxyB = new b2DistanceProxy();
-    this.transformA = new b2Transform(new b2Vec2(0, 0), new b2Rot(0, 0));
-    this.transformB = new b2Transform(new b2Vec2(0, 0), new b2Rot(0, 0));
-    this.translationB = new b2Vec2(0, 0);
-    this.maxFraction = 0;
-  }
-};
-var b2Sweep = class _b2Sweep {
-  constructor(c2 = null, v1 = null, v2 = null, r1 = null, r2 = null) {
-    this.localCenter = c2;
-    this.c1 = v1;
-    this.c2 = v2;
-    this.q1 = r1;
-    this.q2 = r2;
-  }
-  clone() {
-    return new _b2Sweep(this.localCenter.clone(), this.c1.clone(), this.c2.clone(), this.q1.clone(), this.q2.clone());
-  }
-};
-var b2TOIInput = class _b2TOIInput {
-  constructor(proxyA = null, proxyB = null, sweepA = null, sweepB = null, tMax = 0) {
-    this.proxyA = proxyA;
-    this.proxyB = proxyB;
-    this.sweepA = sweepA;
-    this.sweepB = sweepB;
-    this.tMax = tMax;
-  }
-  clone() {
-    return new _b2TOIInput(this.proxyA.clone(), this.proxyB.clone(), this.sweepA.clone(), this.sweepB.clone(), this.tMax);
-  }
-};
-var b2TOIState = {
-  b2_toiStateUnknown: 0,
-  b2_toiStateFailed: 1,
-  b2_toiStateOverlapped: 2,
-  b2_toiStateHit: 3,
-  b2_toiStateSeparated: 4
-};
-var b2TOIOutput = class {
-  constructor() {
-    this.state = b2TOIState.b2_toiStateUnknown;
-    this.t = 0;
-  }
-};
-var b2ManifoldPoint = class _b2ManifoldPoint {
-  constructor() {
-    this.pointX = 0;
-    this.pointY = 0;
-    this.anchorAX = 0;
-    this.anchorAY = 0;
-    this.anchorBX = 0;
-    this.anchorBY = 0;
-    this.separation = 0;
-    this.normalImpulse = 0;
-    this.tangentImpulse = 0;
-    this.maxNormalImpulse = 0;
-    this.normalVelocity = 0;
-    this.id = 0;
-    this.persisted = false;
-  }
-  clone() {
-    const clone = new _b2ManifoldPoint();
-    clone.pointX = this.pointX;
-    clone.pointY = this.pointY;
-    clone.anchorAX = this.anchorAX;
-    clone.anchorAY = this.anchorAY;
-    clone.anchorBX = this.anchorBX;
-    clone.anchorBY = this.anchorBY;
-    clone.separation = this.separation;
-    clone.normalImpulse = this.normalImpulse;
-    clone.tangentImpulse = this.tangentImpulse;
-    clone.maxNormalImpulse = this.maxNormalImpulse;
-    clone.normalVelocity = this.normalVelocity;
-    clone.id = this.id;
-    clone.persisted = this.persisted;
-    return clone;
-  }
-  clear() {
-    this.pointX = 0;
-    this.pointY = 0;
-    this.anchorAX = 0;
-    this.anchorAY = 0;
-    this.anchorBX = 0;
-    this.anchorBY = 0;
-    this.separation = 0;
-    this.normalImpulse = 0;
-    this.tangentImpulse = 0;
-    this.maxNormalImpulse = 0;
-    this.normalVelocity = 0;
-    this.id = 0;
-    this.persisted = false;
-    return this;
-  }
-  copyTo(mp) {
-    mp.pointX = this.pointX;
-    mp.pointY = this.pointY;
-    mp.anchorAX = this.anchorAX;
-    mp.anchorAY = this.anchorAY;
-    mp.anchorBX = this.anchorBX;
-    mp.anchorBY = this.anchorBY;
-    mp.separation = this.separation;
-    mp.normalImpulse = this.normalImpulse;
-    mp.tangentImpulse = this.tangentImpulse;
-    mp.maxNormalImpulse = this.maxNormalImpulse;
-    mp.normalVelocity = this.normalVelocity;
-    mp.id = this.id;
-    mp.persisted = this.persisted;
-  }
-};
-var b2Manifold = class _b2Manifold {
-  constructor(p14 = new b2ManifoldPoint(), p23 = new b2ManifoldPoint()) {
-    this.points = [p14, p23];
-    this.normalX = this.normalY = 0;
-    this.pointCount = 0;
-  }
-  clone() {
-    const clone = new _b2Manifold();
-    this.copyTo(clone);
-    return clone;
-  }
-  clear() {
-    if (this.points[0]) {
-      this.points[0].clear();
-    }
-    if (this.points[1]) {
-      this.points[1].clear();
-    }
-    this.normalX = this.normalY = 0;
-    this.pointCount = 0;
-    return this;
-  }
-  copyTo(manifold) {
-    this.points[0].copyTo(manifold.points[0]);
-    this.points[1].copyTo(manifold.points[1]);
-    manifold.normalX = this.normalX;
-    manifold.normalY = this.normalY;
-    manifold.pointCount = this.pointCount;
-  }
-};
-var b2TreeNode = class {
-  constructor() {
-    this.aabb = null;
-    this.categoryBits = 0;
-    this.parent_next = B2_NULL_INDEX;
-    this.child1 = B2_NULL_INDEX;
-    this.child2 = B2_NULL_INDEX;
-    this.userData = 0;
-    this.height = -1;
-    this.enlarged = false;
-  }
-};
-
 // src/distance_c.js
 function b2GetSweepTransform(sweep, time) {
   const xf2 = new b2Transform();
@@ -1617,7 +1633,7 @@ function b2SegmentDistance(p1X, p1Y, q1X, q1Y, p2X, p2Y, q2X, q2Y) {
   return sdResult;
 }
 function b2MakeProxy(vertices, count, radius) {
-  count = Math.min(count, b2_maxPolygonVertices);
+  count = Math.min(count, B2_MAX_POLYGON_VERTICES);
   const proxy = new b2DistanceProxy();
   proxy.points = [];
   proxy.count = count;
@@ -1631,7 +1647,10 @@ function b2Weight2(a1, w1, a2, w2) {
   return new b2Vec2(a1 * w1.x + a2 * w2.x, a1 * w1.y + a2 * w2.y);
 }
 function b2Weight3(a1, w1, a2, w2, a3, w3) {
-  return new b2Vec2(a1 * w1.x + a2 * w2.x + a3 * w3.x, a1 * w1.y + a2 * w2.y + a3 * w3.y);
+  return new b2Vec2(
+    a1 * w1.x + a2 * w2.x + a3 * w3.x,
+    a1 * w1.y + a2 * w2.y + a3 * w3.y
+  );
 }
 function b2FindSupport(proxy, direction) {
   let bestIndex = 0;
@@ -1836,7 +1855,13 @@ function b2ShapeDistance(cache, input, simplexes, simplexCapacity) {
   const proxyB = input.proxyB;
   const transformA = input.transformA;
   const transformB = input.transformB;
-  const simplex = b2MakeSimplexFromCache(cache, proxyA, transformA, proxyB, transformB);
+  const simplex = b2MakeSimplexFromCache(
+    cache,
+    proxyA,
+    transformA,
+    proxyB,
+    transformB
+  );
   let simplexIndex = 0;
   if (simplexes !== null && simplexIndex < simplexCapacity) {
     simplexes[simplexIndex] = simplex;
@@ -1877,7 +1902,10 @@ function b2ShapeDistance(cache, input, simplexes, simplexCapacity) {
       break;
     }
     const vertex = vertices[simplex.count];
-    vertex.indexA = b2FindSupport(proxyA, b2InvRotateVector(transformA.q, b2Neg(d)));
+    vertex.indexA = b2FindSupport(
+      proxyA,
+      b2InvRotateVector(transformA.q, b2Neg(d))
+    );
     vertex.wA = b2TransformPoint(transformA, proxyA.points[vertex.indexA]);
     vertex.indexB = b2FindSupport(proxyB, b2InvRotateVector(transformB.q, d));
     vertex.wB = b2TransformPoint(transformB, proxyB.points[vertex.indexB]);
@@ -1930,8 +1958,10 @@ function b2ShapeDistance(cache, input, simplexes, simplexCapacity) {
   }
   return output;
 }
+var rayPoint = new b2Vec2(0, 0);
+var rayNormal = new b2Vec2(0, 1);
 function b2ShapeCast(input) {
-  const output = new b2CastOutput();
+  const output = new b2CastOutput(rayNormal, rayPoint);
   output.fraction = input.maxFraction;
   const proxyA = input.proxyA;
   const xfA = input.transformA;
@@ -2015,7 +2045,10 @@ function b2ShapeCast(input) {
   const pointB = new b2Vec2();
   b2ComputeSimplexWitnessPoints(pointB, pointA, simplex);
   const n = b2Normalize(b2Neg(v));
-  const point = new b2Vec2(pointA.x + proxyA.radius * n.x, pointA.y + proxyA.radius * n.y);
+  const point = new b2Vec2(
+    pointA.x + proxyA.radius * n.x,
+    pointA.y + proxyA.radius * n.y
+  );
   output.point = b2TransformPoint(xfA, point);
   output.normal = b2RotateVector(xfA.q, n);
   output.fraction = lambda;
@@ -2026,7 +2059,7 @@ function b2ShapeCast(input) {
 var b2SeparationType = {
   b2_pointsType: 0,
   b2_faceAType: 1,
-  b2_faceBType: 2
+  b2_faceBType: 2,
 };
 var b2SeparationFunction = class {
   constructor() {
@@ -2070,7 +2103,10 @@ function b2MakeSeparationFunction(cache, proxyA, sweepA, proxyB, sweepB, t1) {
     f.axis = b2CrossVS(b2Sub(localPointB2, localPointB1), 1);
     f.axis = b2Normalize(f.axis);
     const normal2 = b2RotateVector(xfB.q, f.axis);
-    f.localPoint = new b2Vec2(0.5 * (localPointB1.x + localPointB2.x), 0.5 * (localPointB1.y + localPointB2.y));
+    f.localPoint = new b2Vec2(
+      0.5 * (localPointB1.x + localPointB2.x),
+      0.5 * (localPointB1.y + localPointB2.y)
+    );
     const pointB2 = b2TransformPoint(xfB, f.localPoint);
     const localPointA = proxyA.points[cache.indexA[0]];
     const pointA2 = b2TransformPoint(xfA, localPointA);
@@ -2086,7 +2122,10 @@ function b2MakeSeparationFunction(cache, proxyA, sweepA, proxyB, sweepB, t1) {
   f.axis = b2CrossVS(b2Sub(localPointA2, localPointA1), 1);
   f.axis = b2Normalize(f.axis);
   const normal = b2RotateVector(xfA.q, f.axis);
-  f.localPoint = new b2Vec2(0.5 * (localPointA1.x + localPointA2.x), 0.5 * (localPointA1.y + localPointA2.y));
+  f.localPoint = new b2Vec2(
+    0.5 * (localPointA1.x + localPointA2.x),
+    0.5 * (localPointA1.y + localPointA2.y)
+  );
   const pointA = b2TransformPoint(xfA, f.localPoint);
   const localPointB = proxyB.points[cache.indexB[0]];
   const pointB = b2TransformPoint(xfB, localPointB);
@@ -2197,7 +2236,7 @@ function b2TimeOfImpact(input) {
   distanceInput.proxyA = input.proxyA;
   distanceInput.proxyB = input.proxyB;
   distanceInput.useRadii = false;
-  for (; ; ) {
+  for (;;) {
     const xfA = b2GetSweepTransform(sweepA, t1);
     const xfB = b2GetSweepTransform(sweepB, t1);
     distanceInput.transformA = xfA;
@@ -2213,11 +2252,18 @@ function b2TimeOfImpact(input) {
       output.t = t1;
       break;
     }
-    const fcn = b2MakeSeparationFunction(cache, proxyA, sweepA, proxyB, sweepB, t1);
+    const fcn = b2MakeSeparationFunction(
+      cache,
+      proxyA,
+      sweepA,
+      proxyB,
+      sweepB,
+      t1
+    );
     let done = false;
     let t2 = tMax;
     let pushBackIter = 0;
-    for (; ; ) {
+    for (;;) {
       const ret = b2FindMinSeparation(fcn, t2);
       let s2 = ret.separation;
       const indexA = ret.indexA;
@@ -2246,11 +2292,12 @@ function b2TimeOfImpact(input) {
         break;
       }
       let rootIterCount = 0;
-      let a1 = t1, a2 = t2;
-      for (; ; ) {
+      let a1 = t1,
+        a2 = t2;
+      for (;;) {
         let t;
         if (rootIterCount & 1) {
-          t = a1 + (target - s1) * (a2 - a1) / (s2 - s1);
+          t = a1 + ((target - s1) * (a2 - a1)) / (s2 - s1);
         } else {
           t = 0.5 * (a1 + a2);
         }
@@ -2272,7 +2319,7 @@ function b2TimeOfImpact(input) {
         }
       }
       ++pushBackIter;
-      if (pushBackIter == b2_maxPolygonVertices) {
+      if (pushBackIter == B2_MAX_POLYGON_VERTICES) {
         break;
       }
     }
@@ -2338,10 +2385,15 @@ function b2IsPolygonCCW(points, count) {
 }
 function b2ComputeHull(points, count) {
   const hull = new b2Hull();
-  if (count < 3 || count > b2_maxPolygonVertices) {
+  if (count < 3 || count > B2_MAX_POLYGON_VERTICES) {
     return hull;
   }
-  const aabb = new b2AABB(Number.MAX_VALUE, Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE);
+  const aabb = new b2AABB(
+    Number.MAX_VALUE,
+    Number.MAX_VALUE,
+    -Number.MAX_VALUE,
+    -Number.MAX_VALUE
+  );
   const ps = [];
   let n = 0;
   const tolSqr = 16 * b2_linearSlop * b2_linearSlop;
@@ -2449,7 +2501,7 @@ function b2ValidateHull(hull) {
   if (!b2Validation) {
     return true;
   }
-  if (hull.count < 3 || b2_maxPolygonVertices < hull.count) {
+  if (hull.count < 3 || B2_MAX_POLYGON_VERTICES < hull.count) {
     return false;
   }
   if (!b2IsPolygonCCW(hull.points, hull.count)) {
@@ -2488,7 +2540,12 @@ function b2ValidateHull(hull) {
 
 // src/geometry_c.js
 function b2IsValidRay(input) {
-  const isValid = b2Vec2_IsValid(input.origin) && b2Vec2_IsValid(input.translation) && b2IsValid(input.maxFraction) && 0 <= input.maxFraction && input.maxFraction < b2_huge;
+  const isValid =
+    b2Vec2_IsValid(input.origin) &&
+    b2Vec2_IsValid(input.translation) &&
+    b2IsValid(input.maxFraction) &&
+    0 <= input.maxFraction &&
+    input.maxFraction < B2_HUGE;
   return isValid;
 }
 function b2ComputePolygonCentroid(vertices, count) {
@@ -2573,10 +2630,10 @@ function b2MakeRoundedBox(hx, hy, radius) {
   shape.radius = radius;
   return shape;
 }
-function b2MakeOffsetBox(hx, hy, center, angle = 0) {
+function b2MakeOffsetBox(hx, hy, center, rotation) {
   const xf2 = new b2Transform();
   xf2.p = center;
-  xf2.q = b2MakeRot(angle);
+  xf2.q = rotation;
   const shape = new b2Polygon();
   shape.count = 4;
   shape.vertices[0] = b2TransformPoint(xf2, new b2Vec2(-hx, -hy));
@@ -2605,7 +2662,8 @@ function b2ComputeCircleMass(shape, density) {
   const massData = new b2MassData();
   massData.mass = density * Math.PI * rr;
   massData.center = shape.center.clone();
-  massData.rotationalInertia = massData.mass * (0.5 * rr + b2Dot(shape.center, shape.center));
+  massData.rotationalInertia =
+    massData.mass * (0.5 * rr + b2Dot(shape.center, shape.center));
   return massData;
 }
 function b2ComputeCapsuleMass(shape, density) {
@@ -2620,12 +2678,13 @@ function b2ComputeCapsuleMass(shape, density) {
   const massData = new b2MassData();
   massData.mass = circleMass + boxMass;
   massData.center = new b2Vec2(0.5 * (p14.x + p23.x), 0.5 * (p14.y + p23.y));
-  const lc = 4 * radius / (3 * Math.PI);
+  const lc = (4 * radius) / (3 * Math.PI);
   const h = 0.5 * length;
   const circleInertia = circleMass * (0.5 * rr + h * h + 2 * h * lc);
-  const boxInertia = boxMass * (4 * rr + ll) / 12;
+  const boxInertia = (boxMass * (4 * rr + ll)) / 12;
   massData.rotationalInertia = circleInertia + boxInertia;
-  massData.rotationalInertia += massData.mass * b2Dot(massData.center, massData.center);
+  massData.rotationalInertia +=
+    massData.mass * b2Dot(massData.center, massData.center);
   return massData;
 }
 function b2ComputePolygonMass(shape, density) {
@@ -2642,7 +2701,7 @@ function b2ComputePolygonMass(shape, density) {
     capsule.radius = shape.radius;
     return b2ComputeCapsuleMass(capsule, density);
   }
-  const vertices = new Array(b2_maxPolygonVertices);
+  const vertices = new Array(B2_MAX_POLYGON_VERTICES);
   const count = shape.count;
   const radius = shape.radius;
   if (radius > 0) {
@@ -2671,8 +2730,10 @@ function b2ComputePolygonMass(shape, density) {
     const triangleArea = 0.5 * D;
     area += triangleArea;
     center = b2MulAdd(center, triangleArea * inv3, b2Add(e1, e2));
-    const ex1 = e1.x, ey1 = e1.y;
-    const ex2 = e2.x, ey2 = e2.y;
+    const ex1 = e1.x,
+      ey1 = e1.y;
+    const ex2 = e2.x,
+      ey2 = e2.y;
     const intx2 = ex1 * ex1 + ex2 * ex1 + ex2 * ex2;
     const inty2 = ey1 * ey1 + ey2 * ey1 + ey2 * ey2;
     rotationalInertia += 0.25 * inv3 * D * (intx2 + inty2);
@@ -2684,7 +2745,9 @@ function b2ComputePolygonMass(shape, density) {
   center.y *= invArea;
   massData.center = b2Add(r, center);
   massData.rotationalInertia = density * rotationalInertia;
-  massData.rotationalInertia += massData.mass * (b2Dot(massData.center, massData.center) - b2Dot(center, center));
+  massData.rotationalInertia +=
+    massData.mass *
+    (b2Dot(massData.center, massData.center) - b2Dot(center, center));
   return massData;
 }
 function b2ComputeCircleAABB(shape, xf2) {
@@ -2708,7 +2771,8 @@ function b2ComputePolygonAABB(shape, xf2) {
   const sv = shape.vertices[0];
   let lowerX = xf2.q.c * sv.x - xf2.q.s * sv.y + xf2.p.x;
   let lowerY = xf2.q.s * sv.x + xf2.q.c * sv.y + xf2.p.y;
-  let upperX = lowerX, upperY = lowerY;
+  let upperX = lowerX,
+    upperY = lowerY;
   for (let i = 1; i < shape.count; ++i) {
     const sv2 = shape.vertices[i];
     const vx = xf2.q.c * sv2.x - xf2.q.s * sv2.y + xf2.p.x;
@@ -2763,9 +2827,11 @@ function b2PointInPolygon(point, shape) {
   const output = b2ShapeDistance(cache, input, null, 0);
   return output.distance <= shape.radius;
 }
+var rayPoint2 = new b2Vec2(0, 0);
+var rayNormal2 = new b2Vec2(0, 1);
 function b2RayCastCircle(input, shape) {
   const p4 = shape.center.clone();
-  const output = new b2CastOutput();
+  const output = new b2CastOutput(rayNormal2, rayPoint2);
   const s = b2Sub(input.origin, p4);
   const res = b2GetLengthAndNormalize(input.translation);
   const length = res.length;
@@ -2794,7 +2860,7 @@ function b2RayCastCircle(input, shape) {
   return output;
 }
 function b2RayCastCapsule(input, shape) {
-  const output = new b2CastOutput();
+  const output = new b2CastOutput(rayNormal2, rayPoint2);
   const v1 = shape.center1;
   const v2 = shape.center2;
   const e = b2Sub(v2, v1);
@@ -2866,7 +2932,10 @@ function b2RayCastCapsule(input, shape) {
     return b2RayCastCircle(input, circle);
   } else {
     output.fraction = s2 / rayLength;
-    output.point = b2Add(b2Lerp(v1, v2, s1 / capsuleLength), b2MulSV(shape.radius, n));
+    output.point = b2Add(
+      b2Lerp(v1, v2, s1 / capsuleLength),
+      b2MulSV(shape.radius, n)
+    );
     output.normal = n;
     output.hit = true;
     return output;
@@ -2874,9 +2943,12 @@ function b2RayCastCapsule(input, shape) {
 }
 function b2RayCastSegment(input, shape, oneSided) {
   if (oneSided) {
-    const offset = b2Cross(b2Sub(input.origin, shape.point1), b2Sub(shape.point2, shape.point1));
+    const offset = b2Cross(
+      b2Sub(input.origin, shape.point1),
+      b2Sub(shape.point2, shape.point1)
+    );
     if (offset < 0) {
-      const output2 = new b2CastOutput();
+      const output2 = new b2CastOutput(rayNormal2, rayPoint2);
       return output2;
     }
   }
@@ -2885,7 +2957,7 @@ function b2RayCastSegment(input, shape, oneSided) {
   const v1 = shape.point1;
   const v2 = shape.point2;
   const e = b2Sub(v2, v1);
-  const output = new b2CastOutput();
+  const output = new b2CastOutput(rayNormal2, rayPoint2);
   const res = b2GetLengthAndNormalize(e);
   const length = res.length;
   const eUnit = res.normal;
@@ -2920,9 +2992,10 @@ function b2RayCastPolygon(input, shape) {
   if (shape.radius === 0) {
     const p14 = input.origin;
     const d = input.translation;
-    let lower = 0, upper = input.maxFraction;
+    let lower = 0,
+      upper = input.maxFraction;
     let index = -1;
-    const output = new b2CastOutput();
+    const output = new b2CastOutput(rayNormal2, rayPoint2);
     for (let i = 0; i < shape.count; ++i) {
       const numerator = b2Dot(shape.normals[i], b2Sub(shape.vertices[i], p14));
       const denominator = b2Dot(shape.normals[i], d);
@@ -2972,7 +3045,11 @@ function b2ShapeCastCircle(input, shape) {
 }
 function b2ShapeCastCapsule(input, shape) {
   const pairInput = new b2ShapeCastPairInput();
-  pairInput.proxyA = b2MakeProxy([shape.center1, shape.center2], 2, shape.radius);
+  pairInput.proxyA = b2MakeProxy(
+    [shape.center1, shape.center2],
+    2,
+    shape.radius
+  );
   pairInput.proxyB = b2MakeProxy(input.points, input.count, input.radius);
   pairInput.transformA = new b2Transform(new b2Vec2(0, 0), new b2Rot(1, 0));
   pairInput.transformB = new b2Transform(new b2Vec2(0, 0), new b2Rot(1, 0));
@@ -3027,7 +3104,8 @@ function b2UpdateShapeAABBs(shape, transform, proxyType) {
   aabb.upperBoundX += speculativeDistance;
   aabb.upperBoundY += speculativeDistance;
   shape.aabb = aabb;
-  const margin = proxyType == b2BodyType.b2_staticBody ? speculativeDistance : aabbMargin;
+  const margin =
+    proxyType == b2BodyType.b2_staticBody ? speculativeDistance : aabbMargin;
   const fatAABB = new b2AABB(
     aabb.lowerBoundX - margin,
     aabb.lowerBoundY - margin,
@@ -3036,7 +3114,14 @@ function b2UpdateShapeAABBs(shape, transform, proxyType) {
   );
   shape.fatAABB = fatAABB;
 }
-function b2CreateShapeInternal(world, body, transform, def, geometry, shapeType) {
+function b2CreateShapeInternal(
+  world,
+  body,
+  transform,
+  def,
+  geometry,
+  shapeType
+) {
   const shapeId = b2AllocId(world.shapeIdPool);
   if (shapeId == world.shapeArray.length) {
     world.shapeArray.push(new b2Shape());
@@ -3055,8 +3140,8 @@ function b2CreateShapeInternal(world, body, transform, def, geometry, shapeType)
     case b2ShapeType.b2_segmentShape:
       shape.segment = geometry;
       break;
-    case b2ShapeType.b2_smoothSegmentShape:
-      shape.smoothSegment = geometry;
+    case b2ShapeType.b2_chainSegmentShape:
+      shape.chainSegment = geometry;
       break;
     default:
       break;
@@ -3084,7 +3169,13 @@ function b2CreateShapeInternal(world, body, transform, def, geometry, shapeType)
   shape.revision += 1;
   if (body.setIndex != b2SetType.b2_disabledSet) {
     const proxyType = body.type;
-    b2CreateShapeProxy(shape, world.broadPhase, proxyType, transform, def.forceContactCreation);
+    b2CreateShapeProxy(
+      shape,
+      world.broadPhase,
+      proxyType,
+      transform,
+      def.forceContactCreation || def.isSensor
+    );
   }
   if (body.headShapeId != B2_NULL_INDEX) {
     const headShape = world.shapeArray[body.headShapeId];
@@ -3104,8 +3195,15 @@ function b2CreateShape(bodyId, def, geometry, shapeType) {
   }
   const body = b2GetBodyFullId(world, bodyId);
   const transform = b2GetBodyTransformQuick(world, body);
-  const shape = b2CreateShapeInternal(world, body, transform, def, geometry, shapeType);
-  if (body.automaticMass === true) {
+  const shape = b2CreateShapeInternal(
+    world,
+    body,
+    transform,
+    def,
+    geometry,
+    shapeType
+  );
+  if (body.updateBodyMass === true) {
     b2UpdateBodyMassData(world, body);
   }
   b2ValidateSolverSets(world);
@@ -3169,7 +3267,7 @@ function b2DestroyShape(shapeId) {
   const wakeBodies = true;
   const body = b2GetBody(world, shape.bodyId);
   b2DestroyShapeInternal(world, shape, body, wakeBodies);
-  if (body.automaticMass === true) {
+  if (body.updateBodyMass === true) {
     b2UpdateBodyMassData(world, body);
   }
 }
@@ -3200,53 +3298,81 @@ function b2CreateChain(bodyId, def) {
   shapeDef.enableSensorEvents = false;
   const n = def.count;
   const points = def.points;
-  let smoothSegment;
+  let chainSegment;
   if (def.isLoop) {
     chainShape.count = n;
     chainShape.shapeIndices = new Array(n);
     let prevIndex = n - 1;
     for (let i = 0; i < n - 2; ++i) {
-      smoothSegment = new b2SmoothSegment();
-      smoothSegment.ghost1 = points[prevIndex].clone();
-      smoothSegment.segment = new b2Segment();
-      smoothSegment.segment.point1 = points[i].clone();
-      smoothSegment.segment.point2 = points[i + 1].clone();
-      smoothSegment.ghost2 = points[i + 2].clone();
-      smoothSegment.chainId = chainId;
+      chainSegment = new b2ChainSegment();
+      chainSegment.ghost1 = points[prevIndex].clone();
+      chainSegment.segment = new b2Segment();
+      chainSegment.segment.point1 = points[i].clone();
+      chainSegment.segment.point2 = points[i + 1].clone();
+      chainSegment.ghost2 = points[i + 2].clone();
+      chainSegment.chainId = chainId;
       prevIndex = i;
-      const shape2 = b2CreateShapeInternal(world, body, transform, shapeDef, smoothSegment, b2ShapeType.b2_smoothSegmentShape);
+      const shape2 = b2CreateShapeInternal(
+        world,
+        body,
+        transform,
+        shapeDef,
+        chainSegment,
+        b2ShapeType.b2_chainSegmentShape
+      );
       chainShape.shapeIndices[i] = shape2.id;
     }
-    smoothSegment = new b2SmoothSegment();
-    smoothSegment.ghost1 = points[n - 3].clone();
-    smoothSegment.segment = new b2Segment();
-    smoothSegment.segment.point1 = points[n - 2].clone();
-    smoothSegment.segment.point2 = points[n - 1].clone();
-    smoothSegment.ghost2 = points[0].clone();
-    smoothSegment.chainId = chainId;
-    let shape = b2CreateShapeInternal(world, body, transform, shapeDef, smoothSegment, b2ShapeType.b2_smoothSegmentShape);
+    chainSegment = new b2ChainSegment();
+    chainSegment.ghost1 = points[n - 3].clone();
+    chainSegment.segment = new b2Segment();
+    chainSegment.segment.point1 = points[n - 2].clone();
+    chainSegment.segment.point2 = points[n - 1].clone();
+    chainSegment.ghost2 = points[0].clone();
+    chainSegment.chainId = chainId;
+    let shape = b2CreateShapeInternal(
+      world,
+      body,
+      transform,
+      shapeDef,
+      chainSegment,
+      b2ShapeType.b2_chainSegmentShape
+    );
     chainShape.shapeIndices[n - 2] = shape.id;
-    smoothSegment = new b2SmoothSegment();
-    smoothSegment.ghost1 = points[n - 2].clone();
-    smoothSegment.segment = new b2Segment();
-    smoothSegment.segment.point1 = points[n - 1].clone();
-    smoothSegment.segment.point2 = points[0].clone();
-    smoothSegment.ghost2 = points[1].clone();
-    smoothSegment.chainId = chainId;
-    shape = b2CreateShapeInternal(world, body, transform, shapeDef, smoothSegment, b2ShapeType.b2_smoothSegmentShape);
+    chainSegment = new b2ChainSegment();
+    chainSegment.ghost1 = points[n - 2].clone();
+    chainSegment.segment = new b2Segment();
+    chainSegment.segment.point1 = points[n - 1].clone();
+    chainSegment.segment.point2 = points[0].clone();
+    chainSegment.ghost2 = points[1].clone();
+    chainSegment.chainId = chainId;
+    shape = b2CreateShapeInternal(
+      world,
+      body,
+      transform,
+      shapeDef,
+      chainSegment,
+      b2ShapeType.b2_chainSegmentShape
+    );
     chainShape.shapeIndices[n - 1] = shape.id;
   } else {
     chainShape.count = n - 3;
     chainShape.shapeIndices = new Array(n);
     for (let i = 0; i < n - 3; ++i) {
-      smoothSegment = new b2SmoothSegment();
-      smoothSegment.ghost1 = points[i].clone();
-      smoothSegment.segment = new b2Segment();
-      smoothSegment.segment.point1 = points[i + 1].clone();
-      smoothSegment.segment.point2 = points[i + 2].clone();
-      smoothSegment.ghost2 = points[i + 3].clone();
-      smoothSegment.chainId = chainId;
-      const shape = b2CreateShapeInternal(world, body, transform, shapeDef, smoothSegment, b2ShapeType.b2_smoothSegmentShape);
+      chainSegment = new b2ChainSegment();
+      chainSegment.ghost1 = points[i].clone();
+      chainSegment.segment = new b2Segment();
+      chainSegment.segment.point1 = points[i + 1].clone();
+      chainSegment.segment.point2 = points[i + 2].clone();
+      chainSegment.ghost2 = points[i + 3].clone();
+      chainSegment.chainId = chainId;
+      const shape = b2CreateShapeInternal(
+        world,
+        body,
+        transform,
+        shapeDef,
+        chainSegment,
+        b2ShapeType.b2_chainSegmentShape
+      );
       chainShape.shapeIndices[i] = shape.id;
     }
   }
@@ -3292,8 +3418,8 @@ function b2ComputeShapeAABB(shape, xf2) {
       return b2ComputePolygonAABB(shape.polygon, xf2);
     case b2ShapeType.b2_segmentShape:
       return b2ComputeSegmentAABB(shape.segment, xf2);
-    case b2ShapeType.b2_smoothSegmentShape:
-      return b2ComputeSegmentAABB(shape.smoothSegment.segment, xf2);
+    case b2ShapeType.b2_chainSegmentShape:
+      return b2ComputeSegmentAABB(shape.chainSegment.segment, xf2);
     default:
       return new b2AABB(xf2.p.x, xf2.p.y, xf2.p.x, xf2.p.y);
   }
@@ -3308,8 +3434,12 @@ function b2GetShapeCentroid(shape) {
       return shape.polygon.centroid.clone();
     case b2ShapeType.b2_segmentShape:
       return b2Lerp(shape.segment.point1, shape.segment.point2, 0.5);
-    case b2ShapeType.b2_smoothSegmentShape:
-      return b2Lerp(shape.smoothSegment.segment.point1, shape.smoothSegment.segment.point2, 0.5);
+    case b2ShapeType.b2_chainSegmentShape:
+      return b2Lerp(
+        shape.chainSegment.segment.point1,
+        shape.chainSegment.segment.point2,
+        0.5
+      );
     default:
       return new b2Vec2(0, 0);
   }
@@ -3317,7 +3447,10 @@ function b2GetShapeCentroid(shape) {
 function b2GetShapePerimeter(shape) {
   switch (shape.type) {
     case b2ShapeType.b2_capsuleShape:
-      return 2 * b2Length(b2Sub(shape.capsule.center1, shape.capsule.center2)) + 2 * Math.PI * shape.capsule.radius;
+      return (
+        2 * b2Length(b2Sub(shape.capsule.center1, shape.capsule.center2)) +
+        2 * Math.PI * shape.capsule.radius
+      );
     case b2ShapeType.b2_circleShape:
       return 2 * Math.PI * shape.circle.radius;
     case b2ShapeType.b2_polygonShape: {
@@ -3334,8 +3467,16 @@ function b2GetShapePerimeter(shape) {
     }
     case b2ShapeType.b2_segmentShape:
       return 2 * b2Length(b2Sub(shape.segment.point1, shape.segment.point2));
-    case b2ShapeType.b2_smoothSegmentShape:
-      return 2 * b2Length(b2Sub(shape.smoothSegment.segment.point1, shape.smoothSegment.segment.point2));
+    case b2ShapeType.b2_chainSegmentShape:
+      return (
+        2 *
+        b2Length(
+          b2Sub(
+            shape.chainSegment.segment.point1,
+            shape.chainSegment.segment.point2
+          )
+        )
+      );
     default:
       return 0;
   }
@@ -3361,14 +3502,17 @@ function b2ComputeShapeExtent(shape, localCenter) {
         extent.minExtent = radius;
         const c1 = b2Sub(shape.capsule.center1, localCenter);
         const c2 = b2Sub(shape.capsule.center2, localCenter);
-        extent.maxExtent = Math.sqrt(Math.max(b2LengthSquared(c1), b2LengthSquared(c2))) + radius;
+        extent.maxExtent =
+          Math.sqrt(Math.max(b2LengthSquared(c1), b2LengthSquared(c2))) +
+          radius;
       }
       break;
     case b2ShapeType.b2_circleShape:
       {
         const radius = shape.circle.radius;
         extent.minExtent = radius;
-        extent.maxExtent = b2Length(b2Sub(shape.circle.center, localCenter)) + radius;
+        extent.maxExtent =
+          b2Length(b2Sub(shape.circle.center, localCenter)) + radius;
       }
       break;
     case b2ShapeType.b2_polygonShape:
@@ -3393,15 +3537,19 @@ function b2ComputeShapeExtent(shape, localCenter) {
         extent.minExtent = 0;
         const c1 = b2Sub(shape.segment.point1, localCenter);
         const c2 = b2Sub(shape.segment.point2, localCenter);
-        extent.maxExtent = Math.sqrt(Math.max(b2LengthSquared(c1), b2LengthSquared(c2)));
+        extent.maxExtent = Math.sqrt(
+          Math.max(b2LengthSquared(c1), b2LengthSquared(c2))
+        );
       }
       break;
-    case b2ShapeType.b2_smoothSegmentShape:
+    case b2ShapeType.b2_chainSegmentShape:
       {
         extent.minExtent = 0;
-        const c1 = b2Sub(shape.smoothSegment.segment.point1, localCenter);
-        const c2 = b2Sub(shape.smoothSegment.segment.point2, localCenter);
-        extent.maxExtent = Math.sqrt(Math.max(b2LengthSquared(c1), b2LengthSquared(c2)));
+        const c1 = b2Sub(shape.chainSegment.segment.point1, localCenter);
+        const c2 = b2Sub(shape.chainSegment.segment.point2, localCenter);
+        extent.maxExtent = Math.sqrt(
+          Math.max(b2LengthSquared(c1), b2LengthSquared(c2))
+        );
       }
       break;
     default:
@@ -3409,6 +3557,8 @@ function b2ComputeShapeExtent(shape, localCenter) {
   }
   return extent;
 }
+var rayPoint3 = new b2Vec2(0, 0);
+var rayNormal3 = new b2Vec2(0, 1);
 function b2RayCastShape(input, shape, transform) {
   const localInput = input;
   localInput.origin = b2InvTransformPoint(transform, input.origin);
@@ -3431,8 +3581,8 @@ function b2RayCastShape(input, shape, transform) {
     case b2ShapeType.b2_segmentShape:
       output = b2RayCastSegment(localInput, shape.segment, false);
       break;
-    case b2ShapeType.b2_smoothSegmentShape:
-      output = b2RayCastSegment(localInput, shape.smoothSegment.segment, true);
+    case b2ShapeType.b2_chainSegmentShape:
+      output = b2RayCastSegment(localInput, shape.chainSegment.segment, true);
       break;
     default:
       return output;
@@ -3465,8 +3615,8 @@ function b2ShapeCastShape(input, shape, transform) {
     case b2ShapeType.b2_segmentShape:
       output = b2ShapeCastSegment(localInput, shape.segment);
       break;
-    case b2ShapeType.b2_smoothSegmentShape:
-      output = b2ShapeCastSegment(localInput, shape.smoothSegment.segment);
+    case b2ShapeType.b2_chainSegmentShape:
+      output = b2ShapeCastSegment(localInput, shape.chainSegment.segment);
       break;
     default:
       return output;
@@ -3477,7 +3627,14 @@ function b2ShapeCastShape(input, shape, transform) {
 }
 function b2CreateShapeProxy(shape, bp, type, transform, forcePairCreation) {
   b2UpdateShapeAABBs(shape, transform, type);
-  shape.proxyKey = b2BroadPhase_CreateProxy(bp, type, shape.fatAABB, shape.filter.categoryBits, shape.id, forcePairCreation);
+  shape.proxyKey = b2BroadPhase_CreateProxy(
+    bp,
+    type,
+    shape.fatAABB,
+    shape.filter.categoryBits,
+    shape.id,
+    forcePairCreation
+  );
 }
 function b2DestroyShapeProxy(shape, bp) {
   if (shape.proxyKey != B2_NULL_INDEX) {
@@ -3488,15 +3645,30 @@ function b2DestroyShapeProxy(shape, bp) {
 function b2MakeShapeDistanceProxy(shape) {
   switch (shape.type) {
     case b2ShapeType.b2_capsuleShape:
-      return b2MakeProxy([shape.capsule.center1.clone(), shape.capsule.center2.clone()], 2, shape.capsule.radius);
+      return b2MakeProxy(
+        [shape.capsule.center1.clone(), shape.capsule.center2.clone()],
+        2,
+        shape.capsule.radius
+      );
     case b2ShapeType.b2_circleShape:
       return b2MakeProxy([shape.circle.center.clone()], 1, shape.circle.radius);
     case b2ShapeType.b2_polygonShape:
-      return b2MakeProxy(shape.polygon.vertices, shape.polygon.count, shape.polygon.radius);
+      return b2MakeProxy(
+        shape.polygon.vertices,
+        shape.polygon.count,
+        shape.polygon.radius
+      );
     case b2ShapeType.b2_segmentShape:
       return b2MakeProxy([shape.segment.point1, shape.segment.point2], 2, 0);
-    case b2ShapeType.b2_smoothSegmentShape:
-      return b2MakeProxy([shape.smoothSegment.segment.point1.clone(), shape.smoothSegment.segment.point2.clone()], 2, 0);
+    case b2ShapeType.b2_chainSegmentShape:
+      return b2MakeProxy(
+        [
+          shape.chainSegment.segment.point1.clone(),
+          shape.chainSegment.segment.point2.clone(),
+        ],
+        2,
+        0
+      );
     default:
       return new b2DistanceProxy();
   }
@@ -3545,7 +3717,7 @@ function b2Shape_RayCast(shapeId, origin, translation) {
   input.maxFraction = 1;
   input.origin = b2InvTransformPoint(transform, origin);
   input.translation = b2InvRotateVector(transform.q, translation);
-  let output = new b2CastOutput();
+  let output = new b2CastOutput(rayNormal3, rayPoint3);
   switch (shape.type) {
     case b2ShapeType.b2_capsuleShape:
       output = b2RayCastCapsule(input, shape.capsule);
@@ -3559,8 +3731,8 @@ function b2Shape_RayCast(shapeId, origin, translation) {
     case b2ShapeType.b2_polygonShape:
       output = b2RayCastPolygon(input, shape.polygon);
       break;
-    case b2ShapeType.b2_smoothSegmentShape:
-      output = b2RayCastSegment(input, shape.smoothSegment.segment, true);
+    case b2ShapeType.b2_chainSegmentShape:
+      output = b2RayCastSegment(input, shape.chainSegment.segment, true);
       break;
     default:
       return output;
@@ -3661,7 +3833,11 @@ function b2Shape_SetFilter(shapeId, filter) {
     return;
   }
   const shape = b2GetShape(world, shapeId);
-  if (filter.maskBits === shape.filter.maskBits && filter.categoryBits === shape.filter.categoryBits && filter.groupIndex === shape.filter.groupIndex) {
+  if (
+    filter.maskBits === shape.filter.maskBits &&
+    filter.categoryBits === shape.filter.categoryBits &&
+    filter.groupIndex === shape.filter.groupIndex
+  ) {
     return;
   }
   const destroyProxy = filter.categoryBits === shape.filter.categoryBits;
@@ -3736,10 +3912,10 @@ function b2Shape_GetSegment(shapeId) {
   const shape = b2GetShape(world, shapeId);
   return shape.segment;
 }
-function b2Shape_GetSmoothSegment(shapeId) {
+function b2Shape_GetChainSegment(shapeId) {
   const world = b2GetWorld(shapeId.world0);
   const shape = b2GetShape(world, shapeId);
-  return shape.smoothSegment;
+  return shape.chainSegment;
 }
 function b2Shape_GetCapsule(shapeId) {
   const world = b2GetWorld(shapeId.world0);
@@ -3802,8 +3978,8 @@ function b2Shape_SetPolygon(shapeId, polygon) {
 function b2Shape_GetParentChain(shapeId) {
   const world = b2GetWorld(shapeId.world0);
   const shape = b2GetShape(world, shapeId);
-  if (shape.type === b2ShapeType.b2_smoothSegmentShape) {
-    const chainId = shape.smoothSegment.chainId;
+  if (shape.type === b2ShapeType.b2_chainSegmentShape) {
+    const chainId = shape.chainSegment.chainId;
     if (chainId !== B2_NULL_INDEX) {
       const chain = world.chainArray[chainId];
       return new b2ChainId(chainId + 1, shapeId.world0, chain.revision);
@@ -3865,11 +4041,23 @@ function b2Shape_GetContactData(shapeId, contactData, capacity) {
     const contactId = contactKey >> 1;
     const edgeIndex = contactKey & 1;
     const contact = world.contactArray[contactId];
-    if ((contact.shapeIdA === shapeId.index1 - 1 || contact.shapeIdB === shapeId.index1 - 1) && (contact.flags & b2ContactFlags.b2_contactTouchingFlag) !== 0) {
+    if (
+      (contact.shapeIdA === shapeId.index1 - 1 ||
+        contact.shapeIdB === shapeId.index1 - 1) &&
+      (contact.flags & b2ContactFlags.b2_contactTouchingFlag) !== 0
+    ) {
       const shapeA = world.shapeArray[contact.shapeIdA];
       const shapeB = world.shapeArray[contact.shapeIdB];
-      contactData[index].shapeIdA = new b2ShapeId(shapeA.id + 1, shapeId.world0, shapeA.revision);
-      contactData[index].shapeIdB = new b2ShapeId(shapeB.id + 1, shapeId.world0, shapeB.revision);
+      contactData[index].shapeIdA = new b2ShapeId(
+        shapeA.id + 1,
+        shapeId.world0,
+        shapeA.revision
+      );
+      contactData[index].shapeIdB = new b2ShapeId(
+        shapeB.id + 1,
+        shapeId.world0,
+        shapeB.revision
+      );
       const contactSim = b2GetContactSim(world, contact);
       contactData[index].manifold = contactSim.manifold;
       index += 1;
@@ -3927,7 +4115,7 @@ var b2Shape = class {
     this.circle = new b2Circle();
     this.polygon = new b2Polygon();
     this.segment = new b2Segment();
-    this.smoothSegment = new b2SmoothSegment();
+    this.chainSegment = new b2ChainSegment();
     this.revision = 0;
     this.isSensor = false;
     this.enableSensorEvents = false;
@@ -3977,7 +4165,9 @@ function b2DestroyBitSet(bitSet) {
   bitSet.bits = null;
 }
 function b2SetBitCountAndClear(bitSet, bitCount) {
-  const blockCount = Math.floor((bitCount + b2_64bits * 8 - 1) / (b2_64bits * 8));
+  const blockCount = Math.floor(
+    (bitCount + b2_64bits * 8 - 1) / (b2_64bits * 8)
+  );
   if (bitSet.blockCapacity < blockCount) {
     b2DestroyBitSet(bitSet);
     const newBitCapacity = bitCount + (bitCount >> 1);
@@ -4018,7 +4208,10 @@ function b2GetBit(bitSet, bitIndex) {
   if (blockIndex >= bitSet.blockCount) {
     return false;
   }
-  return (bitSet.bits[blockIndex] & BigInt(1) << BigInt(bitIndex % 64)) !== BigInt(0);
+  return (
+    (bitSet.bits[blockIndex] & (BigInt(1) << BigInt(bitIndex % 64))) !==
+    BigInt(0)
+  );
 }
 
 // src/constraint_graph_c.js
@@ -4097,7 +4290,9 @@ function b2AddContactToGraph(world, contactSim, contact) {
     const awakeSet = world.solverSetArray[b2SetType.b2_awakeSet];
     const localIndex = bodyA.localIndex;
     if (!(0 <= localIndex && localIndex < awakeSet.sims.count)) {
-      throw new Error("Assert failed: 0 <= localIndex && localIndex < awakeSet.sims.count");
+      throw new Error(
+        "Assert failed: 0 <= localIndex && localIndex < awakeSet.sims.count"
+      );
     }
     newContact.bodySimIndexA = localIndex;
     const bodySimA = awakeSet.sims.data[localIndex];
@@ -4115,7 +4310,9 @@ function b2AddContactToGraph(world, contactSim, contact) {
     const awakeSet = world.solverSetArray[b2SetType.b2_awakeSet];
     const localIndex = bodyB.localIndex;
     if (!(0 <= localIndex && localIndex < awakeSet.sims.count)) {
-      throw new Error("Assert failed: 0 <= localIndex && localIndex < awakeSet.sims.count");
+      throw new Error(
+        "Assert failed: 0 <= localIndex && localIndex < awakeSet.sims.count"
+      );
     }
     newContact.bodySimIndexB = localIndex;
     const bodySimB = awakeSet.sims.data[localIndex];
@@ -4123,7 +4320,13 @@ function b2AddContactToGraph(world, contactSim, contact) {
     newContact.invIB = bodySimB.invInertia;
   }
 }
-function b2RemoveContactFromGraph(world, bodyIdA, bodyIdB, colorIndex, localIndex) {
+function b2RemoveContactFromGraph(
+  world,
+  bodyIdA,
+  bodyIdB,
+  colorIndex,
+  localIndex
+) {
   const graph = world.constraintGraph;
   if (colorIndex !== b2_overflowIndex) {
     throw new Error("Assert failed: colorIndex == b2_overflowIndex");
@@ -4139,7 +4342,9 @@ function b2RemoveContactFromGraph(world, bodyIdA, bodyIdB, colorIndex, localInde
     const movedId = movedContactSim.contactId;
     const movedContact = world.contactArray[movedId];
     if (movedContact.setIndex !== b2SetType.b2_awakeSet) {
-      throw new Error("Assert failed: movedContact.setIndex == b2SetType.b2_awakeSet");
+      throw new Error(
+        "Assert failed: movedContact.setIndex == b2SetType.b2_awakeSet"
+      );
     }
     if (movedContact.colorIndex !== colorIndex) {
       throw new Error("Assert failed: movedContact.colorIndex == colorIndex");
@@ -4164,7 +4369,13 @@ function b2CreateJointInGraph(world, joint) {
   if (staticA && staticB) {
     throw new Error("Assert failed: staticA == false || staticB == false");
   }
-  const colorIndex = b2AssignJointColor(graph, bodyIdA, bodyIdB, staticA, staticB);
+  const colorIndex = b2AssignJointColor(
+    graph,
+    bodyIdA,
+    bodyIdB,
+    staticA,
+    staticB
+  );
   const jointSim = b2AddJoint(graph.colors[colorIndex].joints);
   joint.colorIndex = colorIndex;
   joint.localIndex = graph.colors[colorIndex].joints.count - 1;
@@ -4174,7 +4385,13 @@ function b2AddJointToGraph(world, jointSim, joint) {
   const jointDst = b2CreateJointInGraph(world, joint);
   Object.assign(jointDst, jointSim);
 }
-function b2RemoveJointFromGraph(world, bodyIdA, bodyIdB, colorIndex, localIndex) {
+function b2RemoveJointFromGraph(
+  world,
+  bodyIdA,
+  bodyIdB,
+  colorIndex,
+  localIndex
+) {
   const graph = world.constraintGraph;
   const color = graph.colors[colorIndex];
   if (colorIndex != b2_overflowIndex) {
@@ -4190,7 +4407,9 @@ function b2RemoveJointFromGraph(world, bodyIdA, bodyIdB, colorIndex, localIndex)
     }
     const movedJoint = world.jointArray[movedId];
     if (movedJoint.setIndex !== b2SetType.b2_awakeSet) {
-      throw new Error("Assert failed: movedJoint.setIndex == b2SetType.b2_awakeSet");
+      throw new Error(
+        "Assert failed: movedJoint.setIndex == b2SetType.b2_awakeSet"
+      );
     }
     if (movedJoint.colorIndex !== colorIndex) {
       throw new Error("Assert failed: movedJoint.colorIndex == colorIndex");
@@ -4282,7 +4501,10 @@ function b2PrepareOverflowContacts(context) {
       vBY = stateB.linearVelocity.y;
       wB = stateB.angularVelocity;
     }
-    constraint.softness = indexA === B2_NULL_INDEX || indexB === B2_NULL_INDEX ? staticSoftness : contactSoftness;
+    constraint.softness =
+      indexA === B2_NULL_INDEX || indexB === B2_NULL_INDEX
+        ? staticSoftness
+        : contactSoftness;
     constraint.invMassA = mA;
     constraint.invIA = iA;
     constraint.invMassB = mB;
@@ -4293,7 +4515,7 @@ function b2PrepareOverflowContacts(context) {
     const tangentY = -constraint.normalX;
     for (let j = 0; j < pointCount; ++j) {
       const mp = manifold.points[j];
-      const cp = constraint.points[j] = new b2ContactConstraintPoint();
+      const cp = (constraint.points[j] = new b2ContactConstraintPoint());
       cp.normalImpulse = warmStartScale * mp.normalImpulse;
       cp.tangentImpulse = warmStartScale * mp.tangentImpulse;
       cp.maxNormalImpulse = 0;
@@ -4388,12 +4610,18 @@ function b2SolveOverflowContacts(context, useBias) {
     const iA = constraint.invIA;
     const mB = constraint.invMassB;
     const iB = constraint.invIB;
-    const stateA = constraint.indexA === B2_NULL_INDEX ? dummyState : states.data[constraint.indexA];
+    const stateA =
+      constraint.indexA === B2_NULL_INDEX
+        ? dummyState
+        : states.data[constraint.indexA];
     let vAX = stateA.linearVelocity.x;
     let vAY = stateA.linearVelocity.y;
     let wA = stateA.angularVelocity;
     const dqA = stateA.deltaRotation;
-    const stateB = constraint.indexB === B2_NULL_INDEX ? dummyState : states.data[constraint.indexB];
+    const stateB =
+      constraint.indexB === B2_NULL_INDEX
+        ? dummyState
+        : states.data[constraint.indexB];
     let vBX = stateB.linearVelocity.x;
     let vBY = stateB.linearVelocity.y;
     let wB = stateB.angularVelocity;
@@ -4409,8 +4637,14 @@ function b2SolveOverflowContacts(context, useBias) {
     const pointCount = constraint.pointCount;
     for (let j = 0; j < pointCount; ++j) {
       const cp = constraint.points[j];
-      const rx = dqB.c * cp.anchorBX - dqB.s * cp.anchorBY - (dqA.c * cp.anchorAX - dqA.s * cp.anchorAY);
-      const ry = dqB.s * cp.anchorBX + dqB.c * cp.anchorBY - (dqA.s * cp.anchorAX + dqA.c * cp.anchorAY);
+      const rx =
+        dqB.c * cp.anchorBX -
+        dqB.s * cp.anchorBY -
+        (dqA.c * cp.anchorAX - dqA.s * cp.anchorAY);
+      const ry =
+        dqB.s * cp.anchorBX +
+        dqB.c * cp.anchorBY -
+        (dqA.s * cp.anchorAX + dqA.c * cp.anchorAY);
       const s = (dpx + rx) * normalX + (dpy + ry) * normalY + cp.baseSeparation;
       let velocityBias = 0;
       let massScale = 1;
@@ -4426,8 +4660,12 @@ function b2SolveOverflowContacts(context, useBias) {
       const rAY = cp.anchorAY;
       const rBX = cp.anchorBX;
       const rBY = cp.anchorBY;
-      const vn = (vBX - vAX + wB * -rBY - wA * -rAY) * normalX + (vBY - vAY + wB * rBX - wA * rAX) * normalY;
-      let impulse = -cp.normalMass * massScale * (vn + velocityBias) - impulseScale * cp.normalImpulse;
+      const vn =
+        (vBX - vAX + wB * -rBY - wA * -rAY) * normalX +
+        (vBY - vAY + wB * rBX - wA * rAX) * normalY;
+      let impulse =
+        -cp.normalMass * massScale * (vn + velocityBias) -
+        impulseScale * cp.normalImpulse;
       const newImpulse = Math.max(cp.normalImpulse + impulse, 0);
       impulse = newImpulse - cp.normalImpulse;
       cp.normalImpulse = newImpulse;
@@ -4454,7 +4692,12 @@ function b2SolveOverflowContacts(context, useBias) {
       const maxFriction = friction * cp.normalImpulse;
       const oldTangentImpulse = cp.tangentImpulse;
       cp.tangentImpulse = oldTangentImpulse + impulse;
-      cp.tangentImpulse = cp.tangentImpulse < -maxFriction ? -maxFriction : cp.tangentImpulse > maxFriction ? maxFriction : cp.tangentImpulse;
+      cp.tangentImpulse =
+        cp.tangentImpulse < -maxFriction
+          ? -maxFriction
+          : cp.tangentImpulse > maxFriction
+          ? maxFriction
+          : cp.tangentImpulse;
       impulse = cp.tangentImpulse - oldTangentImpulse;
       const Px = impulse * tangentx;
       const Py = impulse * tangenty;
@@ -4492,10 +4735,16 @@ function b2ApplyOverflowRestitution(context) {
     const iA = constraint.invIA;
     const mB = constraint.invMassB;
     const iB = constraint.invIB;
-    const stateA = constraint.indexA === B2_NULL_INDEX ? dummyState : states.data[constraint.indexA];
+    const stateA =
+      constraint.indexA === B2_NULL_INDEX
+        ? dummyState
+        : states.data[constraint.indexA];
     const vA = stateA.linearVelocity;
     let wA = stateA.angularVelocity;
-    const stateB = constraint.indexB === B2_NULL_INDEX ? dummyState : states.data[constraint.indexB];
+    const stateB =
+      constraint.indexB === B2_NULL_INDEX
+        ? dummyState
+        : states.data[constraint.indexB];
     const vB = stateB.linearVelocity;
     let wB = stateB.angularVelocity;
     const normalX = constraint.normalX;
@@ -4549,7 +4798,8 @@ function b2StoreOverflowImpulses(context) {
     for (let j = 0; j < pointCount; ++j) {
       manifold.points[j].normalImpulse = constraint.points[j].normalImpulse;
       manifold.points[j].tangentImpulse = constraint.points[j].tangentImpulse;
-      manifold.points[j].maxNormalImpulse = constraint.points[j].maxNormalImpulse;
+      manifold.points[j].maxNormalImpulse =
+        constraint.points[j].maxNormalImpulse;
       manifold.points[j].normalVelocity = constraint.points[j].relativeVelocity;
     }
   }
@@ -4582,11 +4832,16 @@ function b2EnlargeAABB(a, b) {
   return changed;
 }
 function b2AABB_Overlaps(a, b) {
-  return !(a.lowerBoundX >= b.upperBoundX || a.upperBoundX <= b.lowerBoundX || a.lowerBoundY >= b.upperBoundY || a.upperBoundY <= b.lowerBoundY);
+  return !(
+    a.lowerBoundX >= b.upperBoundX ||
+    a.upperBoundX <= b.lowerBoundX ||
+    a.lowerBoundY >= b.upperBoundY ||
+    a.upperBoundY <= b.lowerBoundY
+  );
 }
 
 // src/dynamic_tree_c.js
-var b2_treeStackSize = 1024;
+var B2_TREE_STACK_SIZE = 1024;
 function b2IsLeaf(node) {
   return node.height === 0;
 }
@@ -4595,7 +4850,10 @@ function b2DynamicTree_Create() {
   tree.root = B2_NULL_INDEX;
   tree.nodeCapacity = 16;
   tree.nodeCount = 0;
-  tree.nodes = Array.from({ length: tree.nodeCapacity }, () => new b2TreeNode());
+  tree.nodes = Array.from(
+    { length: tree.nodeCapacity },
+    () => new b2TreeNode()
+  );
   for (let i = 0; i < tree.nodeCapacity - 1; ++i) {
     tree.nodes[i].parent_next = i + 1;
     tree.nodes[i].height = -1;
@@ -4618,7 +4876,10 @@ function b2AllocateNode(tree) {
   if (tree.freeList === B2_NULL_INDEX) {
     const oldNodes = tree.nodes;
     tree.nodeCapacity += tree.nodeCapacity >> 1;
-    tree.nodes = Array.from({ length: tree.nodeCapacity }, () => new b2TreeNode());
+    tree.nodes = Array.from(
+      { length: tree.nodeCapacity },
+      () => new b2TreeNode()
+    );
     tree.nodes = Array.from({ length: tree.nodeCapacity }, (_, i) => {
       if (i < oldNodes.length) {
         return oldNodes[i];
@@ -4727,7 +4988,7 @@ var b2RotateType = {
   b2_rotateBF: 1,
   b2_rotateBG: 2,
   b2_rotateCD: 3,
-  b2_rotateCE: 4
+  b2_rotateCE: 4,
 };
 function b2RotateNodes(tree, iA) {
   const nodes = tree.nodes;
@@ -4926,7 +5187,8 @@ function b2InsertLeaf(tree, leaf, shouldRotate) {
   nodes[newParent].parent_next = oldParent;
   nodes[newParent].userData = -1;
   nodes[newParent].aabb = b2AABB_Union(leafAABB, nodes[sibling].aabb);
-  nodes[newParent].categoryBits = nodes[leaf].categoryBits | nodes[sibling].categoryBits;
+  nodes[newParent].categoryBits =
+    nodes[leaf].categoryBits | nodes[sibling].categoryBits;
   nodes[newParent].height = nodes[sibling].height + 1;
   if (oldParent !== B2_NULL_INDEX) {
     if (nodes[oldParent].child1 === sibling) {
@@ -4950,8 +5212,10 @@ function b2InsertLeaf(tree, leaf, shouldRotate) {
     const child1 = nodes[index].child1;
     const child2 = nodes[index].child2;
     nodes[index].aabb = b2AABB_Union(nodes[child1].aabb, nodes[child2].aabb);
-    nodes[index].categoryBits = nodes[child1].categoryBits | nodes[child2].categoryBits;
-    nodes[index].height = 1 + Math.max(nodes[child1].height, nodes[child2].height);
+    nodes[index].categoryBits =
+      nodes[child1].categoryBits | nodes[child2].categoryBits;
+    nodes[index].height =
+      1 + Math.max(nodes[child1].height, nodes[child2].height);
     nodes[index].enlarged = nodes[child1].enlarged || nodes[child2].enlarged;
     if (shouldRotate) {
       b2RotateNodes(tree, index);
@@ -5065,8 +5329,7 @@ function b2DynamicTree_GetAreaRatio(tree) {
   }
   return totalArea / rootArea;
 }
-function b2DynamicTree_Validate(tree) {
-}
+function b2DynamicTree_Validate(tree) {}
 function b2DynamicTree_GetMaxBalance(tree) {
   let maxBalance = 0;
   for (let i = 0; i < tree.nodeCapacity; ++i) {
@@ -5076,7 +5339,9 @@ function b2DynamicTree_GetMaxBalance(tree) {
     }
     const child1 = node.child1;
     const child2 = node.child2;
-    const balance = Math.abs(tree.nodes[child2].height - tree.nodes[child1].height);
+    const balance = Math.abs(
+      tree.nodes[child2].height - tree.nodes[child1].height
+    );
     maxBalance = Math.max(maxBalance, balance);
   }
   return maxBalance;
@@ -5098,7 +5363,8 @@ function b2DynamicTree_RebuildBottomUp(tree) {
   }
   while (count > 1) {
     let minCost = Number.MAX_VALUE;
-    let iMin = -1, jMin = -1;
+    let iMin = -1,
+      jMin = -1;
     for (let i = 0; i < count; ++i) {
       const aabbi = tree.nodes[nodes[i]].aabb;
       for (let j = i + 1; j < count; ++j) {
@@ -5143,9 +5409,10 @@ function b2DynamicTree_ShiftOrigin(tree, newOrigin) {
   }
 }
 function b2DynamicTree_GetByteCount(tree) {
-  const size = Object.keys(tree).length * 8 + // Rough estimate for object properties
-  tree.nodeCapacity * Object.keys(tree.nodes[0]).length * 8 + // Estimate for nodes
-  tree.rebuildCapacity * (4 + 16 + 8 + 4);
+  const size =
+    Object.keys(tree).length * 8 + // Rough estimate for object properties
+    tree.nodeCapacity * Object.keys(tree.nodes[0]).length * 8 + // Estimate for nodes
+    tree.rebuildCapacity * (4 + 16 + 8 + 4);
   return size;
 }
 function b2DynamicTree_Query(tree, aabb, maskBits, callback, context) {
@@ -5160,7 +5427,10 @@ function b2DynamicTree_Query(tree, aabb, maskBits, callback, context) {
       continue;
     }
     const node = tree.nodes[nodeId];
-    if ((node.categoryBits & maskBits) !== 0 && b2AABB_Overlaps(node.aabb, aabb)) {
+    if (
+      (node.categoryBits & maskBits) !== 0 &&
+      b2AABB_Overlaps(node.aabb, aabb)
+    ) {
       if (node.height == 0) {
         const proceed = callback(nodeId, node.userData, context);
         if (proceed === false) {
@@ -5178,8 +5448,10 @@ function b2DynamicTree_QueryAll(tree, aabb, context) {
   if (tree.root == B2_NULL_INDEX) {
     return;
   }
-  const lx = aabb.lowerBoundX, ux = aabb.upperBoundX;
-  const ly = aabb.lowerBoundY, uy = aabb.upperBoundY;
+  const lx = aabb.lowerBoundX,
+    ux = aabb.upperBoundX;
+  const ly = aabb.lowerBoundY,
+    uy = aabb.upperBoundY;
   const nodes = tree.nodes;
   let stackCount = 0;
   stack[stackCount++] = tree.root;
@@ -5189,12 +5461,22 @@ function b2DynamicTree_QueryAll(tree, aabb, context) {
     node = nodes[nodeId];
     if (node.height == 0) {
       a = node.aabb;
-      if (a.lowerBoundX < ux && a.upperBoundX > lx && a.lowerBoundY < uy && a.upperBoundY > ly) {
+      if (
+        a.lowerBoundX < ux &&
+        a.upperBoundX > lx &&
+        a.lowerBoundY < uy &&
+        a.upperBoundY > ly
+      ) {
         b2PairQueryCallback(nodeId, node.userData, context);
       }
     } else {
       a = node.aabb;
-      if (a.lowerBoundX < ux && a.upperBoundX > lx && a.lowerBoundY < uy && a.upperBoundY > ly) {
+      if (
+        a.lowerBoundX < ux &&
+        a.upperBoundX > lx &&
+        a.lowerBoundY < uy &&
+        a.upperBoundY > ly
+      ) {
         stack[stackCount++] = node.child1;
         stack[stackCount++] = node.child2;
       }
@@ -5209,7 +5491,12 @@ function b2DynamicTree_RayCast(tree, input, maskBits, callback, context) {
   const abs_v = b2Abs(v);
   let maxFraction = input.maxFraction;
   let p23 = b2MulAdd(p14, maxFraction, d);
-  const segmentAABB = new b2AABB(Math.min(p14.x, p23.x), Math.min(p14.y, p23.y), Math.max(p14.x, p23.x), Math.max(p14.y, p23.y));
+  const segmentAABB = new b2AABB(
+    Math.min(p14.x, p23.x),
+    Math.min(p14.y, p23.y),
+    Math.max(p14.x, p23.x),
+    Math.max(p14.y, p23.y)
+  );
   const stack2 = [];
   stack2.push(tree.root);
   const subInput = input;
@@ -5219,7 +5506,10 @@ function b2DynamicTree_RayCast(tree, input, maskBits, callback, context) {
       continue;
     }
     const node = tree.nodes[nodeId];
-    if (b2AABB_Overlaps(node.aabb, segmentAABB) == false || (node.categoryBits & maskBits) == 0) {
+    if (
+      b2AABB_Overlaps(node.aabb, segmentAABB) == false ||
+      (node.categoryBits & maskBits) == 0
+    ) {
       continue;
     }
     const c2 = b2AABB_Center(node.aabb);
@@ -5235,7 +5525,7 @@ function b2DynamicTree_RayCast(tree, input, maskBits, callback, context) {
       if (value == 0) {
         return;
       }
-      if (0 < value && value < maxFraction) {
+      if (0 < value && value <= maxFraction) {
         maxFraction = value;
         p23 = b2MulAdd(p14, maxFraction, d);
         segmentAABB.lowerBoundX = Math.min(p14.x, p23.x);
@@ -5255,10 +5545,22 @@ function b2DynamicTree_ShapeCast(tree, input, maskBits, callback, context) {
   }
   const originAABB = new b2AABB(input.points[0], input.points[0]);
   for (let i = 1; i < input.count; ++i) {
-    originAABB.lowerBoundX = Math.min(originAABB.lowerBoundX, input.points[i].x);
-    originAABB.lowerBoundY = Math.min(originAABB.lowerBoundY, input.points[i].y);
-    originAABB.upperBoundX = Math.max(originAABB.upperBoundX, input.points[i].x);
-    originAABB.upperBoundY = Math.max(originAABB.upperBoundY, input.points[i].y);
+    originAABB.lowerBoundX = Math.min(
+      originAABB.lowerBoundX,
+      input.points[i].x
+    );
+    originAABB.lowerBoundY = Math.min(
+      originAABB.lowerBoundY,
+      input.points[i].y
+    );
+    originAABB.upperBoundX = Math.max(
+      originAABB.upperBoundX,
+      input.points[i].x
+    );
+    originAABB.upperBoundY = Math.max(
+      originAABB.upperBoundY,
+      input.points[i].y
+    );
   }
   originAABB.lowerBoundX = originAABB.lowerBoundX - input.radius;
   originAABB.lowerBoundY = originAABB.lowerBoundY - input.radius;
@@ -5286,7 +5588,10 @@ function b2DynamicTree_ShapeCast(tree, input, maskBits, callback, context) {
       continue;
     }
     const node = tree.nodes[nodeId];
-    if (b2AABB_Overlaps(node.aabb, totalAABB) == false || (node.categoryBits & maskBits) == 0) {
+    if (
+      b2AABB_Overlaps(node.aabb, totalAABB) == false ||
+      (node.categoryBits & maskBits) == 0
+    ) {
       continue;
     }
     const c2 = b2AABB_Center(node.aabb);
@@ -5305,10 +5610,22 @@ function b2DynamicTree_ShapeCast(tree, input, maskBits, callback, context) {
       if (0 < value && value < maxFraction) {
         maxFraction = value;
         t = b2MulSV(maxFraction, input.translation);
-        totalAABB.lowerBoundX = Math.min(originAABB.lowerBoundX, originAABB.lowerBoundX + t.x);
-        totalAABB.lowerBoundY = Math.min(originAABB.lowerBoundY, originAABB.lowerBoundY + t.y);
-        totalAABB.upperBoundX = Math.max(originAABB.upperBoundX, originAABB.upperBoundX + t.x);
-        totalAABB.upperBoundY = Math.max(originAABB.upperBoundY, originAABB.upperBoundY + t.y);
+        totalAABB.lowerBoundX = Math.min(
+          originAABB.lowerBoundX,
+          originAABB.lowerBoundX + t.x
+        );
+        totalAABB.lowerBoundY = Math.min(
+          originAABB.lowerBoundY,
+          originAABB.lowerBoundY + t.y
+        );
+        totalAABB.upperBoundX = Math.max(
+          originAABB.upperBoundX,
+          originAABB.upperBoundX + t.x
+        );
+        totalAABB.upperBoundY = Math.max(
+          originAABB.upperBoundY,
+          originAABB.upperBoundY + t.y
+        );
       }
     } else {
       stack2.push(node.child1);
@@ -5386,7 +5703,9 @@ function b2PartitionMid(indices, centers, startIndex, endIndex, count) {
       right--;
     }
   }
-  return left > startIndex && left < endIndex ? left : startIndex + (count >> 1);
+  return left > startIndex && left < endIndex
+    ? left
+    : startIndex + (count >> 1);
 }
 function b2BuildTree(tree, leafCount) {
   const { nodes, leafIndices, leafCenters } = tree;
@@ -5394,14 +5713,20 @@ function b2BuildTree(tree, leafCount) {
     nodes[leafIndices[0]].parent_next = B2_NULL_INDEX;
     return leafIndices[0];
   }
-  const stack2 = new Array(b2_treeStackSize);
+  const stack2 = new Array(B2_TREE_STACK_SIZE);
   let top = 0;
   stack2[0] = {
     nodeIndex: b2AllocateNode(tree),
     childCount: -1,
     startIndex: 0,
     endIndex: leafCount,
-    splitIndex: b2PartitionMid(leafIndices, leafCenters, 0, leafCount, leafCount)
+    splitIndex: b2PartitionMid(
+      leafIndices,
+      leafCenters,
+      0,
+      leafCount,
+      leafCount
+    ),
   };
   while (true) {
     const item = stack2[top];
@@ -5427,7 +5752,10 @@ function b2BuildTree(tree, leafCount) {
       node.categoryBits = child12.categoryBits | child22.categoryBits;
       top--;
     } else {
-      const [startIndex, endIndex] = item.childCount === 0 ? [item.startIndex, item.splitIndex] : [item.splitIndex, item.endIndex];
+      const [startIndex, endIndex] =
+        item.childCount === 0
+          ? [item.startIndex, item.splitIndex]
+          : [item.splitIndex, item.endIndex];
       const count = endIndex - startIndex;
       if (count === 1) {
         const childIndex = leafIndices[startIndex];
@@ -5446,7 +5774,7 @@ function b2BuildTree(tree, leafCount) {
             startIndex,
             endIndex,
             count
-          )
+          ),
         };
       }
     }
@@ -5525,12 +5853,12 @@ function b2CTZ64(block) {
   if (block === 0n) {
     return 0;
   }
-  const low32 = Number(block & 0xFFFFFFFFn);
+  const low32 = Number(block & 0xffffffffn);
   if (low32 !== 0) {
     return Math.clz32(low32 & -low32) ^ 31;
   } else {
     const high32 = Number(block >> 32n);
-    return Math.clz32(high32 & -high32) ^ 31 | 32;
+    return (Math.clz32(high32 & -high32) ^ 31) | 32;
   }
 }
 
@@ -5862,7 +6190,13 @@ function b2TransferJoint(world, targetSet, sourceSet, joint) {
     Object.assign(targetSim, sourceSim);
   }
   if (sourceSet.setIndex === b2SetType.b2_awakeSet) {
-    b2RemoveJointFromGraph(world, joint.edges[0].bodyId, joint.edges[1].bodyId, colorIndex, localIndex);
+    b2RemoveJointFromGraph(
+      world,
+      joint.edges[0].bodyId,
+      joint.edges[1].bodyId,
+      colorIndex,
+      localIndex
+    );
   } else {
     const movedIndex = b2RemoveJoint(sourceSet.joints, localIndex);
     if (movedIndex !== B2_NULL_INDEX) {
@@ -5884,14 +6218,14 @@ var b2SolverStageType = {
   b2_stageIntegratePositions: 5,
   b2_stageRelax: 6,
   b2_stageRestitution: 7,
-  b2_stageStoreImpulses: 8
+  b2_stageStoreImpulses: 8,
 };
 var b2SolverBlockType = {
   b2_bodyBlock: 0,
   b2_jointBlock: 1,
   b2_contactBlock: 2,
   b2_graphJointBlock: 3,
-  b2_graphContactBlock: 4
+  b2_graphContactBlock: 4,
 };
 var b2SolverBlock = class {
   constructor() {
@@ -5964,7 +6298,7 @@ function b2MakeSoft(hertz, zeta, h) {
   if (hertz === 0) {
     return new b2Softness(0, 1, 0);
   }
-  const omega = 2 * b2_pi * hertz;
+  const omega = 2 * B2_PI * hertz;
   const a1 = 2 * zeta + h * omega;
   const a2 = h * omega * a1;
   const a3 = 1 / (1 + a2);
@@ -5976,7 +6310,7 @@ function b2IntegrateVelocitiesTask(startIndex, endIndex, context) {
   const gravity = context.world.gravity;
   const h = context.h;
   const maxLinearSpeed = context.maxLinearVelocity;
-  const maxAngularSpeed = b2_maxRotation * context.inv_dt;
+  const maxAngularSpeed = B2_MAX_ROTATION * context.inv_dt;
   const maxLinearSpeedSquared = maxLinearSpeed * maxLinearSpeed;
   const maxAngularSpeedSquared = maxAngularSpeed * maxAngularSpeed;
   for (let i = startIndex; i < endIndex; ++i) {
@@ -6015,7 +6349,11 @@ function b2IntegratePositionsTask(startIndex, endIndex, context) {
   const h = context.h;
   for (let i = startIndex; i < endIndex; ++i) {
     const state = states[i];
-    b2IntegrateRotationOut(state.deltaRotation, h * state.angularVelocity, state.deltaRotation);
+    b2IntegrateRotationOut(
+      state.deltaRotation,
+      h * state.angularVelocity,
+      state.deltaRotation
+    );
     state.deltaPosition.x = state.deltaPosition.x + h * state.linearVelocity.x;
     state.deltaPosition.y = state.deltaPosition.y + h * state.linearVelocity.y;
   }
@@ -6032,8 +6370,10 @@ function b2FinalizeBodiesTask(startIndex, endIndex, threadIndex, context) {
   const worldId = world.worldId;
   const moveEvents = world.bodyMoveEventArray;
   const islands = world.islandArray;
-  const enlargedSimBitSet = world.taskContextArray[threadIndex].enlargedSimBitSet;
-  const awakeIslandBitSet = world.taskContextArray[threadIndex].awakeIslandBitSet;
+  const enlargedSimBitSet =
+    world.taskContextArray[threadIndex].enlargedSimBitSet;
+  const awakeIslandBitSet =
+    world.taskContextArray[threadIndex].awakeIslandBitSet;
   const taskContext = world.taskContextArray[threadIndex];
   const enableContinuous = world.enableContinuous;
   const speculativeDistance = b2_speculativeDistance;
@@ -6050,19 +6390,34 @@ function b2FinalizeBodiesTask(startIndex, endIndex, threadIndex, context) {
     const im = b2InvMagRot(c2, s);
     sim.transform.q = new b2Rot(im * c2, im * s);
     const maxVelocity = b2Length(v) + Math.abs(w) * sim.maxExtent;
-    const maxDeltaPosition = b2Length(state.deltaPosition) + Math.abs(state.deltaRotation.s) * sim.maxExtent;
+    const maxDeltaPosition =
+      b2Length(state.deltaPosition) +
+      Math.abs(state.deltaRotation.s) * sim.maxExtent;
     const positionSleepFactor = 0.5;
-    const sleepVelocity = Math.max(maxVelocity, positionSleepFactor * invTimeStep * maxDeltaPosition);
+    const sleepVelocity = Math.max(
+      maxVelocity,
+      positionSleepFactor * invTimeStep * maxDeltaPosition
+    );
     state.deltaPosition.x = 0;
     state.deltaPosition.y = 0;
     state.deltaRotation.c = 1;
     state.deltaRotation.s = 0;
-    sim.transform.p.x = sim.center.x - (sim.transform.q.c * sim.localCenter.x - sim.transform.q.s * sim.localCenter.y);
-    sim.transform.p.y = sim.center.y - (sim.transform.q.s * sim.localCenter.x + sim.transform.q.c * sim.localCenter.y);
+    sim.transform.p.x =
+      sim.center.x -
+      (sim.transform.q.c * sim.localCenter.x -
+        sim.transform.q.s * sim.localCenter.y);
+    sim.transform.p.y =
+      sim.center.y -
+      (sim.transform.q.s * sim.localCenter.x +
+        sim.transform.q.c * sim.localCenter.y);
     const body = bodies[sim.bodyId];
     body.bodyMoveIndex = simIndex;
     moveEvents[simIndex].transform = sim.transform;
-    moveEvents[simIndex].bodyId = new b2BodyId(sim.bodyId + 1, worldId, body.revision);
+    moveEvents[simIndex].bodyId = new b2BodyId(
+      sim.bodyId + 1,
+      worldId,
+      body.revision
+    );
     moveEvents[simIndex].userData = body.userData;
     moveEvents[simIndex].fellAsleep = false;
     sim.force.x = 0;
@@ -6071,10 +6426,18 @@ function b2FinalizeBodiesTask(startIndex, endIndex, threadIndex, context) {
     body.isSpeedCapped = sim.isSpeedCapped;
     sim.isSpeedCapped = false;
     sim.isFast = false;
-    if (enableSleep === false || body.enableSleep === false || sleepVelocity > body.sleepThreshold) {
+    if (
+      enableSleep === false ||
+      body.enableSleep === false ||
+      sleepVelocity > body.sleepThreshold
+    ) {
       body.sleepTime = 0;
       const safetyFactor = 0.5;
-      if (body.type === b2BodyType.b2_dynamicBody && enableContinuous && maxVelocity * timeStep > safetyFactor * sim.minExtent) {
+      if (
+        body.type === b2BodyType.b2_dynamicBody &&
+        enableContinuous &&
+        maxVelocity * timeStep > safetyFactor * sim.minExtent
+      ) {
         if (sim.isBullet) {
           stepContext.bulletBodyCount++;
           stepContext.bulletBodies[stepContext.bulletBodyCount - 1] = simIndex;
@@ -6160,15 +6523,11 @@ function b2SolverTask(workerContext) {
   const activeColorCount = context.activeColorCount;
   const stages = context.stages;
   if (workerIndex === 0) {
-    let bodySyncIndex = 1;
     let stageIndex = 0;
     b2ExecuteMainStage(stages[stageIndex], context);
     stageIndex += 1;
-    let contactSyncIndex = 1;
     b2ExecuteMainStage(stages[stageIndex], context);
     stageIndex += 1;
-    contactSyncIndex += 1;
-    let graphSyncIndex = 1;
     b2PrepareOverflowJoints(context);
     b2PrepareOverflowContacts(context);
     const subStepCount = context.subStepCount;
@@ -6176,14 +6535,12 @@ function b2SolverTask(workerContext) {
       let iterStageIndex = stageIndex;
       b2ExecuteMainStage(stages[iterStageIndex], context);
       iterStageIndex += 1;
-      bodySyncIndex += 1;
       b2WarmStartOverflowJoints(context);
       b2WarmStartOverflowContacts(context);
       for (let colorIndex = 0; colorIndex < activeColorCount; ++colorIndex) {
         b2ExecuteMainStage(stages[iterStageIndex], context);
         iterStageIndex += 1;
       }
-      graphSyncIndex += 1;
       let useBias = true;
       b2SolveOverflowJoints(context, useBias);
       b2SolveOverflowContacts(context, useBias);
@@ -6191,10 +6548,8 @@ function b2SolverTask(workerContext) {
         b2ExecuteMainStage(stages[iterStageIndex], context);
         iterStageIndex += 1;
       }
-      graphSyncIndex += 1;
       b2ExecuteMainStage(stages[iterStageIndex], context);
       iterStageIndex += 1;
-      bodySyncIndex += 1;
       useBias = false;
       b2SolveOverflowJoints(context, useBias);
       b2SolveOverflowContacts(context, useBias);
@@ -6202,9 +6557,9 @@ function b2SolverTask(workerContext) {
         b2ExecuteMainStage(stages[iterStageIndex], context);
         iterStageIndex += 1;
       }
-      graphSyncIndex += 1;
     }
-    stageIndex += 1 + activeColorCount + activeColorCount + 1 + activeColorCount;
+    stageIndex +=
+      1 + activeColorCount + activeColorCount + 1 + activeColorCount;
     {
       b2ApplyOverflowRestitution(context);
       let iterStageIndex = stageIndex;
@@ -6220,7 +6575,13 @@ function b2SolverTask(workerContext) {
     return;
   }
 }
-var constSweep = new b2Sweep(new b2Vec2(), new b2Vec2(), new b2Vec2(), new b2Rot(), new b2Rot());
+var constSweep = new b2Sweep(
+  new b2Vec2(),
+  new b2Vec2(),
+  new b2Vec2(),
+  new b2Rot(),
+  new b2Rot()
+);
 function b2ContinuousQueryCallback(proxyId, shapeId, context) {
   const continuousContext = context;
   const fastShape = continuousContext.fastShape;
@@ -6253,16 +6614,20 @@ function b2ContinuousQueryCallback(proxyId, shapeId, context) {
   const customFilterFcn = world.customFilterFcn;
   if (customFilterFcn != null) {
     const idA = new b2ShapeId(shape.id + 1, world.worldId, shape.revision);
-    const idB = new b2ShapeId(fastShape.id + 1, world.worldId, fastShape.revision);
+    const idB = new b2ShapeId(
+      fastShape.id + 1,
+      world.worldId,
+      fastShape.revision
+    );
     canCollide = customFilterFcn(idA, idB, world.customFilterContext);
     if (canCollide === false) {
       return true;
     }
   }
-  if (shape.type === b2ShapeType.b2_smoothSegmentShape) {
+  if (shape.type === b2ShapeType.b2_chainSegmentShape) {
     const transform = bodySim.transform;
-    const p14 = b2TransformPoint(transform, shape.smoothSegment.segment.point1);
-    const p23 = b2TransformPoint(transform, shape.smoothSegment.segment.point2);
+    const p14 = b2TransformPoint(transform, shape.chainSegment.segment.point1);
+    const p23 = b2TransformPoint(transform, shape.chainSegment.segment.point2);
     const eX = p23.x - p14.x;
     const eY = p23.y - p14.y;
     const c1X = continuousContext.centroid1X;
@@ -6300,14 +6665,26 @@ function b2ContinuousQueryCallback(proxyId, shapeId, context) {
       didHit = true;
     }
   }
-  if (didHit && (shape.enablePreSolveEvents || fastShape.enablePreSolveEvents)) {
+  if (
+    didHit &&
+    (shape.enablePreSolveEvents || fastShape.enablePreSolveEvents)
+  ) {
     const transformA = b2GetSweepTransform(input.sweepA, hitFraction);
     const transformB = b2GetSweepTransform(input.sweepB, hitFraction);
     const manifold = new b2Manifold();
     b2ComputeManifold(shape, transformA, fastShape, transformB, manifold);
     const shapeIdA = new b2ShapeId(shape.id + 1, world.worldId, shape.revision);
-    const shapeIdB = new b2ShapeId(fastShape.id + 1, world.worldId, fastShape.revision);
-    didHit = world.preSolveFcn(shapeIdA, shapeIdB, manifold, world.preSolveContext);
+    const shapeIdB = new b2ShapeId(
+      fastShape.id + 1,
+      world.worldId,
+      fastShape.revision
+    );
+    didHit = world.preSolveFcn(
+      shapeIdA,
+      shapeIdB,
+      manifold,
+      world.preSolveContext
+    );
   }
   if (didHit) {
     continuousContext.fraction = hitFraction;
@@ -6329,17 +6706,31 @@ var b2ContinuousContext = class {
 };
 var p = new b2Vec2();
 var p1 = new b2Vec2();
-var constSweep2 = new b2Sweep(new b2Vec2(), new b2Vec2(), new b2Vec2(), new b2Rot(), new b2Rot());
+var constSweep2 = new b2Sweep(
+  new b2Vec2(),
+  new b2Vec2(),
+  new b2Vec2(),
+  new b2Rot(),
+  new b2Rot()
+);
 function b2SolveContinuous(world, bodySimIndex) {
   const awakeSet = world.solverSetArray[b2SetType.b2_awakeSet];
   const fastBodySim = awakeSet.sims.data[bodySimIndex];
   const shapes = world.shapeArray;
   const sweep = b2MakeSweep(fastBodySim, constSweep2);
-  p.x = sweep.c1.x - (sweep.q1.c * sweep.localCenter.x - sweep.q1.s * sweep.localCenter.y);
-  p.y = sweep.c1.y - (sweep.q1.s * sweep.localCenter.x + sweep.q1.c * sweep.localCenter.y);
+  p.x =
+    sweep.c1.x -
+    (sweep.q1.c * sweep.localCenter.x - sweep.q1.s * sweep.localCenter.y);
+  p.y =
+    sweep.c1.y -
+    (sweep.q1.s * sweep.localCenter.x + sweep.q1.c * sweep.localCenter.y);
   const xf12 = new b2Transform(p, sweep.q1);
-  p1.x = sweep.c2.x - (sweep.q2.c * sweep.localCenter.x - sweep.q2.s * sweep.localCenter.y);
-  p1.y = sweep.c2.y - (sweep.q2.s * sweep.localCenter.x + sweep.q2.c * sweep.localCenter.y);
+  p1.x =
+    sweep.c2.x -
+    (sweep.q2.c * sweep.localCenter.x - sweep.q2.s * sweep.localCenter.y);
+  p1.y =
+    sweep.c2.y -
+    (sweep.q2.s * sweep.localCenter.x + sweep.q2.c * sweep.localCenter.y);
   const xf2 = new b2Transform(p1, sweep.q2);
   const staticTree = world.broadPhase.trees[b2BodyType.b2_staticBody];
   const kinematicTree = world.broadPhase.trees[b2BodyType.b2_kinematicBody];
@@ -6370,10 +6761,28 @@ function b2SolveContinuous(world, bodySimIndex) {
     if (fastShape.isSensor) {
       continue;
     }
-    b2DynamicTree_Query(staticTree, box, b2_defaultMaskBits, b2ContinuousQueryCallback, context);
+    b2DynamicTree_Query(
+      staticTree,
+      box,
+      B2_DEFAULT_MASK_BITS,
+      b2ContinuousQueryCallback,
+      context
+    );
     if (isBullet) {
-      b2DynamicTree_Query(kinematicTree, box, b2_defaultMaskBits, b2ContinuousQueryCallback, context);
-      b2DynamicTree_Query(dynamicTree, box, b2_defaultMaskBits, b2ContinuousQueryCallback, context);
+      b2DynamicTree_Query(
+        kinematicTree,
+        box,
+        B2_DEFAULT_MASK_BITS,
+        b2ContinuousQueryCallback,
+        context
+      );
+      b2DynamicTree_Query(
+        dynamicTree,
+        box,
+        B2_DEFAULT_MASK_BITS,
+        b2ContinuousQueryCallback,
+        context
+      );
     }
   }
   const speculativeDistance = b2_speculativeDistance;
@@ -6455,9 +6864,17 @@ function b2Solve(world, stepContext) {
     return;
   }
   stepContext.fastBodyCount = 0;
-  stepContext.fastBodies = b2AllocateStackItem(world.stackAllocator, awakeBodyCount, "fast bodies");
+  stepContext.fastBodies = b2AllocateStackItem(
+    world.stackAllocator,
+    awakeBodyCount,
+    "fast bodies"
+  );
   stepContext.bulletBodyCount = 0;
-  stepContext.bulletBodies = b2AllocateStackItem(world.stackAllocator, awakeBodyCount, "bullet bodies");
+  stepContext.bulletBodies = b2AllocateStackItem(
+    world.stackAllocator,
+    awakeBodyCount,
+    "bullet bodies"
+  );
   {
     const graph = world.constraintGraph;
     const colors = graph.colors;
@@ -6487,7 +6904,7 @@ function b2Solve(world, stepContext) {
       bodyBlockSize = Math.floor(awakeBodyCount / maxBlockCount);
       bodyBlockCount = maxBlockCount;
     } else {
-      bodyBlockCount = Math.floor(awakeBodyCount - 1 >> 5) + 1;
+      bodyBlockCount = Math.floor((awakeBodyCount - 1) >> 5) + 1;
     }
     const colorContactCounts = new Array(b2_graphColorCount);
     const colorContactBlockSizes = new Array(b2_graphColorCount);
@@ -6506,15 +6923,18 @@ function b2Solve(world, stepContext) {
         return new b2ContactConstraint();
       }
     );
-    graph.colors[b2_overflowIndex].overflowConstraints = overflowContactConstraints;
+    graph.colors[b2_overflowIndex].overflowConstraints =
+      overflowContactConstraints;
     let contactBlockSize = blocksPerWorker;
-    let contactBlockCount = simdContactCount > 0 ? Math.floor(simdContactCount - 1 >> 2) + 1 : 0;
+    let contactBlockCount =
+      simdContactCount > 0 ? Math.floor((simdContactCount - 1) >> 2) + 1 : 0;
     if (simdContactCount > contactBlockSize * maxBlockCount) {
       contactBlockSize = Math.floor(simdContactCount / maxBlockCount);
       contactBlockCount = maxBlockCount;
     }
     let jointBlockSize = blocksPerWorker;
-    let jointBlockCount = awakeJointCount > 0 ? Math.floor(awakeJointCount - 1 >> 2) + 1 : 0;
+    let jointBlockCount =
+      awakeJointCount > 0 ? Math.floor((awakeJointCount - 1) >> 2) + 1 : 0;
     if (awakeJointCount > jointBlockSize * maxBlockCount) {
       jointBlockSize = Math.floor(awakeJointCount / maxBlockCount);
       jointBlockCount = maxBlockCount;
@@ -6529,11 +6949,30 @@ function b2Solve(world, stepContext) {
     stageCount += activeColorCount;
     stageCount += activeColorCount;
     stageCount += 1;
-    const stages = Array.from({ length: stageCount }, () => new b2SolverStage());
-    const bodyBlocks = b2AllocateStackItem(world.stackAllocator, bodyBlockCount, "body blocks");
-    const contactBlocks = b2AllocateStackItem(world.stackAllocator, contactBlockCount, "contact blocks");
-    const jointBlocks = b2AllocateStackItem(world.stackAllocator, jointBlockCount, "joint blocks");
-    const graphBlocks = b2AllocateStackItem(world.stackAllocator, graphBlockCount, "graph blocks");
+    const stages = Array.from(
+      { length: stageCount },
+      () => new b2SolverStage()
+    );
+    const bodyBlocks = b2AllocateStackItem(
+      world.stackAllocator,
+      bodyBlockCount,
+      "body blocks"
+    );
+    const contactBlocks = b2AllocateStackItem(
+      world.stackAllocator,
+      contactBlockCount,
+      "contact blocks"
+    );
+    const jointBlocks = b2AllocateStackItem(
+      world.stackAllocator,
+      jointBlockCount,
+      "joint blocks"
+    );
+    const graphBlocks = b2AllocateStackItem(
+      world.stackAllocator,
+      graphBlockCount,
+      "graph blocks"
+    );
     if (world.splitIslandId != B2_NULL_INDEX) {
       b2SplitIsland(world, world.splitIslandId);
     }
@@ -6545,7 +6984,8 @@ function b2Solve(world, stepContext) {
       block.syncIndex = 0;
       bodyBlocks[i] = block;
     }
-    bodyBlocks[bodyBlockCount - 1].count = awakeBodyCount - (bodyBlockCount - 1) * bodyBlockSize;
+    bodyBlocks[bodyBlockCount - 1].count =
+      awakeBodyCount - (bodyBlockCount - 1) * bodyBlockSize;
     for (let i = 0; i < jointBlockCount; ++i) {
       const block = new b2SolverBlock();
       block.startIndex = i * jointBlockSize;
@@ -6555,7 +6995,8 @@ function b2Solve(world, stepContext) {
       jointBlocks[i] = block;
     }
     if (jointBlockCount > 0) {
-      jointBlocks[jointBlockCount - 1].count = awakeJointCount - (jointBlockCount - 1) * jointBlockSize;
+      jointBlocks[jointBlockCount - 1].count =
+        awakeJointCount - (jointBlockCount - 1) * jointBlockSize;
     }
     for (let i = 0; i < contactBlockCount; ++i) {
       const block = new b2SolverBlock();
@@ -6566,7 +7007,8 @@ function b2Solve(world, stepContext) {
       contactBlocks[i] = block;
     }
     if (contactBlockCount > 0) {
-      contactBlocks[contactBlockCount - 1].count = simdContactCount - (contactBlockCount - 1) * contactBlockSize;
+      contactBlocks[contactBlockCount - 1].count =
+        simdContactCount - (contactBlockCount - 1) * contactBlockSize;
     }
     const graphColorBlocks = new Array(b2_graphColorCount);
     let baseGraphBlock = 0;
@@ -6583,7 +7025,9 @@ function b2Solve(world, stepContext) {
         graphBlocks[baseGraphBlock + j] = block;
       }
       if (colorJointBlockCount > 0) {
-        graphBlocks[baseGraphBlock + colorJointBlockCount - 1].count = colorJointCounts[i] - (colorJointBlockCount - 1) * colorJointBlockSize;
+        graphBlocks[baseGraphBlock + colorJointBlockCount - 1].count =
+          colorJointCounts[i] -
+          (colorJointBlockCount - 1) * colorJointBlockSize;
         baseGraphBlock += colorJointBlockCount;
       }
       const colorContactBlockCount = colorContactBlockCounts[i];
@@ -6597,24 +7041,57 @@ function b2Solve(world, stepContext) {
         graphBlocks[baseGraphBlock + j] = block;
       }
       if (colorContactBlockCount > 0) {
-        graphBlocks[baseGraphBlock + colorContactBlockCount - 1].count = colorContactCounts[i] - (colorContactBlockCount - 1) * colorContactBlockSize;
+        graphBlocks[baseGraphBlock + colorContactBlockCount - 1].count =
+          colorContactCounts[i] -
+          (colorContactBlockCount - 1) * colorContactBlockSize;
         baseGraphBlock += colorContactBlockCount;
       }
     }
     const blockDiff = baseGraphBlock;
     let si = 0;
-    const setStageProperties = (stage, type, blocks, blockCount, colorIndex = -1) => {
+    const setStageProperties = (
+      stage,
+      type,
+      blocks,
+      blockCount,
+      colorIndex = -1
+    ) => {
       stage.type = type;
       stage.blocks = blocks;
       stage.blockCount = blockCount;
       stage.colorIndex = colorIndex;
       stage.completionCount = 0;
     };
-    setStageProperties(stages[si++], b2SolverStageType.b2_stagePrepareJoints, jointBlocks, jointBlockCount);
-    setStageProperties(stages[si++], b2SolverStageType.b2_stagePrepareContacts, contactBlocks, contactBlockCount);
-    setStageProperties(stages[si++], b2SolverStageType.b2_stageIntegrateVelocities, bodyBlocks, bodyBlockCount);
-    setStageProperties(stages[si++], b2SolverStageType.b2_stageIntegratePositions, bodyBlocks, bodyBlockCount);
-    setStageProperties(stages[si++], b2SolverStageType.b2_stageStoreImpulses, contactBlocks, contactBlockCount);
+    setStageProperties(
+      stages[si++],
+      b2SolverStageType.b2_stagePrepareJoints,
+      jointBlocks,
+      jointBlockCount
+    );
+    setStageProperties(
+      stages[si++],
+      b2SolverStageType.b2_stagePrepareContacts,
+      contactBlocks,
+      contactBlockCount
+    );
+    setStageProperties(
+      stages[si++],
+      b2SolverStageType.b2_stageIntegrateVelocities,
+      bodyBlocks,
+      bodyBlockCount
+    );
+    setStageProperties(
+      stages[si++],
+      b2SolverStageType.b2_stageIntegratePositions,
+      bodyBlocks,
+      bodyBlockCount
+    );
+    setStageProperties(
+      stages[si++],
+      b2SolverStageType.b2_stageStoreImpulses,
+      contactBlocks,
+      contactBlockCount
+    );
     stepContext.graph = graph;
     stepContext.joints = null;
     stepContext.contacts = null;
@@ -6633,8 +7110,14 @@ function b2Solve(world, stepContext) {
     const awakeIslandCount = awakeSet.islands.count;
     for (let i = 0; i < world.workerCount; ++i) {
       const taskContext = world.taskContextArray[i];
-      taskContext.enlargedSimBitSet = b2SetBitCountAndClear(taskContext.enlargedSimBitSet, awakeBodyCount);
-      taskContext.awakeIslandBitSet = b2SetBitCountAndClear(taskContext.awakeIslandBitSet, awakeIslandCount);
+      taskContext.enlargedSimBitSet = b2SetBitCountAndClear(
+        taskContext.enlargedSimBitSet,
+        awakeBodyCount
+      );
+      taskContext.awakeIslandBitSet = b2SetBitCountAndClear(
+        taskContext.awakeIslandBitSet,
+        awakeIslandCount
+      );
       taskContext.splitIslandId = B2_NULL_INDEX;
       taskContext.splitSleepTime = 0;
     }
@@ -6654,7 +7137,10 @@ function b2Solve(world, stepContext) {
       const contactSims = color.contacts.data;
       for (let j = 0; j < contactCount; ++j) {
         const contactSim = contactSims[j];
-        if ((contactSim.simFlags & b2ContactSimFlags.b2_simEnableHitEvent) === 0) {
+        if (
+          (contactSim.simFlags & b2ContactSimFlags.b2_simEnableHitEvent) ===
+          0
+        ) {
           continue;
         }
         const event = new b2ContactHitEvent();
@@ -6678,8 +7164,16 @@ function b2Solve(world, stepContext) {
           event.normalY = contactSim.manifold.normalY;
           const shapeA = world.shapeArray[contactSim.shapeIdA];
           const shapeB = world.shapeArray[contactSim.shapeIdB];
-          event.shapeIdA = new b2ShapeId(shapeA.id + 1, world.worldId, shapeA.revision);
-          event.shapeIdB = new b2ShapeId(shapeB.id + 1, world.worldId, shapeB.revision);
+          event.shapeIdA = new b2ShapeId(
+            shapeA.id + 1,
+            world.worldId,
+            shapeA.revision
+          );
+          event.shapeIdB = new b2ShapeId(
+            shapeB.id + 1,
+            world.worldId,
+            shapeB.revision
+          );
           world.contactHitArray.push(event);
         }
       }
@@ -6705,14 +7199,18 @@ function b2Solve(world, stepContext) {
         while (shapeId !== B2_NULL_INDEX) {
           const shape = shapes[shapeId];
           if (shape.enlargedAABB) {
-            b2BroadPhase_EnlargeProxy(broadPhase, shape.proxyKey, shape.fatAABB);
+            b2BroadPhase_EnlargeProxy(
+              broadPhase,
+              shape.proxyKey,
+              shape.fatAABB
+            );
             shape.enlargedAABB = false;
           } else if (shape.isFast) {
             b2BufferMove(broadPhase, shape.proxyKey);
           }
           shapeId = shape.nextShapeId;
         }
-        word = word & word - 1n;
+        word = word & (word - 1n);
       }
     }
   }
@@ -6790,14 +7288,20 @@ function b2Solve(world, stepContext) {
     let splitSleepTimer = 0;
     for (let i = 0; i < world.workerCount; ++i) {
       const taskContext = world.taskContextArray[i];
-      if (taskContext.splitIslandId !== B2_NULL_INDEX && taskContext.splitSleepTime > splitSleepTimer) {
+      if (
+        taskContext.splitIslandId !== B2_NULL_INDEX &&
+        taskContext.splitSleepTime > splitSleepTimer
+      ) {
         world.splitIslandId = taskContext.splitIslandId;
         splitSleepTimer = taskContext.splitSleepTime;
       }
     }
     const awakeIslandBitSet = world.taskContextArray[0].awakeIslandBitSet;
     for (let i = 1; i < world.workerCount; ++i) {
-      b2InPlaceUnion(awakeIslandBitSet, world.taskContextArray[i].awakeIslandBitSet);
+      b2InPlaceUnion(
+        awakeIslandBitSet,
+        world.taskContextArray[i].awakeIslandBitSet
+      );
     }
     const islands = awakeSet.islands.data;
     const count = awakeSet.islands.count;
@@ -6817,7 +7321,7 @@ function b2Solve(world, stepContext) {
 function b2DistanceJoint_SetLength(jointId, length) {
   const base = b2GetJointSimCheckType(jointId, b2JointType.b2_distanceJoint);
   const joint = base.distanceJoint;
-  joint.length = b2ClampFloat(length, b2_linearSlop, b2_huge);
+  joint.length = b2ClampFloat(length, b2_linearSlop, B2_HUGE);
   joint.impulse = 0;
   joint.lowerImpulse = 0;
   joint.upperImpulse = 0;
@@ -6839,8 +7343,8 @@ function b2DistanceJoint_IsLimitEnabled(jointId) {
 function b2DistanceJoint_SetLengthRange(jointId, minLength, maxLength) {
   const base = b2GetJointSimCheckType(jointId, b2JointType.b2_distanceJoint);
   const joint = base.distanceJoint;
-  minLength = b2ClampFloat(minLength, b2_linearSlop, b2_huge);
-  maxLength = b2ClampFloat(maxLength, b2_linearSlop, b2_huge);
+  minLength = b2ClampFloat(minLength, b2_linearSlop, B2_HUGE);
+  maxLength = b2ClampFloat(maxLength, b2_linearSlop, B2_HUGE);
   joint.minLength = Math.min(minLength, maxLength);
   joint.maxLength = Math.max(minLength, maxLength);
   joint.impulse = 0;
@@ -6887,12 +7391,12 @@ function b2DistanceJoint_SetSpringDampingRatio(jointId, dampingRatio) {
   const base = b2GetJointSimCheckType(jointId, b2JointType.b2_distanceJoint);
   base.distanceJoint.dampingRatio = dampingRatio;
 }
-function b2DistanceJoint_GetHertz(jointId) {
+function b2DistanceJoint_GetSpringHertz(jointId) {
   const base = b2GetJointSimCheckType(jointId, b2JointType.b2_distanceJoint);
   const joint = base.distanceJoint;
   return joint.hertz;
 }
-function b2DistanceJoint_GetDampingRatio(jointId) {
+function b2DistanceJoint_GetSpringDampingRatio(jointId) {
   const base = b2GetJointSimCheckType(jointId, b2JointType.b2_distanceJoint);
   const joint = base.distanceJoint;
   return joint.dampingRatio;
@@ -6937,7 +7441,12 @@ function b2GetDistanceJointForce(world, base) {
   const pB = b2TransformPoint(transformB, base.localOriginAnchorB);
   const d = b2Sub(pB, pA);
   const axis = b2Normalize(d);
-  const force = (joint.impulse + joint.lowerImpulse - joint.upperImpulse + joint.motorImpulse) * world.inv_h;
+  const force =
+    (joint.impulse +
+      joint.lowerImpulse -
+      joint.upperImpulse +
+      joint.motorImpulse) *
+    world.inv_h;
   return b2MulSV(force, axis);
 }
 function b2PrepareDistanceJoint(base, context) {
@@ -6960,10 +7469,18 @@ function b2PrepareDistanceJoint(base, context) {
   base.invIA = iA;
   base.invIB = iB;
   const joint = base.distanceJoint;
-  joint.indexA = bodyA.setIndex === b2SetType.b2_awakeSet ? bodyA.localIndex : B2_NULL_INDEX;
-  joint.indexB = bodyB.setIndex === b2SetType.b2_awakeSet ? bodyB.localIndex : B2_NULL_INDEX;
-  joint.anchorA = b2RotateVector(bodySimA.transform.q, b2Sub(base.localOriginAnchorA, bodySimA.localCenter));
-  joint.anchorB = b2RotateVector(bodySimB.transform.q, b2Sub(base.localOriginAnchorB, bodySimB.localCenter));
+  joint.indexA =
+    bodyA.setIndex === b2SetType.b2_awakeSet ? bodyA.localIndex : B2_NULL_INDEX;
+  joint.indexB =
+    bodyB.setIndex === b2SetType.b2_awakeSet ? bodyB.localIndex : B2_NULL_INDEX;
+  joint.anchorA = b2RotateVector(
+    bodySimA.transform.q,
+    b2Sub(base.localOriginAnchorA, bodySimA.localCenter)
+  );
+  joint.anchorB = b2RotateVector(
+    bodySimB.transform.q,
+    b2Sub(base.localOriginAnchorB, bodySimB.localCenter)
+  );
   joint.deltaCenter = b2Sub(bodySimB.center, bodySimA.center);
   const rA = joint.anchorA;
   const rB = joint.anchorB;
@@ -6973,7 +7490,11 @@ function b2PrepareDistanceJoint(base, context) {
   const crB = b2Cross(rB, axis);
   const k = mA + mB + iA * crA * crA + iB * crB * crB;
   joint.axialMass = k > 0 ? 1 / k : 0;
-  joint.distanceSoftness = b2MakeSoft(joint.hertz, joint.dampingRatio, context.h);
+  joint.distanceSoftness = b2MakeSoft(
+    joint.hertz,
+    joint.dampingRatio,
+    context.h
+  );
   if (context.enableWarmStarting === false) {
     joint.impulse = 0;
     joint.lowerImpulse = 0;
@@ -6988,14 +7509,23 @@ function b2WarmStartDistanceJoint(base, context) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.distanceJoint;
-  const stateA = joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const stateB = joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const stateA =
+    joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const stateB =
+    joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   const rA = b2RotateVector(stateA.deltaRotation, joint.anchorA);
   const rB = b2RotateVector(stateB.deltaRotation, joint.anchorB);
-  const ds = b2Add(b2Sub(stateB.deltaPosition, stateA.deltaPosition), b2Sub(rB, rA));
+  const ds = b2Add(
+    b2Sub(stateB.deltaPosition, stateA.deltaPosition),
+    b2Sub(rB, rA)
+  );
   const separation = b2Add(joint.deltaCenter, ds);
   const axis = b2Normalize(separation);
-  const axialImpulse = joint.impulse + joint.lowerImpulse - joint.upperImpulse + joint.motorImpulse;
+  const axialImpulse =
+    joint.impulse +
+    joint.lowerImpulse -
+    joint.upperImpulse +
+    joint.motorImpulse;
   const P = b2MulSV(axialImpulse, axis);
   stateA.linearVelocity = b2MulSub(stateA.linearVelocity, mA, P);
   stateA.angularVelocity -= iA * b2Cross(rA, P);
@@ -7009,26 +7539,39 @@ function b2SolveDistanceJoint(base, context, useBias) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.distanceJoint;
-  const stateA = joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const stateB = joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const stateA =
+    joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const stateB =
+    joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   let vA = stateA.linearVelocity;
   let wA = stateA.angularVelocity;
   let vB = stateB.linearVelocity;
   let wB = stateB.angularVelocity;
   const rA = b2RotateVector(stateA.deltaRotation, joint.anchorA);
   const rB = b2RotateVector(stateB.deltaRotation, joint.anchorB);
-  const ds = b2Add(b2Sub(stateB.deltaPosition, stateA.deltaPosition), b2Sub(rB, rA));
+  const ds = b2Add(
+    b2Sub(stateB.deltaPosition, stateA.deltaPosition),
+    b2Sub(rB, rA)
+  );
   const separation = b2Add(joint.deltaCenter, ds);
   const length = b2Length(separation);
   const axis = b2Normalize(separation);
-  if (joint.enableSpring && (joint.minLength < joint.maxLength || joint.enableLimit === false)) {
+  if (
+    joint.enableSpring &&
+    (joint.minLength < joint.maxLength || joint.enableLimit === false)
+  ) {
     if (joint.hertz > 0) {
-      const vr = b2Add(b2Sub(vB, vA), b2Sub(b2CrossSV(wB, rB), b2CrossSV(wA, rA)));
+      const vr = b2Add(
+        b2Sub(vB, vA),
+        b2Sub(b2CrossSV(wB, rB), b2CrossSV(wA, rA))
+      );
       const Cdot = b2Dot(axis, vr);
       const C = length - joint.length;
       const bias = joint.distanceSoftness.biasRate * C;
       const m = joint.distanceSoftness.massScale * joint.axialMass;
-      const impulse = -m * (Cdot + bias) - joint.distanceSoftness.impulseScale * joint.impulse;
+      const impulse =
+        -m * (Cdot + bias) -
+        joint.distanceSoftness.impulseScale * joint.impulse;
       joint.impulse += impulse;
       const P = b2MulSV(impulse, axis);
       vA = b2MulSub(vA, mA, P);
@@ -7038,7 +7581,10 @@ function b2SolveDistanceJoint(base, context, useBias) {
     }
     if (joint.enableLimit) {
       {
-        const vr = b2Add(b2Sub(vB, vA), b2Sub(b2CrossSV(wB, rB), b2CrossSV(wA, rA)));
+        const vr = b2Add(
+          b2Sub(vB, vA),
+          b2Sub(b2CrossSV(wB, rB), b2CrossSV(wA, rA))
+        );
         const Cdot = b2Dot(axis, vr);
         const C = length - joint.minLength;
         let bias = 0;
@@ -7051,7 +7597,9 @@ function b2SolveDistanceJoint(base, context, useBias) {
           massCoeff = context.jointSoftness.massScale;
           impulseCoeff = context.jointSoftness.impulseScale;
         }
-        const impulse = -massCoeff * joint.axialMass * (Cdot + bias) - impulseCoeff * joint.lowerImpulse;
+        const impulse =
+          -massCoeff * joint.axialMass * (Cdot + bias) -
+          impulseCoeff * joint.lowerImpulse;
         const newImpulse = Math.max(0, joint.lowerImpulse + impulse);
         const deltaImpulse = newImpulse - joint.lowerImpulse;
         joint.lowerImpulse = newImpulse;
@@ -7062,7 +7610,10 @@ function b2SolveDistanceJoint(base, context, useBias) {
         wB += iB * b2Cross(rB, P);
       }
       {
-        const vr = b2Add(b2Sub(vA, vB), b2Sub(b2CrossSV(wA, rA), b2CrossSV(wB, rB)));
+        const vr = b2Add(
+          b2Sub(vA, vB),
+          b2Sub(b2CrossSV(wA, rA), b2CrossSV(wB, rB))
+        );
         const Cdot = b2Dot(axis, vr);
         const C = joint.maxLength - length;
         let bias = 0;
@@ -7075,7 +7626,9 @@ function b2SolveDistanceJoint(base, context, useBias) {
           massScale = context.jointSoftness.massScale;
           impulseScale = context.jointSoftness.impulseScale;
         }
-        const impulse = -massScale * joint.axialMass * (Cdot + bias) - impulseScale * joint.upperImpulse;
+        const impulse =
+          -massScale * joint.axialMass * (Cdot + bias) -
+          impulseScale * joint.upperImpulse;
         const newImpulse = Math.max(0, joint.upperImpulse + impulse);
         const deltaImpulse = newImpulse - joint.upperImpulse;
         joint.upperImpulse = newImpulse;
@@ -7087,12 +7640,19 @@ function b2SolveDistanceJoint(base, context, useBias) {
       }
     }
     if (joint.enableMotor) {
-      const vr = b2Add(b2Sub(vB, vA), b2Sub(b2CrossSV(wB, rB), b2CrossSV(wA, rA)));
+      const vr = b2Add(
+        b2Sub(vB, vA),
+        b2Sub(b2CrossSV(wB, rB), b2CrossSV(wA, rA))
+      );
       const Cdot = b2Dot(axis, vr);
       const impulse = joint.axialMass * (joint.motorSpeed - Cdot);
       const oldImpulse = joint.motorImpulse;
       const maxImpulse = context.h * joint.maxMotorForce;
-      joint.motorImpulse = b2ClampFloat(joint.motorImpulse + impulse, -maxImpulse, maxImpulse);
+      joint.motorImpulse = b2ClampFloat(
+        joint.motorImpulse + impulse,
+        -maxImpulse,
+        maxImpulse
+      );
       const deltaImpulse = joint.motorImpulse - oldImpulse;
       const P = b2MulSV(deltaImpulse, axis);
       vA = b2MulSub(vA, mA, P);
@@ -7101,7 +7661,10 @@ function b2SolveDistanceJoint(base, context, useBias) {
       wB += iB * b2Cross(rB, P);
     }
   } else {
-    const vr = b2Add(b2Sub(vB, vA), b2Sub(b2CrossSV(wB, rB), b2CrossSV(wA, rA)));
+    const vr = b2Add(
+      b2Sub(vB, vA),
+      b2Sub(b2CrossSV(wB, rB), b2CrossSV(wA, rA))
+    );
     const Cdot = b2Dot(axis, vr);
     const C = length - joint.length;
     let bias = 0;
@@ -7112,7 +7675,9 @@ function b2SolveDistanceJoint(base, context, useBias) {
       massScale = context.jointSoftness.massScale;
       impulseScale = context.jointSoftness.impulseScale;
     }
-    const impulse = -massScale * joint.axialMass * (Cdot + bias) - impulseScale * joint.impulse;
+    const impulse =
+      -massScale * joint.axialMass * (Cdot + bias) -
+      impulseScale * joint.impulse;
     joint.impulse += impulse;
     const P = b2MulSV(impulse, axis);
     vA = b2MulSub(vA, mA, P);
@@ -7135,12 +7700,22 @@ function b2DrawDistanceJoint(draw, base, transformA, transformB) {
     const pMax = b2MulAdd(pA, joint.maxLength, axis);
     const offset = b2MulSV(0.05 * b2_lengthUnitsPerMeter2, b2RightPerp(axis));
     if (joint.minLength > b2_linearSlop) {
-      draw.DrawSegment(b2Sub(pMin, offset), b2Add(pMin, offset), b2HexColor.b2_colorLightGreen, draw.context);
+      draw.DrawSegment(
+        b2Sub(pMin, offset),
+        b2Add(pMin, offset),
+        b2HexColor.b2_colorLightGreen,
+        draw.context
+      );
     }
-    if (joint.maxLength < b2_huge) {
-      draw.DrawSegment(b2Sub(pMax, offset), b2Add(pMax, offset), b2HexColor.b2_colorRed, draw.context);
+    if (joint.maxLength < B2_HUGE) {
+      draw.DrawSegment(
+        b2Sub(pMax, offset),
+        b2Add(pMax, offset),
+        b2HexColor.b2_colorRed,
+        draw.context
+      );
     }
-    if (joint.minLength > b2_linearSlop && joint.maxLength < b2_huge) {
+    if (joint.minLength > b2_linearSlop && joint.maxLength < B2_HUGE) {
       draw.DrawSegment(pMin, pMax, b2HexColor.b2_colorGray, draw.context);
     }
   }
@@ -7203,7 +7778,10 @@ function b2PrismaticJoint_GetUpperLimit(jointId) {
 }
 function b2PrismaticJoint_SetLimits(jointId, lower, upper) {
   const joint = b2GetJointSimCheckType(jointId, b2JointType.b2_prismaticJoint);
-  if (lower !== joint.prismaticJoint.lowerTranslation || upper !== joint.prismaticJoint.upperTranslation) {
+  if (
+    lower !== joint.prismaticJoint.lowerTranslation ||
+    upper !== joint.prismaticJoint.upperTranslation
+  ) {
     joint.prismaticJoint.lowerTranslation = Math.min(lower, upper);
     joint.prismaticJoint.upperTranslation = Math.max(lower, upper);
     joint.prismaticJoint.lowerImpulse = 0;
@@ -7250,7 +7828,8 @@ function b2GetPrismaticJointForce(world, base) {
   const perpA = b2LeftPerp(axisA);
   const inv_h = world.inv_h;
   const perpForce = inv_h * joint.impulse.x;
-  const axialForce = inv_h * (joint.motorImpulse + joint.lowerImpulse - joint.upperImpulse);
+  const axialForce =
+    inv_h * (joint.motorImpulse + joint.lowerImpulse - joint.upperImpulse);
   const force = b2Add(b2MulSV(perpForce, perpA), b2MulSV(axialForce, axisA));
   return force;
 }
@@ -7279,12 +7858,20 @@ function b2PreparePrismaticJoint(base, context) {
   base.invIA = iA;
   base.invIB = iB;
   const joint = base.prismaticJoint;
-  joint.indexA = bodyA.setIndex == b2SetType.b2_awakeSet ? localIndexA : B2_NULL_INDEX;
-  joint.indexB = bodyB.setIndex == b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
+  joint.indexA =
+    bodyA.setIndex == b2SetType.b2_awakeSet ? localIndexA : B2_NULL_INDEX;
+  joint.indexB =
+    bodyB.setIndex == b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
   const qA = bodySimA.transform.q;
   const qB = bodySimB.transform.q;
-  joint.anchorA = b2RotateVector(qA, b2Sub(base.localOriginAnchorA, bodySimA.localCenter));
-  joint.anchorB = b2RotateVector(qB, b2Sub(base.localOriginAnchorB, bodySimB.localCenter));
+  joint.anchorA = b2RotateVector(
+    qA,
+    b2Sub(base.localOriginAnchorA, bodySimA.localCenter)
+  );
+  joint.anchorB = b2RotateVector(
+    qB,
+    b2Sub(base.localOriginAnchorB, bodySimB.localCenter)
+  );
   joint.axisA = b2RotateVector(qA, joint.localAxisA);
   joint.deltaCenter = b2Sub(bodySimB.center, bodySimA.center);
   joint.deltaAngle = b2RelativeAngle(qB, qA) - joint.referenceAngle;
@@ -7311,15 +7898,24 @@ function b2WarmStartPrismaticJoint(base, context) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.prismaticJoint;
-  const stateA = joint.indexA == B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const stateB = joint.indexB == B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const stateA =
+    joint.indexA == B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const stateB =
+    joint.indexB == B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   const rA = b2RotateVector(stateA.deltaRotation, joint.anchorA);
   const rB = b2RotateVector(stateB.deltaRotation, joint.anchorB);
-  const d = b2Add(b2Add(b2Sub(stateB.deltaPosition, stateA.deltaPosition), joint.deltaCenter), b2Sub(rB, rA));
+  const d = b2Add(
+    b2Add(b2Sub(stateB.deltaPosition, stateA.deltaPosition), joint.deltaCenter),
+    b2Sub(rB, rA)
+  );
   const axisA = b2RotateVector(stateA.deltaRotation, joint.axisA);
   const a1 = b2Cross(b2Add(d, rA), axisA);
   const a2 = b2Cross(rB, axisA);
-  const axialImpulse = joint.springImpulse + joint.motorImpulse + joint.lowerImpulse - joint.upperImpulse;
+  const axialImpulse =
+    joint.springImpulse +
+    joint.motorImpulse +
+    joint.lowerImpulse -
+    joint.upperImpulse;
   const perpA = b2LeftPerp(axisA);
   const s1 = b2Cross(b2Add(d, rA), perpA);
   const s2 = b2Cross(rB, perpA);
@@ -7340,15 +7936,20 @@ function b2SolvePrismaticJoint(base, context, useBias) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.prismaticJoint;
-  const stateA = joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const stateB = joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const stateA =
+    joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const stateB =
+    joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   let vA = stateA.linearVelocity;
   let wA = stateA.angularVelocity;
   let vB = stateB.linearVelocity;
   let wB = stateB.angularVelocity;
   const rA = b2RotateVector(stateA.deltaRotation, joint.anchorA);
   const rB = b2RotateVector(stateB.deltaRotation, joint.anchorB);
-  const d = b2Add(b2Add(b2Sub(stateB.deltaPosition, stateA.deltaPosition), joint.deltaCenter), b2Sub(rB, rA));
+  const d = b2Add(
+    b2Add(b2Sub(stateB.deltaPosition, stateA.deltaPosition), joint.deltaCenter),
+    b2Sub(rB, rA)
+  );
   const axisA = b2RotateVector(stateA.deltaRotation, joint.axisA);
   const translation = b2Dot(axisA, d);
   const a1 = b2Cross(b2Add(d, rA), axisA);
@@ -7359,7 +7960,9 @@ function b2SolvePrismaticJoint(base, context, useBias) {
     const massScale = joint.springSoftness.massScale;
     const impulseScale = joint.springSoftness.impulseScale;
     const Cdot = b2Dot(axisA, b2Sub(vB, vA)) + a2 * wB - a1 * wA;
-    const impulse = -massScale * joint.axialMass * (Cdot + bias) - impulseScale * joint.springImpulse;
+    const impulse =
+      -massScale * joint.axialMass * (Cdot + bias) -
+      impulseScale * joint.springImpulse;
     joint.springImpulse += impulse;
     const P = b2MulSV(impulse, axisA);
     const LA = impulse * a1;
@@ -7374,7 +7977,11 @@ function b2SolvePrismaticJoint(base, context, useBias) {
     let impulse = joint.axialMass * (joint.motorSpeed - Cdot);
     const oldImpulse = joint.motorImpulse;
     const maxImpulse = context.h * joint.maxMotorForce;
-    joint.motorImpulse = b2ClampFloat(joint.motorImpulse + impulse, -maxImpulse, maxImpulse);
+    joint.motorImpulse = b2ClampFloat(
+      joint.motorImpulse + impulse,
+      -maxImpulse,
+      maxImpulse
+    );
     impulse = joint.motorImpulse - oldImpulse;
     const P = b2MulSV(impulse, axisA);
     const LA = impulse * a1;
@@ -7399,7 +8006,9 @@ function b2SolvePrismaticJoint(base, context, useBias) {
       }
       const oldImpulse = joint.lowerImpulse;
       const Cdot = b2Dot(axisA, b2Sub(vB, vA)) + a2 * wB - a1 * wA;
-      let impulse = -joint.axialMass * massScale * (Cdot + bias) - impulseScale * oldImpulse;
+      let impulse =
+        -joint.axialMass * massScale * (Cdot + bias) -
+        impulseScale * oldImpulse;
       joint.lowerImpulse = Math.max(oldImpulse + impulse, 0);
       impulse = joint.lowerImpulse - oldImpulse;
       const P = b2MulSV(impulse, axisA);
@@ -7424,7 +8033,9 @@ function b2SolvePrismaticJoint(base, context, useBias) {
       }
       const oldImpulse = joint.upperImpulse;
       const Cdot = b2Dot(axisA, b2Sub(vA, vB)) + a1 * wA - a2 * wB;
-      let impulse = -joint.axialMass * massScale * (Cdot + bias) - impulseScale * oldImpulse;
+      let impulse =
+        -joint.axialMass * massScale * (Cdot + bias) -
+        impulseScale * oldImpulse;
       joint.upperImpulse = Math.max(oldImpulse + impulse, 0);
       impulse = joint.upperImpulse - oldImpulse;
       const P = b2MulSV(impulse, axisA);
@@ -7440,12 +8051,19 @@ function b2SolvePrismaticJoint(base, context, useBias) {
     const perpA = b2LeftPerp(axisA);
     const s1 = b2Cross(b2Add(d, rA), perpA);
     const s2 = b2Cross(rB, perpA);
-    const Cdot = new b2Vec2(b2Dot(perpA, b2Sub(vB, vA)) + s2 * wB - s1 * wA, wB - wA);
+    const Cdot = new b2Vec2(
+      b2Dot(perpA, b2Sub(vB, vA)) + s2 * wB - s1 * wA,
+      wB - wA
+    );
     let bias = new b2Vec2();
     let massScale = 1;
     let impulseScale = 0;
     if (useBias) {
-      const C = new b2Vec2(b2Dot(perpA, d), b2RelativeAngle(stateB.deltaRotation, stateA.deltaRotation) + joint.deltaAngle);
+      const C = new b2Vec2(
+        b2Dot(perpA, d),
+        b2RelativeAngle(stateB.deltaRotation, stateA.deltaRotation) +
+          joint.deltaAngle
+      );
       bias = b2MulSV(context.jointSoftness.biasRate, C);
       massScale = context.jointSoftness.massScale;
       impulseScale = context.jointSoftness.impulseScale;
@@ -7458,7 +8076,10 @@ function b2SolvePrismaticJoint(base, context, useBias) {
     }
     const K = new b2Mat22(new b2Vec2(k11, k12), new b2Vec2(k12, k22));
     const b = b2Solve22(K, b2Add(Cdot, bias));
-    const impulse = new b2Vec2(-massScale * b.x - impulseScale * joint.impulse.x, -massScale * b.y - impulseScale * joint.impulse.y);
+    const impulse = new b2Vec2(
+      -massScale * b.x - impulseScale * joint.impulse.x,
+      -massScale * b.y - impulseScale * joint.impulse.y
+    );
     joint.impulse.x += impulse.x;
     joint.impulse.y += impulse.y;
     const P = b2MulSV(impulse.x, perpA);
@@ -7490,10 +8111,25 @@ function b2DrawPrismaticJoint(draw, base, transformA, transformB) {
     const upper = b2MulAdd(pA, joint.upperTranslation, axis);
     const perp = b2LeftPerp(axis);
     draw.DrawSegment(lower, upper, c1, draw.context);
-    draw.DrawSegment(b2MulSub(lower, 0.1, perp), b2MulAdd(lower, 0.1, perp), c2, draw.context);
-    draw.DrawSegment(b2MulSub(upper, 0.1, perp), b2MulAdd(upper, 0.1, perp), c3, draw.context);
+    draw.DrawSegment(
+      b2MulSub(lower, 0.1, perp),
+      b2MulAdd(lower, 0.1, perp),
+      c2,
+      draw.context
+    );
+    draw.DrawSegment(
+      b2MulSub(upper, 0.1, perp),
+      b2MulAdd(upper, 0.1, perp),
+      c3,
+      draw.context
+    );
   } else {
-    draw.DrawSegment(b2MulSub(pA, 1, axis), b2MulAdd(pA, 1, axis), c1, draw.context);
+    draw.DrawSegment(
+      b2MulSub(pA, 1, axis),
+      b2MulAdd(pA, 1, axis),
+      c1,
+      draw.context
+    );
   }
   draw.DrawPoint(pA.x, pA.y, 5, c1, draw.context);
   draw.DrawPoint(pB.x, pB.y, 5, c4, draw.context);
@@ -7529,10 +8165,15 @@ function b2RevoluteJoint_GetSpringDampingRatio(jointId) {
 }
 function b2RevoluteJoint_GetAngle(jointId) {
   const world = b2GetWorld(jointId.world0);
-  const jointSim = b2GetJointSimCheckType(jointId, b2JointType.b2_revoluteJoint);
+  const jointSim = b2GetJointSimCheckType(
+    jointId,
+    b2JointType.b2_revoluteJoint
+  );
   const transformA = b2GetBodyTransform(world, jointSim.bodyIdA);
   const transformB = b2GetBodyTransform(world, jointSim.bodyIdB);
-  let angle = b2RelativeAngle(transformB.q, transformA.q) - jointSim.revoluteJoint.referenceAngle;
+  let angle =
+    b2RelativeAngle(transformB.q, transformA.q) -
+    jointSim.revoluteJoint.referenceAngle;
   angle = b2UnwindAngle(angle);
   return angle;
 }
@@ -7558,7 +8199,10 @@ function b2RevoluteJoint_GetUpperLimit(jointId) {
 }
 function b2RevoluteJoint_SetLimits(jointId, lower, upper) {
   const joint = b2GetJointSimCheckType(jointId, b2JointType.b2_revoluteJoint);
-  if (lower !== joint.revoluteJoint.lowerAngle || upper !== joint.revoluteJoint.upperAngle) {
+  if (
+    lower !== joint.revoluteJoint.lowerAngle ||
+    upper !== joint.revoluteJoint.upperAngle
+  ) {
     joint.revoluteJoint.lowerAngle = Math.min(lower, upper);
     joint.revoluteJoint.upperAngle = Math.max(lower, upper);
     joint.revoluteJoint.lowerImpulse = 0;
@@ -7603,7 +8247,9 @@ function b2GetRevoluteJointForce(world, base) {
 }
 function b2GetRevoluteJointTorque(world, base) {
   const revolute = base.revoluteJoint;
-  const torque = world.inv_h * (revolute.motorImpulse + revolute.lowerImpulse - revolute.upperImpulse);
+  const torque =
+    world.inv_h *
+    (revolute.motorImpulse + revolute.lowerImpulse - revolute.upperImpulse);
   return torque;
 }
 function b2PrepareRevoluteJoint(base, context) {
@@ -7628,12 +8274,22 @@ function b2PrepareRevoluteJoint(base, context) {
   base.invIA = iA;
   base.invIB = iB;
   const joint = base.revoluteJoint;
-  joint.indexA = bodyA.setIndex === b2SetType.b2_awakeSet ? localIndexA : B2_NULL_INDEX;
-  joint.indexB = bodyB.setIndex === b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
-  joint.anchorA = b2RotateVector(bodySimA.transform.q, b2Sub(base.localOriginAnchorA, bodySimA.localCenter));
-  joint.anchorB = b2RotateVector(bodySimB.transform.q, b2Sub(base.localOriginAnchorB, bodySimB.localCenter));
+  joint.indexA =
+    bodyA.setIndex === b2SetType.b2_awakeSet ? localIndexA : B2_NULL_INDEX;
+  joint.indexB =
+    bodyB.setIndex === b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
+  joint.anchorA = b2RotateVector(
+    bodySimA.transform.q,
+    b2Sub(base.localOriginAnchorA, bodySimA.localCenter)
+  );
+  joint.anchorB = b2RotateVector(
+    bodySimB.transform.q,
+    b2Sub(base.localOriginAnchorB, bodySimB.localCenter)
+  );
   joint.deltaCenter = b2Sub(bodySimB.center, bodySimA.center);
-  joint.deltaAngle = b2RelativeAngle(bodySimB.transform.q, bodySimA.transform.q) - joint.referenceAngle;
+  joint.deltaAngle =
+    b2RelativeAngle(bodySimB.transform.q, bodySimA.transform.q) -
+    joint.referenceAngle;
   joint.deltaAngle = b2UnwindAngle(joint.deltaAngle);
   const k = iA + iB;
   joint.axialMass = k > 0 ? 1 / k : 0;
@@ -7653,15 +8309,31 @@ function b2WarmStartRevoluteJoint(base, context) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.revoluteJoint;
-  const stateA = joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const stateB = joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const stateA =
+    joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const stateB =
+    joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   const rA = b2RotateVector(stateA.deltaRotation, joint.anchorA);
   const rB = b2RotateVector(stateB.deltaRotation, joint.anchorB);
-  const axialImpulse = joint.springImpulse + joint.motorImpulse + joint.lowerImpulse - joint.upperImpulse;
-  stateA.linearVelocity = b2MulSub(stateA.linearVelocity, mA, joint.linearImpulse);
-  stateA.angularVelocity -= iA * (b2Cross(rA, joint.linearImpulse) + axialImpulse);
-  stateB.linearVelocity = b2MulAdd(stateB.linearVelocity, mB, joint.linearImpulse);
-  stateB.angularVelocity += iB * (b2Cross(rB, joint.linearImpulse) + axialImpulse);
+  const axialImpulse =
+    joint.springImpulse +
+    joint.motorImpulse +
+    joint.lowerImpulse -
+    joint.upperImpulse;
+  stateA.linearVelocity = b2MulSub(
+    stateA.linearVelocity,
+    mA,
+    joint.linearImpulse
+  );
+  stateA.angularVelocity -=
+    iA * (b2Cross(rA, joint.linearImpulse) + axialImpulse);
+  stateB.linearVelocity = b2MulAdd(
+    stateB.linearVelocity,
+    mB,
+    joint.linearImpulse
+  );
+  stateB.angularVelocity +=
+    iB * (b2Cross(rB, joint.linearImpulse) + axialImpulse);
 }
 function b2SolveRevoluteJoint(base, context, useBias) {
   const mA = base.invMassA;
@@ -7670,20 +8342,26 @@ function b2SolveRevoluteJoint(base, context, useBias) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.revoluteJoint;
-  const stateA = joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const stateB = joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const stateA =
+    joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const stateB =
+    joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   let vA = stateA.linearVelocity.clone();
   let wA = stateA.angularVelocity;
   let vB = stateB.linearVelocity.clone();
   let wB = stateB.angularVelocity;
   const fixedRotation = iA + iB === 0;
   if (joint.enableSpring && fixedRotation === false) {
-    const C = b2RelativeAngle(stateB.deltaRotation, stateA.deltaRotation) + joint.deltaAngle;
+    const C =
+      b2RelativeAngle(stateB.deltaRotation, stateA.deltaRotation) +
+      joint.deltaAngle;
     const bias = joint.springSoftness.biasRate * C;
     const massScale = joint.springSoftness.massScale;
     const impulseScale = joint.springSoftness.impulseScale;
     const Cdot = wB - wA;
-    const impulse = -massScale * joint.axialMass * (Cdot + bias) - impulseScale * joint.springImpulse;
+    const impulse =
+      -massScale * joint.axialMass * (Cdot + bias) -
+      impulseScale * joint.springImpulse;
     joint.springImpulse += impulse;
     wA -= iA * impulse;
     wB += iB * impulse;
@@ -7693,13 +8371,19 @@ function b2SolveRevoluteJoint(base, context, useBias) {
     let impulse = -joint.axialMass * Cdot;
     const oldImpulse = joint.motorImpulse;
     const maxImpulse = context.h * joint.maxMotorTorque;
-    joint.motorImpulse = b2ClampFloat(joint.motorImpulse + impulse, -maxImpulse, maxImpulse);
+    joint.motorImpulse = b2ClampFloat(
+      joint.motorImpulse + impulse,
+      -maxImpulse,
+      maxImpulse
+    );
     impulse = joint.motorImpulse - oldImpulse;
     wA -= iA * impulse;
     wB += iB * impulse;
   }
   if (joint.enableLimit && fixedRotation === false) {
-    let jointAngle = b2RelativeAngle(stateB.deltaRotation, stateA.deltaRotation) + joint.deltaAngle;
+    let jointAngle =
+      b2RelativeAngle(stateB.deltaRotation, stateA.deltaRotation) +
+      joint.deltaAngle;
     jointAngle = b2UnwindAngle(jointAngle);
     {
       const C = jointAngle - joint.lowerAngle;
@@ -7714,7 +8398,9 @@ function b2SolveRevoluteJoint(base, context, useBias) {
         impulseScale = context.jointSoftness.impulseScale;
       }
       const Cdot = wB - wA;
-      let impulse = -massScale * joint.axialMass * (Cdot + bias) - impulseScale * joint.lowerImpulse;
+      let impulse =
+        -massScale * joint.axialMass * (Cdot + bias) -
+        impulseScale * joint.lowerImpulse;
       const oldImpulse = joint.lowerImpulse;
       joint.lowerImpulse = Math.max(joint.lowerImpulse + impulse, 0);
       impulse = joint.lowerImpulse - oldImpulse;
@@ -7734,7 +8420,9 @@ function b2SolveRevoluteJoint(base, context, useBias) {
         impulseScale = context.jointSoftness.impulseScale;
       }
       const Cdot = wA - wB;
-      let impulse = -massScale * joint.axialMass * (Cdot + bias) - impulseScale * joint.lowerImpulse;
+      let impulse =
+        -massScale * joint.axialMass * (Cdot + bias) -
+        impulseScale * joint.lowerImpulse;
       const oldImpulse = joint.upperImpulse;
       joint.upperImpulse = Math.max(joint.upperImpulse + impulse, 0);
       impulse = joint.upperImpulse - oldImpulse;
@@ -7745,21 +8433,27 @@ function b2SolveRevoluteJoint(base, context, useBias) {
   {
     const rA = b2RotateVector(stateA.deltaRotation, joint.anchorA);
     const rB = b2RotateVector(stateB.deltaRotation, joint.anchorB);
-    const Cdot = b2Sub(b2Add(vB, b2CrossSV(wB, rB)), b2Add(vA, b2CrossSV(wA, rA)));
+    const Cdot = b2Sub(
+      b2Add(vB, b2CrossSV(wB, rB)),
+      b2Add(vA, b2CrossSV(wA, rA))
+    );
     let bias = new b2Vec2(0, 0);
     let massScale = 1;
     let impulseScale = 0;
     if (useBias) {
       const dcA = stateA.deltaPosition;
       const dcB = stateB.deltaPosition;
-      const separation = b2Add(b2Add(b2Sub(dcB, dcA), b2Sub(rB, rA)), joint.deltaCenter);
+      const separation = b2Add(
+        b2Add(b2Sub(dcB, dcA), b2Sub(rB, rA)),
+        joint.deltaCenter
+      );
       bias = b2MulSV(context.jointSoftness.biasRate, separation);
       massScale = context.jointSoftness.massScale;
       impulseScale = context.jointSoftness.impulseScale;
     }
     const K = {
       cx: new b2Vec2(0, 0),
-      cy: new b2Vec2(0, 0)
+      cy: new b2Vec2(0, 0),
     };
     K.cx.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB;
     K.cy.x = -rA.y * rA.x * iA - rB.y * rB.x * iB;
@@ -7848,7 +8542,10 @@ function b2WheelJoint_GetUpperLimit(jointId) {
 }
 function b2WheelJoint_SetLimits(jointId, lower, upper) {
   const joint = b2GetJointSimCheckType(jointId, b2JointType.b2_wheelJoint);
-  if (lower !== joint.wheelJoint.lowerTranslation || upper !== joint.wheelJoint.upperTranslation) {
+  if (
+    lower !== joint.wheelJoint.lowerTranslation ||
+    upper !== joint.wheelJoint.upperTranslation
+  ) {
     joint.wheelJoint.lowerTranslation = Math.min(lower, upper);
     joint.wheelJoint.upperTranslation = Math.max(lower, upper);
     joint.wheelJoint.lowerImpulse = 0;
@@ -7892,7 +8589,9 @@ function b2GetWheelJointForce(world, base) {
   const axisA = joint.axisA;
   const perpA = b2LeftPerp(axisA);
   const perpForce = world.inv_h * joint.perpImpulse;
-  const axialForce = world.inv_h * (joint.springImpulse + joint.lowerImpulse - joint.upperImpulse);
+  const axialForce =
+    world.inv_h *
+    (joint.springImpulse + joint.lowerImpulse - joint.upperImpulse);
   const force = b2Add(b2MulSV(perpForce, perpA), b2MulSV(axialForce, axisA));
   return force;
 }
@@ -7921,12 +8620,20 @@ function b2PrepareWheelJoint(base, context) {
   base.invIA = iA;
   base.invIB = iB;
   const joint = base.wheelJoint;
-  joint.indexA = bodyA.setIndex == b2SetType.b2_awakeSet ? localIndexA : B2_NULL_INDEX;
-  joint.indexB = bodyB.setIndex == b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
+  joint.indexA =
+    bodyA.setIndex == b2SetType.b2_awakeSet ? localIndexA : B2_NULL_INDEX;
+  joint.indexB =
+    bodyB.setIndex == b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
   const qA = bodySimA.transform.q;
   const qB = bodySimB.transform.q;
-  joint.anchorA = b2RotateVector(qA, b2Sub(base.localOriginAnchorA, bodySimA.localCenter));
-  joint.anchorB = b2RotateVector(qB, b2Sub(base.localOriginAnchorB, bodySimB.localCenter));
+  joint.anchorA = b2RotateVector(
+    qA,
+    b2Sub(base.localOriginAnchorA, bodySimA.localCenter)
+  );
+  joint.anchorB = b2RotateVector(
+    qB,
+    b2Sub(base.localOriginAnchorB, bodySimB.localCenter)
+  );
   joint.axisA = b2RotateVector(qA, joint.localAxisA);
   joint.deltaCenter = b2Sub(bodySimB.center, bodySimA.center);
   const rA = joint.anchorA;
@@ -7960,19 +8667,28 @@ function b2WarmStartWheelJoint(base, context) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.wheelJoint;
-  const stateA = joint.indexA == B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const stateB = joint.indexB == B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const stateA =
+    joint.indexA == B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const stateB =
+    joint.indexB == B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   const rA = b2RotateVector(stateA.deltaRotation, joint.anchorA);
   const rB = b2RotateVector(stateB.deltaRotation, joint.anchorB);
-  const d = b2Add(b2Add(b2Sub(stateB.deltaPosition, stateA.deltaPosition), joint.deltaCenter), b2Sub(rB, rA));
+  const d = b2Add(
+    b2Add(b2Sub(stateB.deltaPosition, stateA.deltaPosition), joint.deltaCenter),
+    b2Sub(rB, rA)
+  );
   const axisA = b2RotateVector(stateA.deltaRotation, joint.axisA);
   const perpA = b2LeftPerp(axisA);
   const a1 = b2Cross(b2Add(d, rA), axisA);
   const a2 = b2Cross(rB, axisA);
   const s1 = b2Cross(b2Add(d, rA), perpA);
   const s2 = b2Cross(rB, perpA);
-  const axialImpulse = joint.springImpulse + joint.lowerImpulse - joint.upperImpulse;
-  const P = b2Add(b2MulSV(axialImpulse, axisA), b2MulSV(joint.perpImpulse, perpA));
+  const axialImpulse =
+    joint.springImpulse + joint.lowerImpulse - joint.upperImpulse;
+  const P = b2Add(
+    b2MulSV(axialImpulse, axisA),
+    b2MulSV(joint.perpImpulse, perpA)
+  );
   const LA = axialImpulse * a1 + joint.perpImpulse * s1 + joint.motorImpulse;
   const LB = axialImpulse * a2 + joint.perpImpulse * s2 + joint.motorImpulse;
   stateA.linearVelocity = b2MulSub(stateA.linearVelocity, mA, P);
@@ -7987,8 +8703,10 @@ function b2SolveWheelJoint(base, context, useBias) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.wheelJoint;
-  const stateA = joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const stateB = joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const stateA =
+    joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const stateB =
+    joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   let vA = stateA.linearVelocity;
   let wA = stateA.angularVelocity;
   let vB = stateB.linearVelocity;
@@ -7996,7 +8714,10 @@ function b2SolveWheelJoint(base, context, useBias) {
   const fixedRotation = iA + iB === 0;
   const rA = b2RotateVector(stateA.deltaRotation, joint.anchorA);
   const rB = b2RotateVector(stateB.deltaRotation, joint.anchorB);
-  const d = b2Add(b2Add(b2Sub(stateB.deltaPosition, stateA.deltaPosition), joint.deltaCenter), b2Sub(rB, rA));
+  const d = b2Add(
+    b2Add(b2Sub(stateB.deltaPosition, stateA.deltaPosition), joint.deltaCenter),
+    b2Sub(rB, rA)
+  );
   const axisA = b2RotateVector(stateA.deltaRotation, joint.axisA);
   const translation = b2Dot(axisA, d);
   const a1 = b2Cross(b2Add(d, rA), axisA);
@@ -8006,7 +8727,11 @@ function b2SolveWheelJoint(base, context, useBias) {
     let impulse = -joint.motorMass * Cdot;
     const oldImpulse = joint.motorImpulse;
     const maxImpulse = context.h * joint.maxMotorTorque;
-    joint.motorImpulse = b2ClampFloat(joint.motorImpulse + impulse, -maxImpulse, maxImpulse);
+    joint.motorImpulse = b2ClampFloat(
+      joint.motorImpulse + impulse,
+      -maxImpulse,
+      maxImpulse
+    );
     impulse = joint.motorImpulse - oldImpulse;
     wA -= iA * impulse;
     wB += iB * impulse;
@@ -8017,7 +8742,9 @@ function b2SolveWheelJoint(base, context, useBias) {
     const massScale = joint.springSoftness.massScale;
     const impulseScale = joint.springSoftness.impulseScale;
     const Cdot = b2Dot(axisA, b2Sub(vB, vA)) + a2 * wB - a1 * wA;
-    const impulse = -massScale * joint.axialMass * (Cdot + bias) - impulseScale * joint.springImpulse;
+    const impulse =
+      -massScale * joint.axialMass * (Cdot + bias) -
+      impulseScale * joint.springImpulse;
     joint.springImpulse += impulse;
     const P = b2MulSV(impulse, axisA);
     const LA = impulse * a1;
@@ -8042,7 +8769,9 @@ function b2SolveWheelJoint(base, context, useBias) {
         impulseScale = context.jointSoftness.impulseScale;
       }
       const Cdot = b2Dot(axisA, b2Sub(vB, vA)) + a2 * wB - a1 * wA;
-      let impulse = -massScale * joint.axialMass * (Cdot + bias) - impulseScale * joint.lowerImpulse;
+      let impulse =
+        -massScale * joint.axialMass * (Cdot + bias) -
+        impulseScale * joint.lowerImpulse;
       const oldImpulse = joint.lowerImpulse;
       joint.lowerImpulse = Math.max(oldImpulse + impulse, 0);
       impulse = joint.lowerImpulse - oldImpulse;
@@ -8067,7 +8796,9 @@ function b2SolveWheelJoint(base, context, useBias) {
         impulseScale = context.jointSoftness.impulseScale;
       }
       const Cdot = b2Dot(axisA, b2Sub(vA, vB)) + a1 * wA - a2 * wB;
-      let impulse = -massScale * joint.axialMass * (Cdot + bias) - impulseScale * joint.upperImpulse;
+      let impulse =
+        -massScale * joint.axialMass * (Cdot + bias) -
+        impulseScale * joint.upperImpulse;
       const oldImpulse = joint.upperImpulse;
       joint.upperImpulse = Math.max(oldImpulse + impulse, 0);
       impulse = joint.upperImpulse - oldImpulse;
@@ -8094,7 +8825,9 @@ function b2SolveWheelJoint(base, context, useBias) {
     const s1 = b2Cross(b2Add(d, rA), perpA);
     const s2 = b2Cross(rB, perpA);
     const Cdot = b2Dot(perpA, b2Sub(vB, vA)) + s2 * wB - s1 * wA;
-    const impulse = -massScale * joint.perpMass * (Cdot + bias) - impulseScale * joint.perpImpulse;
+    const impulse =
+      -massScale * joint.perpMass * (Cdot + bias) -
+      impulseScale * joint.perpImpulse;
     joint.perpImpulse += impulse;
     const P = b2MulSV(impulse, perpA);
     const LA = impulse * s1;
@@ -8125,10 +8858,25 @@ function b2DrawWheelJoint(draw, base, transformA, transformB) {
     const upper = b2MulAdd(pA, joint.upperTranslation, axis);
     const perp = b2LeftPerp(axis);
     draw.DrawSegment(lower, upper, c1, draw.context);
-    draw.DrawSegment(b2MulSub(lower, 0.1, perp), b2MulAdd(lower, 0.1, perp), c2, draw.context);
-    draw.DrawSegment(b2MulSub(upper, 0.1, perp), b2MulAdd(upper, 0.1, perp), c3, draw.context);
+    draw.DrawSegment(
+      b2MulSub(lower, 0.1, perp),
+      b2MulAdd(lower, 0.1, perp),
+      c2,
+      draw.context
+    );
+    draw.DrawSegment(
+      b2MulSub(upper, 0.1, perp),
+      b2MulAdd(upper, 0.1, perp),
+      c3,
+      draw.context
+    );
   } else {
-    draw.DrawSegment(b2MulSub(pA, 1, axis), b2MulAdd(pA, 1, axis), c1, draw.context);
+    draw.DrawSegment(
+      b2MulSub(pA, 1, axis),
+      b2MulAdd(pA, 1, axis),
+      c1,
+      draw.context
+    );
   }
   draw.DrawPoint(pA.x, pA.y, 5, c1, draw.context);
   draw.DrawPoint(pB.x, pB.y, 5, c4, draw.context);
@@ -8145,7 +8893,7 @@ function b2MotorJoint_GetLinearOffset(jointId) {
 }
 function b2MotorJoint_SetAngularOffset(jointId, angularOffset) {
   const joint = b2GetJointSimCheckType(jointId, b2JointType.b2_motorJoint);
-  joint.motorJoint.angularOffset = b2ClampFloat(angularOffset, -b2_pi, b2_pi);
+  joint.motorJoint.angularOffset = b2ClampFloat(angularOffset, -B2_PI, B2_PI);
 }
 function b2MotorJoint_GetAngularOffset(jointId) {
   const joint = b2GetJointSimCheckType(jointId, b2JointType.b2_motorJoint);
@@ -8204,18 +8952,31 @@ function b2PrepareMotorJoint(base, context) {
   base.invIA = iA;
   base.invIB = iB;
   const joint = base.motorJoint;
-  joint.indexA = bodyA.setIndex == b2SetType.b2_awakeSet ? localIndexA : B2_NULL_INDEX;
-  joint.indexB = bodyB.setIndex == b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
-  joint.anchorA = b2RotateVector(bodySimA.transform.q, b2Sub(base.localOriginAnchorA, bodySimA.localCenter));
-  joint.anchorB = b2RotateVector(bodySimB.transform.q, b2Sub(base.localOriginAnchorB, bodySimB.localCenter));
-  joint.deltaCenter = b2Sub(b2Sub(bodySimB.center, bodySimA.center), joint.linearOffset);
-  joint.deltaAngle = b2RelativeAngle(bodySimB.transform.q, bodySimA.transform.q) - joint.angularOffset;
+  joint.indexA =
+    bodyA.setIndex == b2SetType.b2_awakeSet ? localIndexA : B2_NULL_INDEX;
+  joint.indexB =
+    bodyB.setIndex == b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
+  joint.anchorA = b2RotateVector(
+    bodySimA.transform.q,
+    b2Sub(base.localOriginAnchorA, bodySimA.localCenter)
+  );
+  joint.anchorB = b2RotateVector(
+    bodySimB.transform.q,
+    b2Sub(base.localOriginAnchorB, bodySimB.localCenter)
+  );
+  joint.deltaCenter = b2Sub(
+    b2Sub(bodySimB.center, bodySimA.center),
+    joint.linearOffset
+  );
+  joint.deltaAngle =
+    b2RelativeAngle(bodySimB.transform.q, bodySimA.transform.q) -
+    joint.angularOffset;
   joint.deltaAngle = b2UnwindAngle(joint.deltaAngle);
   const rA = joint.anchorA;
   const rB = joint.anchorB;
   const K = {
     cx: new b2Vec2(0, 0),
-    cy: new b2Vec2(0, 0)
+    cy: new b2Vec2(0, 0),
   };
   K.cx.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB;
   K.cx.y = -rA.y * rA.x * iA - rB.y * rB.x * iB;
@@ -8236,14 +8997,26 @@ function b2WarmStartMotorJoint(base, context) {
   const iB = base.invIB;
   const joint = base.motorJoint;
   const dummyState = new b2BodyState();
-  const bodyA = joint.indexA == B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const bodyB = joint.indexB == B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const bodyA =
+    joint.indexA == B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const bodyB =
+    joint.indexB == B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   const rA = b2RotateVector(bodyA.deltaRotation, joint.anchorA);
   const rB = b2RotateVector(bodyB.deltaRotation, joint.anchorB);
-  bodyA.linearVelocity = b2MulSub(bodyA.linearVelocity, mA, joint.linearImpulse);
-  bodyA.angularVelocity -= iA * (b2Cross(rA, joint.linearImpulse) + joint.angularImpulse);
-  bodyB.linearVelocity = b2MulAdd(bodyB.linearVelocity, mB, joint.linearImpulse);
-  bodyB.angularVelocity += iB * (b2Cross(rB, joint.linearImpulse) + joint.angularImpulse);
+  bodyA.linearVelocity = b2MulSub(
+    bodyA.linearVelocity,
+    mA,
+    joint.linearImpulse
+  );
+  bodyA.angularVelocity -=
+    iA * (b2Cross(rA, joint.linearImpulse) + joint.angularImpulse);
+  bodyB.linearVelocity = b2MulAdd(
+    bodyB.linearVelocity,
+    mB,
+    joint.linearImpulse
+  );
+  bodyB.angularVelocity +=
+    iB * (b2Cross(rB, joint.linearImpulse) + joint.angularImpulse);
 }
 function b2SolveMotorJoint(base, context, useBias) {
   const mA = base.invMassA;
@@ -8252,21 +9025,30 @@ function b2SolveMotorJoint(base, context, useBias) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.motorJoint;
-  const bodyA = joint.indexA == B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const bodyB = joint.indexB == B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const bodyA =
+    joint.indexA == B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const bodyB =
+    joint.indexB == B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   let vA = bodyA.linearVelocity;
   let wA = bodyA.angularVelocity;
   let vB = bodyB.linearVelocity;
   let wB = bodyB.angularVelocity;
   {
-    let angularSeperation = b2RelativeAngle(bodyB.deltaRotation, bodyA.deltaRotation) + joint.deltaAngle;
+    let angularSeperation =
+      b2RelativeAngle(bodyB.deltaRotation, bodyA.deltaRotation) +
+      joint.deltaAngle;
     angularSeperation = b2UnwindAngle(angularSeperation);
-    const angularBias = context.inv_h * joint.correctionFactor * angularSeperation;
+    const angularBias =
+      context.inv_h * joint.correctionFactor * angularSeperation;
     const Cdot = wB - wA;
     let impulse = -joint.angularMass * (Cdot + angularBias);
     const oldImpulse = joint.angularImpulse;
     const maxImpulse = context.h * joint.maxTorque;
-    joint.angularImpulse = b2ClampFloat(joint.angularImpulse + impulse, -maxImpulse, maxImpulse);
+    joint.angularImpulse = b2ClampFloat(
+      joint.angularImpulse + impulse,
+      -maxImpulse,
+      maxImpulse
+    );
     impulse = joint.angularImpulse - oldImpulse;
     wA -= iA * impulse;
     wB += iB * impulse;
@@ -8274,10 +9056,19 @@ function b2SolveMotorJoint(base, context, useBias) {
   {
     const rA = b2RotateVector(bodyA.deltaRotation, joint.anchorA);
     const rB = b2RotateVector(bodyB.deltaRotation, joint.anchorB);
-    const ds = b2Add(b2Sub(bodyB.deltaPosition, bodyA.deltaPosition), b2Sub(rB, rA));
+    const ds = b2Add(
+      b2Sub(bodyB.deltaPosition, bodyA.deltaPosition),
+      b2Sub(rB, rA)
+    );
     const linearSeparation = b2Add(joint.deltaCenter, ds);
-    const linearBias = b2MulSV(context.inv_h * joint.correctionFactor, linearSeparation);
-    const Cdot = b2Sub(b2Add(vB, b2CrossSV(wB, rB)), b2Add(vA, b2CrossSV(wA, rA)));
+    const linearBias = b2MulSV(
+      context.inv_h * joint.correctionFactor,
+      linearSeparation
+    );
+    const Cdot = b2Sub(
+      b2Add(vB, b2CrossSV(wB, rB)),
+      b2Add(vA, b2CrossSV(wA, rA))
+    );
     const b = b2MulMV(joint.linearMass, b2Add(Cdot, linearBias));
     let impulse = new b2Vec2(-b.x, -b.y);
     const oldImpulse = joint.linearImpulse;
@@ -8353,18 +9144,26 @@ function b2PrepareMouseJoint(base, context) {
   base.invMassB = bodySimB.invMass;
   base.invIB = bodySimB.invInertia;
   const joint = base.mouseJoint;
-  joint.indexB = bodyB.setIndex === b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
-  joint.anchorB = b2RotateVector(bodySimB.transform.q, b2Sub(base.localOriginAnchorB, bodySimB.localCenter));
+  joint.indexB =
+    bodyB.setIndex === b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
+  joint.anchorB = b2RotateVector(
+    bodySimB.transform.q,
+    b2Sub(base.localOriginAnchorB, bodySimB.localCenter)
+  );
   joint.linearSoftness = b2MakeSoft(joint.hertz, joint.dampingRatio, context.h);
   const angularHertz = 0.5;
   const angularDampingRatio = 0.1;
-  joint.angularSoftness = b2MakeSoft(angularHertz, angularDampingRatio, context.h);
+  joint.angularSoftness = b2MakeSoft(
+    angularHertz,
+    angularDampingRatio,
+    context.h
+  );
   const rB = joint.anchorB;
   const mB = bodySimB.invMass;
   const iB = bodySimB.invInertia;
   const K = {
     cx: new b2Vec2(mB + iB * rB.y * rB.y, -iB * rB.x * rB.y),
-    cy: new b2Vec2(-iB * rB.x * rB.y, mB + iB * rB.x * rB.x)
+    cy: new b2Vec2(-iB * rB.x * rB.y, mB + iB * rB.x * rB.x),
   };
   joint.linearMass = b2GetInverse22(K);
   joint.deltaCenter = b2Sub(bodySimB.center, joint.targetA);
@@ -8399,7 +9198,8 @@ function b2SolveMouseJoint(base, context) {
     const massScale = joint.angularSoftness.massScale;
     const impulseScale = joint.angularSoftness.impulseScale;
     let impulseStrength = iB > 0 ? -wB / iB : 0;
-    impulseStrength = massScale * impulseStrength - impulseScale * joint.angularImpulse;
+    impulseStrength =
+      massScale * impulseStrength - impulseScale * joint.angularImpulse;
     joint.angularImpulse += impulseStrength;
     wB += iB * impulseStrength;
   }
@@ -8408,7 +9208,10 @@ function b2SolveMouseJoint(base, context) {
     const dqB = stateB.deltaRotation;
     const rB = b2RotateVector(dqB, joint.anchorB);
     const Cdot = b2Add(vB, b2CrossSV(wB, rB));
-    const separation = b2Add(b2Add(stateB.deltaPosition, rB), joint.deltaCenter);
+    const separation = b2Add(
+      b2Add(stateB.deltaPosition, rB),
+      joint.deltaCenter
+    );
     const bias = b2MulSV(joint.linearSoftness.biasRate, separation);
     const massScale = joint.linearSoftness.massScale;
     const impulseScale = joint.linearSoftness.impulseScale;
@@ -8422,7 +9225,10 @@ function b2SolveMouseJoint(base, context) {
     joint.linearImpulse.y += impulseVector.y;
     const mag = b2Length(joint.linearImpulse);
     if (mag > maxImpulse) {
-      joint.linearImpulse = b2MulSV(maxImpulse, b2Normalize(joint.linearImpulse));
+      joint.linearImpulse = b2MulSV(
+        maxImpulse,
+        b2Normalize(joint.linearImpulse)
+      );
     }
     impulseVector.x = joint.linearImpulse.x - oldImpulse.x;
     impulseVector.y = joint.linearImpulse.y - oldImpulse.y;
@@ -8495,7 +9301,12 @@ function b2PrepareWeldJoint(base, context) {
   const bodies = world.bodyArray;
   const bodyA = bodies[idA];
   const bodyB = bodies[idB];
-  if (!(bodyA.setIndex === b2SetType.b2_awakeSet || bodyB.setIndex === b2SetType.b2_awakeSet)) {
+  if (
+    !(
+      bodyA.setIndex === b2SetType.b2_awakeSet ||
+      bodyB.setIndex === b2SetType.b2_awakeSet
+    )
+  ) {
     throw new Error("At least one body must be awake");
   }
   const setA = world.solverSetArray[bodyA.setIndex];
@@ -8519,12 +9330,20 @@ function b2PrepareWeldJoint(base, context) {
   base.invIA = iA;
   base.invIB = iB;
   const joint = base.weldJoint;
-  joint.indexA = bodyA.setIndex === b2SetType.b2_awakeSet ? localIndexA : B2_NULL_INDEX;
-  joint.indexB = bodyB.setIndex === b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
+  joint.indexA =
+    bodyA.setIndex === b2SetType.b2_awakeSet ? localIndexA : B2_NULL_INDEX;
+  joint.indexB =
+    bodyB.setIndex === b2SetType.b2_awakeSet ? localIndexB : B2_NULL_INDEX;
   const qA = bodySimA.transform.q;
   const qB = bodySimB.transform.q;
-  joint.anchorA = b2RotateVector(qA, b2Sub(base.localOriginAnchorA, bodySimA.localCenter));
-  joint.anchorB = b2RotateVector(qB, b2Sub(base.localOriginAnchorB, bodySimB.localCenter));
+  joint.anchorA = b2RotateVector(
+    qA,
+    b2Sub(base.localOriginAnchorA, bodySimA.localCenter)
+  );
+  joint.anchorB = b2RotateVector(
+    qB,
+    b2Sub(base.localOriginAnchorB, bodySimB.localCenter)
+  );
   joint.deltaCenter = b2Sub(bodySimB.center, bodySimA.center);
   joint.deltaAngle = b2RelativeAngle(qB, qA) - joint.referenceAngle;
   const ka = iA + iB;
@@ -8532,12 +9351,20 @@ function b2PrepareWeldJoint(base, context) {
   if (joint.linearHertz === 0) {
     joint.linearSoftness = context.jointSoftness;
   } else {
-    joint.linearSoftness = b2MakeSoft(joint.linearHertz, joint.linearDampingRatio, context.h);
+    joint.linearSoftness = b2MakeSoft(
+      joint.linearHertz,
+      joint.linearDampingRatio,
+      context.h
+    );
   }
   if (joint.angularHertz === 0) {
     joint.angularSoftness = context.jointSoftness;
   } else {
-    joint.angularSoftness = b2MakeSoft(joint.angularHertz, joint.angularDampingRatio, context.h);
+    joint.angularSoftness = b2MakeSoft(
+      joint.angularHertz,
+      joint.angularDampingRatio,
+      context.h
+    );
   }
   if (context.enableWarmStarting === false) {
     joint.linearImpulse = new b2Vec2(0, 0);
@@ -8551,14 +9378,26 @@ function b2WarmStartWeldJoint(base, context) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.weldJoint;
-  const stateA = joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const stateB = joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const stateA =
+    joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const stateB =
+    joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   const rA = b2RotateVector(stateA.deltaRotation, joint.anchorA);
   const rB = b2RotateVector(stateB.deltaRotation, joint.anchorB);
-  stateA.linearVelocity = b2MulSub(stateA.linearVelocity, mA, joint.linearImpulse);
-  stateA.angularVelocity -= iA * (b2Cross(rA, joint.linearImpulse) + joint.angularImpulse);
-  stateB.linearVelocity = b2MulAdd(stateB.linearVelocity, mB, joint.linearImpulse);
-  stateB.angularVelocity += iB * (b2Cross(rB, joint.linearImpulse) + joint.angularImpulse);
+  stateA.linearVelocity = b2MulSub(
+    stateA.linearVelocity,
+    mA,
+    joint.linearImpulse
+  );
+  stateA.angularVelocity -=
+    iA * (b2Cross(rA, joint.linearImpulse) + joint.angularImpulse);
+  stateB.linearVelocity = b2MulAdd(
+    stateB.linearVelocity,
+    mB,
+    joint.linearImpulse
+  );
+  stateB.angularVelocity +=
+    iB * (b2Cross(rB, joint.linearImpulse) + joint.angularImpulse);
 }
 function b2SolveWeldJoint(base, context, useBias) {
   if (base.type !== b2JointType.b2_weldJoint) {
@@ -8570,8 +9409,10 @@ function b2SolveWeldJoint(base, context, useBias) {
   const iB = base.invIB;
   const dummyState = new b2BodyState();
   const joint = base.weldJoint;
-  const stateA = joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
-  const stateB = joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
+  const stateA =
+    joint.indexA === B2_NULL_INDEX ? dummyState : context.states[joint.indexA];
+  const stateB =
+    joint.indexB === B2_NULL_INDEX ? dummyState : context.states[joint.indexB];
   let vA = stateA.linearVelocity;
   let wA = stateA.angularVelocity;
   let vB = stateB.linearVelocity;
@@ -8581,13 +9422,17 @@ function b2SolveWeldJoint(base, context, useBias) {
     let massScale = 1;
     let impulseScale = 0;
     if (useBias || joint.angularHertz > 0) {
-      const C = b2RelativeAngle(stateB.deltaRotation, stateA.deltaRotation) + joint.deltaAngle;
+      const C =
+        b2RelativeAngle(stateB.deltaRotation, stateA.deltaRotation) +
+        joint.deltaAngle;
       bias = joint.angularSoftness.biasRate * C;
       massScale = joint.angularSoftness.massScale;
       impulseScale = joint.angularSoftness.impulseScale;
     }
     const Cdot = wB - wA;
-    const impulse = -massScale * joint.axialMass * (Cdot + bias) - impulseScale * joint.angularImpulse;
+    const impulse =
+      -massScale * joint.axialMass * (Cdot + bias) -
+      impulseScale * joint.angularImpulse;
     joint.angularImpulse += impulse;
     wA -= iA * impulse;
     wB += iB * impulse;
@@ -8606,7 +9451,10 @@ function b2SolveWeldJoint(base, context, useBias) {
       massScale = joint.linearSoftness.massScale;
       impulseScale = joint.linearSoftness.impulseScale;
     }
-    const Cdot = b2Sub(b2Add(vB, b2CrossSV(wB, rB)), b2Add(vA, b2CrossSV(wA, rA)));
+    const Cdot = b2Sub(
+      b2Add(vB, b2CrossSV(wB, rB)),
+      b2Add(vA, b2CrossSV(wA, rA))
+    );
     const K = new b2Mat22();
     K.cx.x = mA + mB + rA.y * rA.y * iA + rB.y * rB.y * iB;
     K.cy.x = -rA.y * rA.x * iA - rB.y * rB.x * iB;
@@ -8633,7 +9481,7 @@ function b2SolveWeldJoint(base, context, useBias) {
 function b2DefaultDistanceJointDef() {
   const def = new b2DistanceJointDef();
   def.length = 1;
-  def.maxLength = b2_huge;
+  def.maxLength = B2_HUGE;
   return def;
 }
 function b2DefaultMotorJointDef() {
@@ -8704,7 +9552,15 @@ var b2JointPair = class {
     this.jointSim = jointSim;
   }
 };
-function b2CreateJoint(world, bodyA, bodyB, userData, drawSize, type, collideConnected) {
+function b2CreateJoint(
+  world,
+  bodyA,
+  bodyB,
+  userData,
+  drawSize,
+  type,
+  collideConnected
+) {
   b2ValidateSolverSets(world);
   const bodyIdA = bodyA.id;
   const bodyIdB = bodyB.id;
@@ -8731,7 +9587,7 @@ function b2CreateJoint(world, bodyA, bodyB, userData, drawSize, type, collideCon
   joint.edges[0].bodyId = bodyIdA;
   joint.edges[0].prevKey = B2_NULL_INDEX;
   joint.edges[0].nextKey = bodyA.headJointKey;
-  const keyA = jointId << 1 | 0;
+  const keyA = (jointId << 1) | 0;
   if (bodyA.headJointKey !== B2_NULL_INDEX) {
     const jointA = world.jointArray[bodyA.headJointKey >> 1];
     const edgeA = jointA.edges[bodyA.headJointKey & 1];
@@ -8742,7 +9598,7 @@ function b2CreateJoint(world, bodyA, bodyB, userData, drawSize, type, collideCon
   joint.edges[1].bodyId = bodyIdB;
   joint.edges[1].prevKey = B2_NULL_INDEX;
   joint.edges[1].nextKey = bodyB.headJointKey;
-  const keyB = jointId << 1 | 1;
+  const keyB = (jointId << 1) | 1;
   if (bodyB.headJointKey !== B2_NULL_INDEX) {
     const jointB = world.jointArray[bodyB.headJointKey >> 1];
     const edgeB = jointB.edges[bodyB.headJointKey & 1];
@@ -8751,7 +9607,10 @@ function b2CreateJoint(world, bodyA, bodyB, userData, drawSize, type, collideCon
   bodyB.headJointKey = keyB;
   bodyB.jointCount += 1;
   let jointSim;
-  if (bodyA.setIndex === b2SetType.b2_disabledSet || bodyB.setIndex === b2SetType.b2_disabledSet) {
+  if (
+    bodyA.setIndex === b2SetType.b2_disabledSet ||
+    bodyB.setIndex === b2SetType.b2_disabledSet
+  ) {
     const set = world.solverSetArray[b2SetType.b2_disabledSet];
     joint.setIndex = b2SetType.b2_disabledSet;
     joint.localIndex = set.joints.length;
@@ -8759,7 +9618,10 @@ function b2CreateJoint(world, bodyA, bodyB, userData, drawSize, type, collideCon
     jointSim.jointId = jointId;
     jointSim.bodyIdA = bodyIdA;
     jointSim.bodyIdB = bodyIdB;
-  } else if (bodyA.setIndex === b2SetType.b2_staticSet && bodyB.setIndex === b2SetType.b2_staticSet) {
+  } else if (
+    bodyA.setIndex === b2SetType.b2_staticSet &&
+    bodyB.setIndex === b2SetType.b2_staticSet
+  ) {
     const set = world.solverSetArray[b2SetType.b2_staticSet];
     joint.setIndex = b2SetType.b2_staticSet;
     joint.localIndex = set.joints.length;
@@ -8767,7 +9629,10 @@ function b2CreateJoint(world, bodyA, bodyB, userData, drawSize, type, collideCon
     jointSim.jointId = jointId;
     jointSim.bodyIdA = bodyIdA;
     jointSim.bodyIdB = bodyIdB;
-  } else if (bodyA.setIndex === b2SetType.b2_awakeSet || bodyB.setIndex === b2SetType.b2_awakeSet) {
+  } else if (
+    bodyA.setIndex === b2SetType.b2_awakeSet ||
+    bodyB.setIndex === b2SetType.b2_awakeSet
+  ) {
     if (maxSetIndex >= b2SetType.b2_firstSleepingSet) {
       b2WakeSolverSet(world, maxSetIndex);
     }
@@ -8785,14 +9650,19 @@ function b2CreateJoint(world, bodyA, bodyB, userData, drawSize, type, collideCon
     jointSim.jointId = jointId;
     jointSim.bodyIdA = bodyIdA;
     jointSim.bodyIdB = bodyIdB;
-    if (bodyA.setIndex !== bodyB.setIndex && bodyA.setIndex >= b2SetType.b2_firstSleepingSet && bodyB.setIndex >= b2SetType.b2_firstSleepingSet) {
+    if (
+      bodyA.setIndex !== bodyB.setIndex &&
+      bodyA.setIndex >= b2SetType.b2_firstSleepingSet &&
+      bodyB.setIndex >= b2SetType.b2_firstSleepingSet
+    ) {
       b2MergeSolverSets(world, bodyA.setIndex, bodyB.setIndex);
       setIndex = bodyA.setIndex;
       jointSim = world.solverSetArray[setIndex].joints[joint.localIndex];
     }
   }
   if (joint.setIndex > b2SetType.b2_disabledSet) {
-    b2LinkJoint(world, joint);
+    const mergeIslands = true;
+    b2LinkJoint(world, joint, mergeIslands);
   }
   b2ValidateSolverSets(world);
   return new b2JointPair(joint, jointSim);
@@ -8827,7 +9697,15 @@ function b2CreateDistanceJoint(worldId, def) {
   }
   const bodyA = b2GetBodyFullId(world, def.bodyIdA);
   const bodyB = b2GetBodyFullId(world, def.bodyIdB);
-  const pair = b2CreateJoint(world, bodyA, bodyB, def.userData, 1, b2JointType.b2_distanceJoint, def.collideConnected);
+  const pair = b2CreateJoint(
+    world,
+    bodyA,
+    bodyB,
+    def.userData,
+    1,
+    b2JointType.b2_distanceJoint,
+    def.collideConnected
+  );
   const joint = pair.jointSim;
   joint.type = b2JointType.b2_distanceJoint;
   joint.localOriginAnchorA = def.localAnchorA;
@@ -8850,7 +9728,11 @@ function b2CreateDistanceJoint(worldId, def) {
   if (def.collideConnected === false) {
     b2DestroyContactsBetweenBodies(world, bodyA, bodyB);
   }
-  const jointId = new b2JointId(joint.jointId + 1, world.worldId, pair.joint.revision);
+  const jointId = new b2JointId(
+    joint.jointId + 1,
+    world.worldId,
+    pair.joint.revision
+  );
   return jointId;
 }
 function b2CreateMotorJoint(worldId, def) {
@@ -8860,7 +9742,15 @@ function b2CreateMotorJoint(worldId, def) {
   }
   const bodyA = b2GetBodyFullId(world, def.bodyIdA);
   const bodyB = b2GetBodyFullId(world, def.bodyIdB);
-  const pair = b2CreateJoint(world, bodyA, bodyB, def.userData, 1, b2JointType.b2_motorJoint, def.collideConnected);
+  const pair = b2CreateJoint(
+    world,
+    bodyA,
+    bodyB,
+    def.userData,
+    1,
+    b2JointType.b2_motorJoint,
+    def.collideConnected
+  );
   const joint = pair.jointSim;
   joint.type = b2JointType.b2_motorJoint;
   joint.localOriginAnchorA = new b2Vec2(0, 0);
@@ -8874,7 +9764,11 @@ function b2CreateMotorJoint(worldId, def) {
   if (def.collideConnected === false) {
     b2DestroyContactsBetweenBodies(world, bodyA, bodyB);
   }
-  const jointId = new b2JointId(joint.jointId + 1, world.worldId, pair.joint.revision);
+  const jointId = new b2JointId(
+    joint.jointId + 1,
+    world.worldId,
+    pair.joint.revision
+  );
   return jointId;
 }
 function b2CreateMouseJoint(worldId, def) {
@@ -8886,7 +9780,15 @@ function b2CreateMouseJoint(worldId, def) {
   const bodyB = b2GetBodyFullId(world, def.bodyIdB);
   const transformA = b2GetBodyTransformQuick(world, bodyA);
   const transformB = b2GetBodyTransformQuick(world, bodyB);
-  const pair = b2CreateJoint(world, bodyA, bodyB, def.userData, 1, b2JointType.b2_mouseJoint, def.collideConnected);
+  const pair = b2CreateJoint(
+    world,
+    bodyA,
+    bodyB,
+    def.userData,
+    1,
+    b2JointType.b2_mouseJoint,
+    def.collideConnected
+  );
   const joint = pair.jointSim;
   joint.type = b2JointType.b2_mouseJoint;
   joint.localOriginAnchorA = b2InvTransformPoint(transformA, def.target);
@@ -8896,7 +9798,11 @@ function b2CreateMouseJoint(worldId, def) {
   joint.mouseJoint.hertz = def.hertz;
   joint.mouseJoint.dampingRatio = def.dampingRatio;
   joint.mouseJoint.maxForce = def.maxForce;
-  const jointId = new b2JointId(joint.jointId + 1, world.worldId, pair.joint.revision);
+  const jointId = new b2JointId(
+    joint.jointId + 1,
+    world.worldId,
+    pair.joint.revision
+  );
   return jointId;
 }
 function b2CreateRevoluteJoint(worldId, def) {
@@ -8906,13 +9812,25 @@ function b2CreateRevoluteJoint(worldId, def) {
   }
   const bodyA = b2GetBodyFullId(world, def.bodyIdA);
   const bodyB = b2GetBodyFullId(world, def.bodyIdB);
-  const pair = b2CreateJoint(world, bodyA, bodyB, def.userData, def.drawSize, b2JointType.b2_revoluteJoint, def.collideConnected);
+  const pair = b2CreateJoint(
+    world,
+    bodyA,
+    bodyB,
+    def.userData,
+    def.drawSize,
+    b2JointType.b2_revoluteJoint,
+    def.collideConnected
+  );
   const joint = pair.jointSim;
   joint.type = b2JointType.b2_revoluteJoint;
   joint.localOriginAnchorA = def.localAnchorA;
   joint.localOriginAnchorB = def.localAnchorB;
   joint.revoluteJoint = new b2RevoluteJoint();
-  joint.revoluteJoint.referenceAngle = b2ClampFloat(def.referenceAngle, -Math.PI, Math.PI);
+  joint.revoluteJoint.referenceAngle = b2ClampFloat(
+    def.referenceAngle,
+    -Math.PI,
+    Math.PI
+  );
   joint.revoluteJoint.linearImpulse = new b2Vec2(0, 0);
   joint.revoluteJoint.axialMass = 0;
   joint.revoluteJoint.springImpulse = 0;
@@ -8923,8 +9841,16 @@ function b2CreateRevoluteJoint(worldId, def) {
   joint.revoluteJoint.dampingRatio = def.dampingRatio;
   joint.revoluteJoint.lowerAngle = Math.min(def.lowerAngle, def.upperAngle);
   joint.revoluteJoint.upperAngle = Math.max(def.lowerAngle, def.upperAngle);
-  joint.revoluteJoint.lowerAngle = b2ClampFloat(joint.revoluteJoint.lowerAngle, -Math.PI, Math.PI);
-  joint.revoluteJoint.upperAngle = b2ClampFloat(joint.revoluteJoint.upperAngle, -Math.PI, Math.PI);
+  joint.revoluteJoint.lowerAngle = b2ClampFloat(
+    joint.revoluteJoint.lowerAngle,
+    -Math.PI,
+    Math.PI
+  );
+  joint.revoluteJoint.upperAngle = b2ClampFloat(
+    joint.revoluteJoint.upperAngle,
+    -Math.PI,
+    Math.PI
+  );
   joint.revoluteJoint.maxMotorTorque = def.maxMotorTorque;
   joint.revoluteJoint.motorSpeed = def.motorSpeed;
   joint.revoluteJoint.enableSpring = def.enableSpring;
@@ -8933,7 +9859,11 @@ function b2CreateRevoluteJoint(worldId, def) {
   if (def.collideConnected === false) {
     b2DestroyContactsBetweenBodies(world, bodyA, bodyB);
   }
-  const jointId = new b2JointId(joint.jointId + 1, world.worldId, pair.joint.revision);
+  const jointId = new b2JointId(
+    joint.jointId + 1,
+    world.worldId,
+    pair.joint.revision
+  );
   return jointId;
 }
 function b2CreatePrismaticJoint(worldId, def) {
@@ -8943,7 +9873,15 @@ function b2CreatePrismaticJoint(worldId, def) {
   }
   const bodyA = b2GetBodyFullId(world, def.bodyIdA);
   const bodyB = b2GetBodyFullId(world, def.bodyIdB);
-  const pair = b2CreateJoint(world, bodyA, bodyB, def.userData, 1, b2JointType.b2_prismaticJoint, def.collideConnected);
+  const pair = b2CreateJoint(
+    world,
+    bodyA,
+    bodyB,
+    def.userData,
+    1,
+    b2JointType.b2_prismaticJoint,
+    def.collideConnected
+  );
   const joint = pair.jointSim;
   joint.type = b2JointType.b2_prismaticJoint;
   joint.localOriginAnchorA = def.localAnchorA;
@@ -8969,7 +9907,11 @@ function b2CreatePrismaticJoint(worldId, def) {
   if (def.collideConnected === false) {
     b2DestroyContactsBetweenBodies(world, bodyA, bodyB);
   }
-  const jointId = new b2JointId(joint.jointId + 1, world.worldId, pair.joint.revision);
+  const jointId = new b2JointId(
+    joint.jointId + 1,
+    world.worldId,
+    pair.joint.revision
+  );
   return jointId;
 }
 function b2CreateWeldJoint(worldId, def) {
@@ -8979,7 +9921,15 @@ function b2CreateWeldJoint(worldId, def) {
   }
   const bodyA = b2GetBodyFullId(world, def.bodyIdA);
   const bodyB = b2GetBodyFullId(world, def.bodyIdB);
-  const pair = b2CreateJoint(world, bodyA, bodyB, def.userData, 1, b2JointType.b2_weldJoint, def.collideConnected);
+  const pair = b2CreateJoint(
+    world,
+    bodyA,
+    bodyB,
+    def.userData,
+    1,
+    b2JointType.b2_weldJoint,
+    def.collideConnected
+  );
   const joint = pair.jointSim;
   joint.type = b2JointType.b2_weldJoint;
   joint.localOriginAnchorA = def.localAnchorA;
@@ -8995,7 +9945,11 @@ function b2CreateWeldJoint(worldId, def) {
   if (def.collideConnected === false) {
     b2DestroyContactsBetweenBodies(world, bodyA, bodyB);
   }
-  const jointId = new b2JointId(joint.jointId + 1, world.worldId, pair.joint.revision);
+  const jointId = new b2JointId(
+    joint.jointId + 1,
+    world.worldId,
+    pair.joint.revision
+  );
   return jointId;
 }
 function b2CreateWheelJoint(worldId, def) {
@@ -9005,7 +9959,15 @@ function b2CreateWheelJoint(worldId, def) {
   }
   const bodyA = b2GetBodyFullId(world, def.bodyIdA);
   const bodyB = b2GetBodyFullId(world, def.bodyIdB);
-  const pair = b2CreateJoint(world, bodyA, bodyB, def.userData, 1, b2JointType.b2_wheelJoint, def.collideConnected);
+  const pair = b2CreateJoint(
+    world,
+    bodyA,
+    bodyB,
+    def.userData,
+    1,
+    b2JointType.b2_wheelJoint,
+    def.collideConnected
+  );
   const joint = pair.jointSim;
   joint.type = b2JointType.b2_wheelJoint;
   joint.localOriginAnchorA = def.localAnchorA;
@@ -9029,7 +9991,11 @@ function b2CreateWheelJoint(worldId, def) {
   if (def.collideConnected === false) {
     b2DestroyContactsBetweenBodies(world, bodyA, bodyB);
   }
-  const jointId = new b2JointId(joint.jointId + 1, world.worldId, pair.joint.revision);
+  const jointId = new b2JointId(
+    joint.jointId + 1,
+    world.worldId,
+    pair.joint.revision
+  );
   return jointId;
 }
 function b2DestroyJointInternal(world, joint, wakeBodies) {
@@ -9050,7 +10016,7 @@ function b2DestroyJointInternal(world, joint, wakeBodies) {
     const nextEdge = nextJoint.edges[edgeA.nextKey & 1];
     nextEdge.prevKey = edgeA.prevKey;
   }
-  const edgeKeyA = jointId << 1 | 0;
+  const edgeKeyA = (jointId << 1) | 0;
   if (bodyA.headJointKey === edgeKeyA) {
     bodyA.headJointKey = edgeA.nextKey;
   }
@@ -9065,16 +10031,24 @@ function b2DestroyJointInternal(world, joint, wakeBodies) {
     const nextEdge = nextJoint.edges[edgeB.nextKey & 1];
     nextEdge.prevKey = edgeB.prevKey;
   }
-  const edgeKeyB = jointId << 1 | 1;
+  const edgeKeyB = (jointId << 1) | 1;
   if (bodyB.headJointKey === edgeKeyB) {
     bodyB.headJointKey = edgeB.nextKey;
   }
   bodyB.jointCount -= 1;
-  b2UnlinkJoint(world, joint);
+  if (joint.islandId !== B2_NULL_INDEX) {
+    b2UnlinkJoint(world, joint);
+  }
   const setIndex = joint.setIndex;
   const localIndex = joint.localIndex;
   if (setIndex === b2SetType.b2_awakeSet) {
-    b2RemoveJointFromGraph(world, joint.edges[0].bodyId, joint.edges[1].bodyId, joint.colorIndex, localIndex);
+    b2RemoveJointFromGraph(
+      world,
+      joint.edges[0].bodyId,
+      joint.edges[1].bodyId,
+      joint.colorIndex,
+      localIndex
+    );
   } else {
     const set = world.solverSetArray[setIndex];
     const movedIndex = b2RemoveJoint(set.joints, localIndex);
@@ -9147,7 +10121,8 @@ function b2Joint_SetCollideConnected(jointId, shouldCollide) {
   if (shouldCollide) {
     const shapeCountA = bodyA.shapeCount;
     const shapeCountB = bodyB.shapeCount;
-    let shapeId = shapeCountA < shapeCountB ? bodyA.headShapeId : bodyB.headShapeId;
+    let shapeId =
+      shapeCountA < shapeCountB ? bodyA.headShapeId : bodyB.headShapeId;
     while (shapeId !== B2_NULL_INDEX) {
       const shape = world.shapeArray[shapeId];
       if (shape.proxyKey !== B2_NULL_INDEX) {
@@ -9339,7 +10314,10 @@ function b2SolveOverflowJoints(context, useBias) {
 function b2DrawJoint(draw, world, joint) {
   const bodyA = b2GetBody(world, joint.edges[0].bodyId);
   const bodyB = b2GetBody(world, joint.edges[1].bodyId);
-  if (bodyA.setIndex === b2SetType.b2_disabledSet || bodyB.setIndex === b2SetType.b2_disabledSet) {
+  if (
+    bodyA.setIndex === b2SetType.b2_disabledSet ||
+    bodyB.setIndex === b2SetType.b2_disabledSet
+  ) {
     return;
   }
   const jointSim = b2GetJointSim(world, joint);
@@ -9366,7 +10344,13 @@ function b2DrawJoint(draw, world, joint) {
       b2DrawPrismaticJoint(draw, jointSim, transformA, transformB);
       break;
     case b2JointType.b2_revoluteJoint:
-      b2DrawRevoluteJoint(draw, jointSim, transformA, transformB, joint.drawSize);
+      b2DrawRevoluteJoint(
+        draw,
+        jointSim,
+        transformA,
+        transformB,
+        joint.drawSize
+      );
       break;
     case b2JointType.b2_wheelJoint:
       b2DrawWheelJoint(draw, jointSim, transformA, transformB);
@@ -9389,7 +10373,7 @@ function b2DrawJoint(draw, world, joint) {
       b2HexColor.b2_colorChocolate,
       b2HexColor.b2_colorGoldenrod,
       b2HexColor.b2_colorCoral,
-      b2HexColor.b2_colorBlack
+      b2HexColor.b2_colorBlack,
     ];
     const colorIndex = joint.colorIndex;
     if (colorIndex !== B2_NULL_INDEX) {
@@ -9792,7 +10776,9 @@ var b2JointSim = class {
     dst.motorJoint = this.motorJoint ? this.motorJoint.clone() : null;
     dst.mouseJoint = this.mouseJoint ? this.mouseJoint.clone() : null;
     dst.revoluteJoint = this.revoluteJoint ? this.revoluteJoint.clone() : null;
-    dst.prismaticJoint = this.prismaticJoint ? this.prismaticJoint.clone() : null;
+    dst.prismaticJoint = this.prismaticJoint
+      ? this.prismaticJoint.clone()
+      : null;
     dst.weldJoint = this.weldJoint ? this.weldJoint.clone() : null;
     dst.wheelJoint = this.wheelJoint ? this.wheelJoint.clone() : null;
   }
@@ -9884,10 +10870,16 @@ function b2LinkContact(world, contact) {
   const bodyIdB = contact.edges[1].bodyId;
   const bodyA = b2GetBody(world, bodyIdA);
   const bodyB = b2GetBody(world, bodyIdB);
-  if (bodyA.setIndex === b2SetType.b2_awakeSet && bodyB.setIndex >= b2SetType.b2_firstSleepingSet) {
+  if (
+    bodyA.setIndex === b2SetType.b2_awakeSet &&
+    bodyB.setIndex >= b2SetType.b2_firstSleepingSet
+  ) {
     b2WakeSolverSet(world, bodyB.setIndex);
   }
-  if (bodyB.setIndex === b2SetType.b2_awakeSet && bodyA.setIndex >= b2SetType.b2_firstSleepingSet) {
+  if (
+    bodyB.setIndex === b2SetType.b2_awakeSet &&
+    bodyA.setIndex >= b2SetType.b2_firstSleepingSet
+  ) {
     b2WakeSolverSet(world, bodyA.setIndex);
   }
   let islandIdA = bodyA.islandId;
@@ -9972,12 +10964,18 @@ function b2AddJointToIsland(world, islandId, joint) {
   joint.islandId = islandId;
   b2ValidateIsland(world, islandId);
 }
-function b2LinkJoint(world, joint) {
+function b2LinkJoint(world, joint, mergeIslands) {
   const bodyA = b2GetBody(world, joint.edges[0].bodyId);
   const bodyB = b2GetBody(world, joint.edges[1].bodyId);
-  if (bodyA.setIndex === b2SetType.b2_awakeSet && bodyB.setIndex >= b2SetType.b2_firstSleepingSet) {
+  if (
+    bodyA.setIndex === b2SetType.b2_awakeSet &&
+    bodyB.setIndex >= b2SetType.b2_firstSleepingSet
+  ) {
     b2WakeSolverSet(world, bodyB.setIndex);
-  } else if (bodyB.setIndex === b2SetType.b2_awakeSet && bodyA.setIndex >= b2SetType.b2_firstSleepingSet) {
+  } else if (
+    bodyB.setIndex === b2SetType.b2_awakeSet &&
+    bodyA.setIndex >= b2SetType.b2_firstSleepingSet
+  ) {
     b2WakeSolverSet(world, bodyA.setIndex);
   }
   let islandIdA = bodyA.islandId;
@@ -10017,6 +11015,9 @@ function b2LinkJoint(world, joint) {
     b2AddJointToIsland(world, islandIdA, joint);
   } else {
     b2AddJointToIsland(world, islandIdB, joint);
+  }
+  if (mergeIslands) {
+    b2MergeAwakeIslands(world);
   }
 }
 function b2UnlinkJoint(world, joint) {
@@ -10208,7 +11209,10 @@ function b2SplitIsland(world, baseId) {
         const otherEdgeIndex = edgeIndex ^ 1;
         const otherBodyId = contact.edges[otherEdgeIndex].bodyId;
         const otherBody = bodies[otherBodyId];
-        if (otherBody.isMarked === false && otherBody.setIndex !== b2SetType.b2_staticSet) {
+        if (
+          otherBody.isMarked === false &&
+          otherBody.setIndex !== b2SetType.b2_staticSet
+        ) {
           stack2.push(otherBodyId);
           otherBody.isMarked = true;
         }
@@ -10241,7 +11245,10 @@ function b2SplitIsland(world, baseId) {
         if (otherBody.setIndex === b2SetType.b2_disabledSet) {
           continue;
         }
-        if (otherBody.isMarked === false && otherBody.setIndex === b2SetType.b2_awakeSet) {
+        if (
+          otherBody.isMarked === false &&
+          otherBody.setIndex === b2SetType.b2_awakeSet
+        ) {
           stack2.push(otherBodyId);
           otherBody.isMarked = true;
         }
@@ -10444,7 +11451,7 @@ function b2CreateBody(worldId, def) {
     invMass: 0,
     inertia: 0,
     invInertia: 0,
-    minExtent: b2_huge,
+    minExtent: B2_HUGE,
     maxExtent: 0,
     linearDamping: def.linearDamping,
     angularDamping: def.angularDamping,
@@ -10454,14 +11461,14 @@ function b2CreateBody(worldId, def) {
     allowFastRotation: def.allowFastRotation,
     enlargeAABB: false,
     isFast: false,
-    isSpeedCapped: false
+    isSpeedCapped: false,
   });
   if (setId === b2SetType.b2_awakeSet) {
     const bodyState = b2AddBodyState(set.states);
     Object.assign(bodyState, {
       linearVelocity: def.linearVelocity,
       angularVelocity: def.angularVelocity,
-      deltaRotation: new b2Rot()
+      deltaRotation: new b2Rot(),
     });
   }
   while (bodyId >= world.bodyArray.length) {
@@ -10494,7 +11501,7 @@ function b2CreateBody(worldId, def) {
     fixedRotation: def.fixedRotation,
     isSpeedCapped: false,
     isMarked: false,
-    automaticMass: def.automaticMass
+    updateBodyMass: def.updateBodyMass,
   });
   if (setId >= b2SetType.b2_awakeSet) {
     b2CreateIslandForBody(world, setId, body);
@@ -10552,7 +11559,10 @@ function b2DestroyBody(bodyId) {
   }
   if (body.setIndex === b2SetType.b2_awakeSet) {
     const result = b2RemoveBodyState(set.states, body.localIndex);
-  } else if (set.setIndex >= b2SetType.b2_firstSleepingSet && set.sims.count == 0) {
+  } else if (
+    set.setIndex >= b2SetType.b2_firstSleepingSet &&
+    set.sims.count == 0
+  ) {
     b2DestroySolverSet(world, set.setIndex);
   }
   b2FreeId(world.bodyIdPool, body.id);
@@ -10584,8 +11594,16 @@ function b2Body_GetContactData(bodyId, contactData, capacity) {
     if (contact.flags & b2ContactFlags.b2_contactTouchingFlag) {
       const shapeA = world.shapeArray[contact.shapeIdA];
       const shapeB = world.shapeArray[contact.shapeIdB];
-      contactData[index].shapeIdA = new b2ShapeId(shapeA.id + 1, bodyId.world0, shapeA.revision);
-      contactData[index].shapeIdB = new b2ShapeId(shapeB.id + 1, bodyId.world0, shapeB.revision);
+      contactData[index].shapeIdA = new b2ShapeId(
+        shapeA.id + 1,
+        bodyId.world0,
+        shapeA.revision
+      );
+      contactData[index].shapeIdB = new b2ShapeId(
+        shapeB.id + 1,
+        bodyId.world0,
+        shapeB.revision
+      );
       const contactSim = b2GetContactSim(world, contact);
       contactData[index].manifold = contactSim.manifold;
       index += 1;
@@ -10602,7 +11620,12 @@ function b2Body_ComputeAABB(bodyId) {
   const body = b2GetBodyFullId(world, bodyId);
   if (body.headShapeId === B2_NULL_INDEX) {
     const transform = b2GetBodyTransform(world, body.id);
-    const aabb2 = new b2AABB(transform.p.x, transform.p.y, transform.p.x, transform.p.y);
+    const aabb2 = new b2AABB(
+      transform.p.x,
+      transform.p.y,
+      transform.p.x,
+      transform.p.y
+    );
     return aabb2;
   }
   let shape = world.shapeArray[body.headShapeId];
@@ -10619,7 +11642,7 @@ function b2UpdateBodyMassData(world, body) {
   bodySim.invMass = 0;
   bodySim.inertia = 0;
   bodySim.invInertia = 0;
-  bodySim.minExtent = b2_huge;
+  bodySim.minExtent = B2_HUGE;
   bodySim.maxExtent = 0;
   if (body.type !== b2BodyType.b2_dynamicBody) {
     bodySim.center = bodySim.transform.p.clone();
@@ -10664,7 +11687,10 @@ function b2UpdateBodyMassData(world, body) {
   bodySim.center = b2TransformPoint(bodySim.transform, bodySim.localCenter);
   const state = b2GetBodyState(world, body);
   if (state !== null) {
-    const deltaLinear = b2CrossSV(state.angularVelocity, b2Sub(bodySim.center, oldCenter));
+    const deltaLinear = b2CrossSV(
+      state.angularVelocity,
+      b2Sub(bodySim.center, oldCenter)
+    );
     state.linearVelocity = b2Add(state.linearVelocity, deltaLinear);
   }
   shapeId = body.headShapeId;
@@ -10850,8 +11876,13 @@ function b2Body_ApplyLinearImpulse(bodyId, impulse, point, wake) {
     const set = world.solverSetArray[b2SetType.b2_awakeSet];
     const state = set.states.data[localIndex];
     const bodySim = set.sims.data[localIndex];
-    state.linearVelocity = b2MulAdd(state.linearVelocity, bodySim.invMass, impulse);
-    state.angularVelocity += bodySim.invInertia * b2Cross(b2Sub(point, bodySim.center), impulse);
+    state.linearVelocity = b2MulAdd(
+      state.linearVelocity,
+      bodySim.invMass,
+      impulse
+    );
+    state.angularVelocity +=
+      bodySim.invInertia * b2Cross(b2Sub(point, bodySim.center), impulse);
   }
 }
 function b2Body_ApplyLinearImpulseToCenter(bodyId, impulse, wake) {
@@ -10865,7 +11896,11 @@ function b2Body_ApplyLinearImpulseToCenter(bodyId, impulse, wake) {
     const set = world.solverSetArray[b2SetType.b2_awakeSet];
     const state = set.states.data[localIndex];
     const bodySim = set.sims.data[localIndex];
-    state.linearVelocity = b2MulAdd(state.linearVelocity, bodySim.invMass, impulse);
+    state.linearVelocity = b2MulAdd(
+      state.linearVelocity,
+      bodySim.invMass,
+      impulse
+    );
   }
 }
 function b2Body_ApplyAngularImpulse(bodyId, impulse, wake) {
@@ -10947,7 +11982,13 @@ function b2Body_SetType(bodyId, type) {
       b2DestroyShapeProxy(shape, world.broadPhase);
       const forcePairCreation = true;
       const proxyType = type;
-      b2CreateShapeProxy(shape, world.broadPhase, proxyType, transform, forcePairCreation);
+      b2CreateShapeProxy(
+        shape,
+        world.broadPhase,
+        proxyType,
+        transform,
+        forcePairCreation
+      );
     }
   } else if (type === b2BodyType.b2_staticBody) {
     const staticSet = world.solverSetArray[b2SetType.b2_staticSet];
@@ -10979,7 +12020,13 @@ function b2Body_SetType(bodyId, type) {
       shapeId = shape.nextShapeId;
       b2DestroyShapeProxy(shape, world.broadPhase);
       const forcePairCreation = true;
-      b2CreateShapeProxy(shape, world.broadPhase, b2BodyType.b2_staticBody, transform, forcePairCreation);
+      b2CreateShapeProxy(
+        shape,
+        world.broadPhase,
+        b2BodyType.b2_staticBody,
+        transform,
+        forcePairCreation
+      );
     }
   } else {
     const transform = b2GetBodyTransformQuick(world, body);
@@ -10990,7 +12037,13 @@ function b2Body_SetType(bodyId, type) {
       b2DestroyShapeProxy(shape, world.broadPhase);
       const proxyType = type;
       const forcePairCreation = true;
-      b2CreateShapeProxy(shape, world.broadPhase, proxyType, transform, forcePairCreation);
+      b2CreateShapeProxy(
+        shape,
+        world.broadPhase,
+        proxyType,
+        transform,
+        forcePairCreation
+      );
     }
   }
   {
@@ -11006,14 +12059,17 @@ function b2Body_SetType(bodyId, type) {
       if (otherBody.setIndex === b2SetType.b2_disabledSet) {
         continue;
       }
-      if (body.type === b2BodyType.b2_staticBody && otherBody.type === b2BodyType.b2_staticBody) {
+      if (
+        body.type === b2BodyType.b2_staticBody &&
+        otherBody.type === b2BodyType.b2_staticBody
+      ) {
         continue;
       }
-      b2LinkJoint(world, joint);
+      b2LinkJoint(world, joint, false);
     }
+    b2MergeAwakeIslands(world);
   }
   b2UpdateBodyMassData(world, body);
-  b2ValidateConnectivity(world);
   b2ValidateSolverSets(world);
 }
 function b2Body_SetUserData(bodyId, userData) {
@@ -11032,7 +12088,7 @@ function b2Body_GetMass(bodyId) {
   const bodySim = b2GetBodySim(world, body);
   return bodySim.mass;
 }
-function b2Body_GetInertiaTensor(bodyId) {
+function b2Body_GetRotationalInertia(bodyId) {
   const world = b2GetWorld(bodyId.world0);
   const body = b2GetBodyFullId(world, bodyId);
   const bodySim = b2GetBodySim(world, body);
@@ -11084,19 +12140,6 @@ function b2Body_ApplyMassFromShapes(bodyId) {
   }
   const body = b2GetBodyFullId(world, bodyId);
   b2UpdateBodyMassData(world, body);
-}
-function b2Body_SetAutomaticMass(bodyId, automaticMass) {
-  const world = b2GetWorldLocked(bodyId.world0);
-  if (world === null) {
-    return;
-  }
-  const body = b2GetBodyFullId(world, bodyId);
-  body.automaticMass = automaticMass;
-}
-function b2Body_GetAutomaticMass(bodyId) {
-  const world = b2GetWorld(bodyId.world0);
-  const body = b2GetBodyFullId(world, bodyId);
-  return body.automaticMass;
 }
 function b2Body_SetLinearDamping(bodyId, linearDamping) {
   const world = b2GetWorldLocked(bodyId.world0);
@@ -11174,10 +12217,10 @@ function b2Body_IsSleepEnabled(bodyId) {
   const body = b2GetBodyFullId(world, bodyId);
   return body.enableSleep;
 }
-function b2Body_SetSleepThreshold(bodyId, sleepVelocity) {
+function b2Body_SetSleepThreshold(bodyId, sleepThreshold) {
   const world = b2GetWorld(bodyId.world0);
   const body = b2GetBodyFullId(world, bodyId);
-  body.sleepThreshold = sleepVelocity;
+  body.sleepThreshold = sleepThreshold;
 }
 function b2Body_GetSleepThreshold(bodyId) {
   const world = b2GetWorld(bodyId.world0);
@@ -11244,7 +12287,10 @@ function b2Body_Enable(bodyId) {
     return;
   }
   const disabledSet = world.solverSetArray[b2SetType.b2_disabledSet];
-  const setId = body.type === b2BodyType.b2_staticBody ? b2SetType.b2_staticSet : b2SetType.b2_awakeSet;
+  const setId =
+    body.type === b2BodyType.b2_staticBody
+      ? b2SetType.b2_staticSet
+      : b2SetType.b2_awakeSet;
   const targetSet = world.solverSetArray[setId];
   b2TransferBody(world, targetSet, disabledSet, body);
   const transform = b2GetBodyTransformQuick(world, body);
@@ -11254,11 +12300,18 @@ function b2Body_Enable(bodyId) {
   while (shapeId !== B2_NULL_INDEX) {
     const shape = world.shapeArray[shapeId];
     shapeId = shape.nextShapeId;
-    b2CreateShapeProxy(shape, world.broadPhase, proxyType, transform, forcePairCreation);
+    b2CreateShapeProxy(
+      shape,
+      world.broadPhase,
+      proxyType,
+      transform,
+      forcePairCreation
+    );
   }
   if (setId !== b2SetType.b2_staticSet) {
     b2CreateIslandForBody(world, setId, body);
   }
+  const mergeIslands = false;
   let jointKey = body.headJointKey;
   while (jointKey !== B2_NULL_INDEX) {
     const jointId = jointKey >> 1;
@@ -11267,11 +12320,17 @@ function b2Body_Enable(bodyId) {
     jointKey = joint.edges[edgeIndex].nextKey;
     const bodyA = world.bodyArray[joint.edges[0].bodyId];
     const bodyB = world.bodyArray[joint.edges[1].bodyId];
-    if (bodyA.setIndex === b2SetType.b2_disabledSet || bodyB.setIndex === b2SetType.b2_disabledSet) {
+    if (
+      bodyA.setIndex === b2SetType.b2_disabledSet ||
+      bodyB.setIndex === b2SetType.b2_disabledSet
+    ) {
       continue;
     }
     let jointSetId;
-    if (bodyA.setIndex === b2SetType.b2_staticSet && bodyB.setIndex === b2SetType.b2_staticSet) {
+    if (
+      bodyA.setIndex === b2SetType.b2_staticSet &&
+      bodyB.setIndex === b2SetType.b2_staticSet
+    ) {
       jointSetId = b2SetType.b2_staticSet;
     } else if (bodyA.setIndex === b2SetType.b2_staticSet) {
       jointSetId = bodyB.setIndex;
@@ -11281,10 +12340,10 @@ function b2Body_Enable(bodyId) {
     const jointSet = world.solverSetArray[jointSetId];
     b2TransferJoint(world, jointSet, disabledSet, joint);
     if (jointSetId !== b2SetType.b2_staticSet) {
-      b2LinkJoint(world, joint);
+      b2LinkJoint(world, joint, mergeIslands);
     }
   }
-  b2ValidateConnectivity(world);
+  b2MergeAwakeIslands(world);
   b2ValidateSolverSets(world);
 }
 function b2Body_SetFixedRotation(bodyId, flag) {
@@ -11376,7 +12435,10 @@ function b2Body_GetJoints(bodyId, jointArray, capacity) {
   return jointCount;
 }
 function b2ShouldBodiesCollide(world, bodyA, bodyB) {
-  if (bodyA.type !== b2BodyType.b2_dynamicBody && bodyB.type !== b2BodyType.b2_dynamicBody) {
+  if (
+    bodyA.type !== b2BodyType.b2_dynamicBody &&
+    bodyB.type !== b2BodyType.b2_dynamicBody
+  ) {
     return false;
   }
   let jointKey;
@@ -11393,7 +12455,10 @@ function b2ShouldBodiesCollide(world, bodyA, bodyB) {
     const edgeIndex = jointKey & 1;
     const otherEdgeIndex = edgeIndex ^ 1;
     const joint = b2GetJoint(world, jointId);
-    if (joint.collideConnected === false && joint.edges[otherEdgeIndex].bodyId === otherBodyId) {
+    if (
+      joint.collideConnected === false &&
+      joint.edges[otherEdgeIndex].bodyId === otherBodyId
+    ) {
       return false;
     }
     jointKey = joint.edges[edgeIndex].nextKey;
@@ -11455,7 +12520,7 @@ var b2Body = class {
     this.fixedRotation = false;
     this.isSpeedCapped = false;
     this.isMarked = false;
-    this.automaticMass = false;
+    this.updateBodyMass = false;
   }
 };
 var b2BodyState = class {
@@ -11717,7 +12782,7 @@ function b2RemoveIsland(array, index) {
 }
 
 // src/manifold_c.js
-var B2_MAKE_ID = (A, B) => (A & 255) << 8 | B & 255;
+var B2_MAKE_ID = (A, B) => ((A & 255) << 8) | (B & 255);
 var xf = new b2Transform(new b2Vec2(), new b2Rot());
 var xf1 = new b2Transform(new b2Vec2(), new b2Rot());
 var p12 = new b2Vec2();
@@ -11725,7 +12790,8 @@ var p2 = new b2Vec2();
 var q1 = new b2Vec2();
 var q2 = new b2Vec2();
 function b2MakeCapsule(p14, p23, radius) {
-  const axis = b2NormalizeChecked(b2Sub(p23, p14));
+  const d = b2Sub(p23, p14);
+  const axis = b2Normalize(d);
   const normal = b2RightPerp(axis);
   const shape = new b2Polygon();
   shape.vertices = [p14, p23];
@@ -11738,12 +12804,15 @@ function b2MakeCapsule(p14, p23, radius) {
 function b2CollideCircles(circleA, xfA, circleB, xfB, manifold) {
   b2InvMulTransformsOut(xfA, xfB, xf);
   const pointA = circleA.center;
-  const pointBX = xf.q.c * circleB.center.x - xf.q.s * circleB.center.y + xf.p.x;
-  const pointBY = xf.q.s * circleB.center.x + xf.q.c * circleB.center.y + xf.p.y;
+  const pointBX =
+    xf.q.c * circleB.center.x - xf.q.s * circleB.center.y + xf.p.x;
+  const pointBY =
+    xf.q.s * circleB.center.x + xf.q.c * circleB.center.y + xf.p.y;
   const sx = pointBX - pointA.x;
   const sy = pointBY - pointA.y;
   const distance = Math.sqrt(sx * sx + sy * sy);
-  let normalX = 0, normalY = 0;
+  let normalX = 0,
+    normalY = 0;
   if (distance >= eps) {
     normalX = sx / distance;
     normalY = sy / distance;
@@ -11833,7 +12902,9 @@ function b2CollidePolygonAndCircle(polygonA, xfA, circleB, xfB, manifold) {
   const vertices = polygonA.vertices;
   const normals = polygonA.normals;
   for (let i = 0; i < vertexCount; ++i) {
-    const s = normals[i].x * (c.x - vertices[i].x) + normals[i].y * (c.y - vertices[i].y);
+    const s =
+      normals[i].x * (c.x - vertices[i].x) +
+      normals[i].y * (c.y - vertices[i].y);
     if (s > separation) {
       separation = s;
       normalIndex = i;
@@ -11852,7 +12923,8 @@ function b2CollidePolygonAndCircle(polygonA, xfA, circleB, xfB, manifold) {
     const x = c.x - v1.x;
     const y = c.y - v1.y;
     const length = Math.sqrt(x * x + y * y);
-    let normalX = 0, normalY = 0;
+    let normalX = 0,
+      normalY = 0;
     if (length > eps) {
       const invLength = 1 / length;
       normalX = x * invLength;
@@ -11884,7 +12956,8 @@ function b2CollidePolygonAndCircle(polygonA, xfA, circleB, xfB, manifold) {
     const x = c.x - v2.x;
     const y = c.y - v2.y;
     const length = Math.sqrt(x * x + y * y);
-    let normalX = 0, normalY = 0;
+    let normalX = 0,
+      normalY = 0;
     if (length > eps) {
       const invLength = 1 / length;
       normalX = x * invLength;
@@ -11985,17 +13058,17 @@ function b2CollideCapsules(capsuleA, xfA, capsuleB, xfB, manifold) {
   }
   const distance = Math.sqrt(distanceSquared);
   const length1 = b2LengthXY(d1X, d1Y);
-  const u1X = d1X * 1 / length1;
-  const u1Y = d1Y * 1 / length1;
+  const u1X = (d1X * 1) / length1;
+  const u1Y = (d1Y * 1) / length1;
   const length2 = b2LengthXY(d2X, d2Y);
-  const u2X = d2X * 1 / length2;
-  const u2Y = d2Y * 1 / length2;
+  const u2X = (d2X * 1) / length2;
+  const u2Y = (d2Y * 1) / length2;
   const fp2 = (p2.x - p12.x) * u1X + (p2.y - p12.y) * u1Y;
   const fq2 = (q2.x - p12.x) * u1X + (q2.y - p12.y) * u1Y;
-  const outsideA = fp2 <= 0 && fq2 <= 0 || fp2 >= length1 && fq2 >= length1;
+  const outsideA = (fp2 <= 0 && fq2 <= 0) || (fp2 >= length1 && fq2 >= length1);
   const fp1 = (p12.x - p2.x) * u1X + (p12.y - p2.y) * u2Y;
   const fq1 = (q1.x - p2.x) * u1X + (q1.y - p2.y) * u2Y;
-  const outsideB = fp1 <= 0 && fq1 <= 0 || fp1 >= length2 && fq1 >= length2;
+  const outsideB = (fp1 <= 0 && fq1 <= 0) || (fp1 >= length2 && fq1 >= length2);
   manifold.pointCount = 0;
   if (outsideA === false && outsideB === false) {
     let normalAX, normalAY, separationA;
@@ -12139,8 +13212,10 @@ function b2CollideCapsules(capsuleA, xfA, capsuleB, xfB, manifold) {
     manifold.pointCount = 1;
   }
   if (manifold.pointCount > 0) {
-    const rotatedNormalX = xfA.q.c * manifold.normalX - xfA.q.s * manifold.normalY;
-    const rotatedNormalY = xfA.q.s * manifold.normalX + xfA.q.c * manifold.normalY;
+    const rotatedNormalX =
+      xfA.q.c * manifold.normalX - xfA.q.s * manifold.normalY;
+    const rotatedNormalY =
+      xfA.q.s * manifold.normalX + xfA.q.c * manifold.normalY;
     manifold.normalX = rotatedNormalX;
     manifold.normalY = rotatedNormalY;
     for (let i = 0; i < manifold.pointCount; ++i) {
@@ -12167,7 +13242,11 @@ function b2CollideSegmentAndCapsule(segmentA, xfA, capsuleB, xfB, manifold) {
   return b2CollideCapsules(constCapsule, xfA, capsuleB, xfB);
 }
 function b2CollidePolygonAndCapsule(polygonA, xfA, capsuleB, xfB, manifold) {
-  const polyB = b2MakeCapsule(capsuleB.center1, capsuleB.center2, capsuleB.radius);
+  const polyB = b2MakeCapsule(
+    capsuleB.center1,
+    capsuleB.center2,
+    capsuleB.radius
+  );
   return b2CollidePolygons(polygonA, xfA, polyB, xfB, manifold);
 }
 function b2ClipPolygons(polyA, polyB, edgeA, edgeB, flip, manifold) {
@@ -12265,7 +13344,8 @@ function b2FindMaxSeparation(poly1, poly2) {
   let maxSeparation = Number.NEGATIVE_INFINITY;
   for (let i = 0; i < count1; ++i) {
     const n = n1s[i];
-    const vx = v1s[i].x, vy = v1s[i].y;
+    const vx = v1s[i].x,
+      vy = v1s[i].y;
     let si = Number.POSITIVE_INFINITY;
     for (let j = 0; j < count2; ++j) {
       const dx = v2s[j].x - vx;
@@ -12282,8 +13362,8 @@ function b2FindMaxSeparation(poly1, poly2) {
   }
   return { edgeIndex: bestIndex, maxSeparation };
 }
-var localPolyA = new b2Polygon(b2_maxPolygonVertices);
-var localPolyB = new b2Polygon(b2_maxPolygonVertices);
+var localPolyA = new b2Polygon(B2_MAX_POLYGON_VERTICES);
+var localPolyB = new b2Polygon(B2_MAX_POLYGON_VERTICES);
 var p3 = new b2Vec2();
 var sfA = new b2Transform();
 function b2CollidePolygons(polygonA, xfA, polygonB, xfB, manifold) {
@@ -12328,7 +13408,10 @@ function b2CollidePolygons(polygonA, xfA, polygonB, xfB, manifold) {
   let edgeB = ret2.edgeIndex;
   const separationB = ret2.maxSeparation;
   const radius = localPolyA.radius + localPolyB.radius;
-  if (separationA > b2_speculativeDistance + radius || separationB > b2_speculativeDistance + radius) {
+  if (
+    separationA > b2_speculativeDistance + radius ||
+    separationB > b2_speculativeDistance + radius
+  ) {
     return manifold.clear();
   }
   let flip;
@@ -12340,7 +13423,8 @@ function b2CollidePolygons(polygonA, xfA, polygonB, xfB, manifold) {
     edgeB = 0;
     let minDot = Number.MAX_VALUE;
     for (let i = 0; i < count; ++i) {
-      const dot = searchDirection.x * normals[i].x + searchDirection.y * normals[i].y;
+      const dot =
+        searchDirection.x * normals[i].x + searchDirection.y * normals[i].y;
       if (dot < minDot) {
         minDot = dot;
         edgeB = i;
@@ -12354,7 +13438,8 @@ function b2CollidePolygons(polygonA, xfA, polygonB, xfB, manifold) {
     edgeA = 0;
     let minDot = Number.MAX_VALUE;
     for (let i = 0; i < count; ++i) {
-      const dot = searchDirection.x * normals[i].x + searchDirection.y * normals[i].y;
+      const dot =
+        searchDirection.x * normals[i].x + searchDirection.y * normals[i].y;
       if (dot < minDot) {
         minDot = dot;
         edgeA = i;
@@ -12370,7 +13455,16 @@ function b2CollidePolygons(polygonA, xfA, polygonB, xfB, manifold) {
     const v12 = localPolyA.vertices[i12];
     const v21 = localPolyB.vertices[i21];
     const v22 = localPolyB.vertices[i22];
-    const result = b2SegmentDistance(v11.x, v11.y, v12.x, v12.y, v21.x, v21.y, v22.x, v22.y);
+    const result = b2SegmentDistance(
+      v11.x,
+      v11.y,
+      v12.x,
+      v12.y,
+      v21.x,
+      v21.y,
+      v22.x,
+      v22.y
+    );
     if (result.fraction1 === 0 && result.fraction2 === 0) {
       let normalX = v21.x - v11.x;
       let normalY = v21.y - v11.y;
@@ -12497,11 +13591,17 @@ function b2CollideSegmentAndPolygon(segmentA, xfA, polygonB, xfB, manifold) {
   const polygonA = b2MakeCapsule(segmentA.point1, segmentA.point2, 0);
   return b2CollidePolygons(polygonA, xfA, polygonB, xfB, manifold);
 }
-function b2CollideSmoothSegmentAndCircle(smoothSegmentA, xfA, circleB, xfB, manifold) {
+function b2CollideChainSegmentAndCircle(
+  chainSegmentA,
+  xfA,
+  circleB,
+  xfB,
+  manifold
+) {
   b2InvMulTransformsOut(xfA, xfB, xf);
   const pB = b2TransformPoint(xf, circleB.center);
-  const p14 = smoothSegmentA.segment.point1;
-  const p23 = smoothSegmentA.segment.point2;
+  const p14 = chainSegmentA.segment.point1;
+  const p23 = chainSegmentA.segment.point2;
   const e = b2Sub(p23, p14);
   const offset = b2Dot(b2RightPerp(e), b2Sub(pB, p14));
   if (offset < 0) {
@@ -12511,14 +13611,14 @@ function b2CollideSmoothSegmentAndCircle(smoothSegmentA, xfA, circleB, xfB, mani
   const v = b2Dot(e, b2Sub(pB, p14));
   let pA;
   if (v <= 0) {
-    const prevEdge = b2Sub(p14, smoothSegmentA.ghost1);
+    const prevEdge = b2Sub(p14, chainSegmentA.ghost1);
     const uPrev = b2Dot(prevEdge, b2Sub(pB, p14));
     if (uPrev <= 0) {
       return manifold.clear();
     }
     pA = p14;
   } else if (u <= 0) {
-    const nextEdge = b2Sub(smoothSegmentA.ghost2, p23);
+    const nextEdge = b2Sub(chainSegmentA.ghost2, p23);
     const vNext = b2Dot(nextEdge, b2Sub(pB, p23));
     if (vNext > 0) {
       return manifold.clear();
@@ -12554,9 +13654,27 @@ function b2CollideSmoothSegmentAndCircle(smoothSegmentA, xfA, circleB, xfB, mani
   manifold.pointCount = 1;
   return manifold;
 }
-function b2CollideSmoothSegmentAndCapsule(segmentA, xfA, capsuleB, xfB, cache, manifold) {
-  const polyB = b2MakeCapsule(capsuleB.center1, capsuleB.center2, capsuleB.radius);
-  return b2CollideSmoothSegmentAndPolygon(segmentA, xfA, polyB, xfB, cache, manifold);
+function b2CollideChainSegmentAndCapsule(
+  segmentA,
+  xfA,
+  capsuleB,
+  xfB,
+  cache,
+  manifold
+) {
+  const polyB = b2MakeCapsule(
+    capsuleB.center1,
+    capsuleB.center2,
+    capsuleB.radius
+  );
+  return b2CollideChainSegmentAndPolygon(
+    segmentA,
+    xfA,
+    polyB,
+    xfB,
+    cache,
+    manifold
+  );
 }
 function b2ClipSegments(a1, a2, b1, b2, normal, ra, rb, id1, id2, manifold) {
   const tangent = b2LeftPerp(normal);
@@ -12602,7 +13720,7 @@ function b2ClipSegments(a1, a2, b1, b2, normal, ra, rb, id1, id2, manifold) {
 var b2NormalType = {
   b2_normalSkip: 0,
   b2_normalAdmit: 1,
-  b2_normalSnap: 2
+  b2_normalSnap: 2,
 };
 function b2ClassifyNormal(params, normal) {
   const sinTol = 0.01;
@@ -12626,7 +13744,7 @@ function b2ClassifyNormal(params, normal) {
     }
   }
 }
-var b2SmoothSegmentParams = class {
+var b2ChainSegmentParams = class {
   constructor() {
     this.edge1 = new b2Vec2();
     this.normal0 = new b2Vec2();
@@ -12635,31 +13753,38 @@ var b2SmoothSegmentParams = class {
     this.convex2 = false;
   }
 };
-function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, cache, manifold) {
+function b2CollideChainSegmentAndPolygon(
+  chainSegmentA,
+  xfA,
+  polygonB,
+  xfB,
+  cache,
+  manifold
+) {
   b2InvMulTransformsOut(xfA, xfB, xf);
   const centroidB = b2TransformPoint(xf, polygonB.centroid);
   const radiusB = polygonB.radius;
-  const p14 = smoothSegmentA.segment.point1;
-  const p23 = smoothSegmentA.segment.point2;
+  const p14 = chainSegmentA.segment.point1;
+  const p23 = chainSegmentA.segment.point2;
   const edge1 = b2Normalize(b2Sub(p23, p14));
-  const smoothParams = new b2SmoothSegmentParams();
-  smoothParams.edge1 = edge1.clone();
+  const chainParams = new b2ChainSegmentParams();
+  chainParams.edge1 = edge1.clone();
   const convexTol = 0.01;
-  const edge0 = b2Normalize(b2Sub(p14, smoothSegmentA.ghost1));
-  smoothParams.normal0 = b2RightPerp(edge0);
-  smoothParams.convex1 = b2Cross(edge0, edge1) >= convexTol;
-  const edge2 = b2Normalize(b2Sub(smoothSegmentA.ghost2, p23));
-  smoothParams.normal2 = b2RightPerp(edge2);
-  smoothParams.convex2 = b2Cross(edge1, edge2) >= convexTol;
+  const edge0 = b2Normalize(b2Sub(p14, chainSegmentA.ghost1));
+  chainParams.normal0 = b2RightPerp(edge0);
+  chainParams.convex1 = b2Cross(edge0, edge1) >= convexTol;
+  const edge2 = b2Normalize(b2Sub(chainSegmentA.ghost2, p23));
+  chainParams.normal2 = b2RightPerp(edge2);
+  chainParams.convex2 = b2Cross(edge1, edge2) >= convexTol;
   const normal1 = b2RightPerp(edge1);
   const behind1 = b2Dot(normal1, b2Sub(centroidB, p14)) < 0;
   let behind0 = true;
   let behind2 = true;
-  if (smoothParams.convex1) {
-    behind0 = b2Dot(smoothParams.normal0, b2Sub(centroidB, p14)) < 0;
+  if (chainParams.convex1) {
+    behind0 = b2Dot(chainParams.normal0, b2Sub(centroidB, p14)) < 0;
   }
-  if (smoothParams.convex2) {
-    behind2 = b2Dot(smoothParams.normal2, b2Sub(centroidB, p23)) < 0;
+  if (chainParams.convex2) {
+    behind2 = b2Dot(chainParams.normal2, b2Sub(centroidB, p23)) < 0;
   }
   if (behind1 && behind0 && behind2) {
     return manifold.clear();
@@ -12672,7 +13797,11 @@ function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, ca
     normals[i] = b2RotateVector(xf.q, polygonB.normals[i]);
   }
   const input = new b2DistanceInput();
-  input.proxyA = b2MakeProxy([smoothSegmentA.segment.point1, smoothSegmentA.segment.point2], 2, 0);
+  input.proxyA = b2MakeProxy(
+    [chainSegmentA.segment.point1, chainSegmentA.segment.point2],
+    2,
+    0
+  );
   input.proxyB = b2MakeProxy(vertices, count, 0);
   input.transformA = new b2Transform(new b2Vec2(0, 0), new b2Rot(1, 0));
   input.transformB = new b2Transform(new b2Vec2(0, 0), new b2Rot(1, 0));
@@ -12681,8 +13810,8 @@ function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, ca
   if (output.distance > radiusB + b2_speculativeDistance) {
     return manifold.clear();
   }
-  const n0 = smoothParams.convex1 ? smoothParams.normal0 : normal1;
-  const n2 = smoothParams.convex2 ? smoothParams.normal2 : normal1;
+  const n0 = chainParams.convex1 ? chainParams.normal0 : normal1;
+  const n2 = chainParams.convex2 ? chainParams.normal2 : normal1;
   let incidentIndex = -1;
   let incidentNormal = -1;
   if (behind1 == false && output.distance > 0.1 * b2_linearSlop) {
@@ -12690,7 +13819,7 @@ function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, ca
       const pA = output.pointA;
       const pB = output.pointB;
       const normal = b2Normalize(b2Sub(pB, pA));
-      const type = b2ClassifyNormal(smoothParams, normal);
+      const type = b2ClassifyNormal(chainParams, normal);
       if (type == b2NormalType.b2_normalSkip) {
         return manifold.clear();
       }
@@ -12722,7 +13851,7 @@ function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, ca
         let dot2 = b2Dot(normalB, normals[ib22]);
         const ib = dot1 > dot2 ? ib12 : ib22;
         normalB = normals[ib];
-        const type = b2ClassifyNormal(smoothParams, b2Neg(normalB));
+        const type = b2ClassifyNormal(chainParams, b2Neg(normalB));
         if (type == b2NormalType.b2_normalSkip) {
           return manifold.clear();
         }
@@ -12742,13 +13871,32 @@ function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, ca
               return manifold.clear();
             }
           }
-          b2ClipSegments(b12, b22, p14, p23, normalB, radiusB, 0, B2_MAKE_ID(ib12, 1), B2_MAKE_ID(ib22, 0), manifold);
+          b2ClipSegments(
+            b12,
+            b22,
+            p14,
+            p23,
+            normalB,
+            radiusB,
+            0,
+            B2_MAKE_ID(ib12, 1),
+            B2_MAKE_ID(ib22, 0),
+            manifold
+          );
           manifold.normalX = xfA.q.c * -normalB.x - xfA.q.s * -normalB.y;
           manifold.normalY = xfA.q.s * -normalB.x + xfA.q.c * -normalB.y;
-          manifold.points[0].anchorAX = xfA.q.c * manifold.points[0].anchorAX - xfA.q.s * manifold.points[0].anchorAY;
-          manifold.points[0].anchorAY = xfA.q.s * manifold.points[0].anchorAX + xfA.q.c * manifold.points[0].anchorAY;
-          manifold.points[1].anchorAX = xfA.q.c * manifold.points[1].anchorAX - xfA.q.s * manifold.points[1].anchorAY;
-          manifold.points[1].anchorAY = xfA.q.s * manifold.points[1].anchorAX + xfA.q.c * manifold.points[1].anchorAY;
+          manifold.points[0].anchorAX =
+            xfA.q.c * manifold.points[0].anchorAX -
+            xfA.q.s * manifold.points[0].anchorAY;
+          manifold.points[0].anchorAY =
+            xfA.q.s * manifold.points[0].anchorAX +
+            xfA.q.c * manifold.points[0].anchorAY;
+          manifold.points[1].anchorAX =
+            xfA.q.c * manifold.points[1].anchorAX -
+            xfA.q.s * manifold.points[1].anchorAY;
+          manifold.points[1].anchorAY =
+            xfA.q.s * manifold.points[1].anchorAX +
+            xfA.q.c * manifold.points[1].anchorAY;
           const pAB2 = b2Sub(xfA.p, xfB.p);
           manifold.points[0].anchorBX = manifold.points[0].anchorAX + pAB2.x;
           manifold.points[0].anchorBY = manifold.points[0].anchorAY + pAB2.y;
@@ -12776,10 +13924,10 @@ function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, ca
         incidentIndex = i;
       }
     }
-    if (smoothParams.convex1) {
+    if (chainParams.convex1) {
       let s0 = Number.MAX_VALUE;
       for (let i = 0; i < count; ++i) {
-        const s = b2Dot(smoothParams.normal0, b2Sub(vertices[i], p14));
+        const s = b2Dot(chainParams.normal0, b2Sub(vertices[i], p14));
         if (s < s0) {
           s0 = s;
         }
@@ -12789,10 +13937,10 @@ function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, ca
         incidentIndex = -1;
       }
     }
-    if (smoothParams.convex2) {
+    if (chainParams.convex2) {
       let s2 = Number.MAX_VALUE;
       for (let i = 0; i < count; ++i) {
-        const s = b2Dot(smoothParams.normal2, b2Sub(vertices[i], p23));
+        const s = b2Dot(chainParams.normal2, b2Sub(vertices[i], p23));
         if (s < s2) {
           s2 = s;
         }
@@ -12806,7 +13954,7 @@ function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, ca
     let referenceIndex = -1;
     for (let i = 0; i < count; ++i) {
       const n = normals[i];
-      const type = b2ClassifyNormal(smoothParams, b2Neg(n));
+      const type = b2ClassifyNormal(chainParams, b2Neg(n));
       if (type != b2NormalType.b2_normalAdmit) {
         continue;
       }
@@ -12834,13 +13982,32 @@ function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, ca
           return manifold.clear(0);
         }
       }
-      b2ClipSegments(a1, a2, p14, p23, normals[ia1], radiusB, 0, B2_MAKE_ID(ia1, 1), B2_MAKE_ID(ia2, 0), manifold);
+      b2ClipSegments(
+        a1,
+        a2,
+        p14,
+        p23,
+        normals[ia1],
+        radiusB,
+        0,
+        B2_MAKE_ID(ia1, 1),
+        B2_MAKE_ID(ia2, 0),
+        manifold
+      );
       manifold.normalX = xfA.q.c * -normals[ia1].x - xfA.q.s * -normals[ia1].y;
       manifold.normalY = xfA.q.s * -normals[ia1].x + xfA.q.c * -normals[ia1].y;
-      manifold.points[0].anchorAX = xfA.q.c * manifold.points[0].anchorAX - xfA.q.s * manifold.points[0].anchorAY;
-      manifold.points[0].anchorAY = xfA.q.s * manifold.points[0].anchorAX + xfA.q.c * manifold.points[0].anchorAY;
-      manifold.points[1].anchorAX = xfA.q.c * manifold.points[1].anchorAX - xfA.q.s * manifold.points[1].anchorAY;
-      manifold.points[1].anchorAY = xfA.q.s * manifold.points[1].anchorAX + xfA.q.c * manifold.points[1].anchorAY;
+      manifold.points[0].anchorAX =
+        xfA.q.c * manifold.points[0].anchorAX -
+        xfA.q.s * manifold.points[0].anchorAY;
+      manifold.points[0].anchorAY =
+        xfA.q.s * manifold.points[0].anchorAX +
+        xfA.q.c * manifold.points[0].anchorAY;
+      manifold.points[1].anchorAX =
+        xfA.q.c * manifold.points[1].anchorAX -
+        xfA.q.s * manifold.points[1].anchorAY;
+      manifold.points[1].anchorAY =
+        xfA.q.s * manifold.points[1].anchorAX +
+        xfA.q.c * manifold.points[1].anchorAY;
       const pAB2 = b2Sub(xfA.p, xfB.p);
       manifold.points[0].anchorBX = manifold.points[0].anchorAX + pAB2.x;
       manifold.points[0].anchorBY = manifold.points[0].anchorAY + pAB2.y;
@@ -12880,13 +14047,32 @@ function b2CollideSmoothSegmentAndPolygon(smoothSegmentA, xfA, polygonB, xfB, ca
       b2 = vertices[ib2];
     }
   }
-  b2ClipSegments(p14, p23, b1, b2, normal1, 0, radiusB, B2_MAKE_ID(0, ib2), B2_MAKE_ID(1, ib1), manifold);
+  b2ClipSegments(
+    p14,
+    p23,
+    b1,
+    b2,
+    normal1,
+    0,
+    radiusB,
+    B2_MAKE_ID(0, ib2),
+    B2_MAKE_ID(1, ib1),
+    manifold
+  );
   manifold.normalX = xfA.q.c * manifold.normalX - xfA.q.s * manifold.normalY;
   manifold.normalY = xfA.q.s * manifold.normalX + xfA.q.c * manifold.normalY;
-  manifold.points[0].anchorAX = xfA.q.c * manifold.points[0].anchorAX - xfA.q.s * manifold.points[0].anchorAY;
-  manifold.points[0].anchorAY = xfA.q.s * manifold.points[0].anchorAX + xfA.q.c * manifold.points[0].anchorAY;
-  manifold.points[1].anchorAX = xfA.q.c * manifold.points[1].anchorAX - xfA.q.s * manifold.points[1].anchorAY;
-  manifold.points[1].anchorAY = xfA.q.s * manifold.points[1].anchorAX + xfA.q.c * manifold.points[1].anchorAY;
+  manifold.points[0].anchorAX =
+    xfA.q.c * manifold.points[0].anchorAX -
+    xfA.q.s * manifold.points[0].anchorAY;
+  manifold.points[0].anchorAY =
+    xfA.q.s * manifold.points[0].anchorAX +
+    xfA.q.c * manifold.points[0].anchorAY;
+  manifold.points[1].anchorAX =
+    xfA.q.c * manifold.points[1].anchorAX -
+    xfA.q.s * manifold.points[1].anchorAY;
+  manifold.points[1].anchorAY =
+    xfA.q.s * manifold.points[1].anchorAX +
+    xfA.q.c * manifold.points[1].anchorAY;
   const pAB = b2Sub(xfA.p, xfB.p);
   manifold.points[0].anchorBX = manifold.points[0].anchorAX + pAB.x;
   manifold.points[0].anchorBY = manifold.points[0].anchorAY + pAB.y;
@@ -12906,7 +14092,7 @@ var b2ContactFlags = {
   b2_contactSensorFlag: 4,
   b2_contactSensorTouchingFlag: 8,
   b2_contactEnableSensorEvents: 16,
-  b2_contactEnableContactEvents: 32
+  b2_contactEnableContactEvents: 32,
 };
 var b2ContactEdge = class {
   constructor() {
@@ -12983,45 +14169,147 @@ var b2ContactRegister = class {
     this.primary = primary;
   }
 };
-var s_registers = Array(b2ShapeType.b2_shapeTypeCount).fill().map(
-  () => Array(b2ShapeType.b2_shapeTypeCount).fill().map(() => new b2ContactRegister())
-);
+var s_registers = Array(b2ShapeType.b2_shapeTypeCount)
+  .fill()
+  .map(() =>
+    Array(b2ShapeType.b2_shapeTypeCount)
+      .fill()
+      .map(() => new b2ContactRegister())
+  );
 var s_initialized = false;
 function b2CircleManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
   return b2CollideCircles(shapeA.circle, xfA, shapeB.circle, xfB, manifold);
 }
 function b2CapsuleAndCircleManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
-  return b2CollideCapsuleAndCircle(shapeA.capsule, xfA, shapeB.circle, xfB, manifold);
+  return b2CollideCapsuleAndCircle(
+    shapeA.capsule,
+    xfA,
+    shapeB.circle,
+    xfB,
+    manifold
+  );
 }
 function b2CapsuleManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
   return b2CollideCapsules(shapeA.capsule, xfA, shapeB.capsule, xfB, manifold);
 }
 function b2PolygonAndCircleManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
-  return b2CollidePolygonAndCircle(shapeA.polygon, xfA, shapeB.circle, xfB, manifold);
+  return b2CollidePolygonAndCircle(
+    shapeA.polygon,
+    xfA,
+    shapeB.circle,
+    xfB,
+    manifold
+  );
 }
-function b2PolygonAndCapsuleManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
-  return b2CollidePolygonAndCapsule(shapeA.polygon, xfA, shapeB.capsule, xfB, manifold);
+function b2PolygonAndCapsuleManifold(
+  shapeA,
+  xfA,
+  shapeB,
+  xfB,
+  cache,
+  manifold
+) {
+  return b2CollidePolygonAndCapsule(
+    shapeA.polygon,
+    xfA,
+    shapeB.capsule,
+    xfB,
+    manifold
+  );
 }
 function b2PolygonManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
   return b2CollidePolygons(shapeA.polygon, xfA, shapeB.polygon, xfB, manifold);
 }
 function b2SegmentAndCircleManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
-  return b2CollideSegmentAndCircle(shapeA.segment, xfA, shapeB.circle, xfB, manifold);
+  return b2CollideSegmentAndCircle(
+    shapeA.segment,
+    xfA,
+    shapeB.circle,
+    xfB,
+    manifold
+  );
 }
-function b2SegmentAndCapsuleManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
-  return b2CollideSegmentAndCapsule(shapeA.segment, xfA, shapeB.capsule, xfB, manifold);
+function b2SegmentAndCapsuleManifold(
+  shapeA,
+  xfA,
+  shapeB,
+  xfB,
+  cache,
+  manifold
+) {
+  return b2CollideSegmentAndCapsule(
+    shapeA.segment,
+    xfA,
+    shapeB.capsule,
+    xfB,
+    manifold
+  );
 }
-function b2SegmentAndPolygonManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
-  return b2CollideSegmentAndPolygon(shapeA.segment, xfA, shapeB.polygon, xfB, manifold);
+function b2SegmentAndPolygonManifold(
+  shapeA,
+  xfA,
+  shapeB,
+  xfB,
+  cache,
+  manifold
+) {
+  return b2CollideSegmentAndPolygon(
+    shapeA.segment,
+    xfA,
+    shapeB.polygon,
+    xfB,
+    manifold
+  );
 }
-function b2SmoothSegmentAndCircleManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
-  return b2CollideSmoothSegmentAndCircle(shapeA.smoothSegment, xfA, shapeB.circle, xfB, manifold);
+function b2ChainSegmentAndCircleManifold(
+  shapeA,
+  xfA,
+  shapeB,
+  xfB,
+  cache,
+  manifold
+) {
+  return b2CollideChainSegmentAndCircle(
+    shapeA.chainSegment,
+    xfA,
+    shapeB.circle,
+    xfB,
+    manifold
+  );
 }
-function b2SmoothSegmentAndCapsuleManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
-  return b2CollideSmoothSegmentAndCapsule(shapeA.smoothSegment, xfA, shapeB.capsule, xfB, cache, manifold);
+function b2ChainSegmentAndCapsuleManifold(
+  shapeA,
+  xfA,
+  shapeB,
+  xfB,
+  cache,
+  manifold
+) {
+  return b2CollideChainSegmentAndCapsule(
+    shapeA.chainSegment,
+    xfA,
+    shapeB.capsule,
+    xfB,
+    cache,
+    manifold
+  );
 }
-function b2SmoothSegmentAndPolygonManifold(shapeA, xfA, shapeB, xfB, cache, manifold) {
-  return b2CollideSmoothSegmentAndPolygon(shapeA.smoothSegment, xfA, shapeB.polygon, xfB, cache, manifold);
+function b2ChainSegmentAndPolygonManifold(
+  shapeA,
+  xfA,
+  shapeB,
+  xfB,
+  cache,
+  manifold
+) {
+  return b2CollideChainSegmentAndPolygon(
+    shapeA.chainSegment,
+    xfA,
+    shapeB.polygon,
+    xfB,
+    cache,
+    manifold
+  );
 }
 function b2AddType(fcn, type1, type2) {
   s_registers[type1][type2].fcn = fcn;
@@ -13033,18 +14321,66 @@ function b2AddType(fcn, type1, type2) {
 }
 function b2InitializeContactRegisters() {
   if (s_initialized === false) {
-    b2AddType(b2CircleManifold, b2ShapeType.b2_circleShape, b2ShapeType.b2_circleShape);
-    b2AddType(b2CapsuleAndCircleManifold, b2ShapeType.b2_capsuleShape, b2ShapeType.b2_circleShape);
-    b2AddType(b2CapsuleManifold, b2ShapeType.b2_capsuleShape, b2ShapeType.b2_capsuleShape);
-    b2AddType(b2PolygonAndCircleManifold, b2ShapeType.b2_polygonShape, b2ShapeType.b2_circleShape);
-    b2AddType(b2PolygonAndCapsuleManifold, b2ShapeType.b2_polygonShape, b2ShapeType.b2_capsuleShape);
-    b2AddType(b2PolygonManifold, b2ShapeType.b2_polygonShape, b2ShapeType.b2_polygonShape);
-    b2AddType(b2SegmentAndCircleManifold, b2ShapeType.b2_segmentShape, b2ShapeType.b2_circleShape);
-    b2AddType(b2SegmentAndCapsuleManifold, b2ShapeType.b2_segmentShape, b2ShapeType.b2_capsuleShape);
-    b2AddType(b2SegmentAndPolygonManifold, b2ShapeType.b2_segmentShape, b2ShapeType.b2_polygonShape);
-    b2AddType(b2SmoothSegmentAndCircleManifold, b2ShapeType.b2_smoothSegmentShape, b2ShapeType.b2_circleShape);
-    b2AddType(b2SmoothSegmentAndCapsuleManifold, b2ShapeType.b2_smoothSegmentShape, b2ShapeType.b2_capsuleShape);
-    b2AddType(b2SmoothSegmentAndPolygonManifold, b2ShapeType.b2_smoothSegmentShape, b2ShapeType.b2_polygonShape);
+    b2AddType(
+      b2CircleManifold,
+      b2ShapeType.b2_circleShape,
+      b2ShapeType.b2_circleShape
+    );
+    b2AddType(
+      b2CapsuleAndCircleManifold,
+      b2ShapeType.b2_capsuleShape,
+      b2ShapeType.b2_circleShape
+    );
+    b2AddType(
+      b2CapsuleManifold,
+      b2ShapeType.b2_capsuleShape,
+      b2ShapeType.b2_capsuleShape
+    );
+    b2AddType(
+      b2PolygonAndCircleManifold,
+      b2ShapeType.b2_polygonShape,
+      b2ShapeType.b2_circleShape
+    );
+    b2AddType(
+      b2PolygonAndCapsuleManifold,
+      b2ShapeType.b2_polygonShape,
+      b2ShapeType.b2_capsuleShape
+    );
+    b2AddType(
+      b2PolygonManifold,
+      b2ShapeType.b2_polygonShape,
+      b2ShapeType.b2_polygonShape
+    );
+    b2AddType(
+      b2SegmentAndCircleManifold,
+      b2ShapeType.b2_segmentShape,
+      b2ShapeType.b2_circleShape
+    );
+    b2AddType(
+      b2SegmentAndCapsuleManifold,
+      b2ShapeType.b2_segmentShape,
+      b2ShapeType.b2_capsuleShape
+    );
+    b2AddType(
+      b2SegmentAndPolygonManifold,
+      b2ShapeType.b2_segmentShape,
+      b2ShapeType.b2_polygonShape
+    );
+    b2AddType(
+      b2ChainSegmentAndCircleManifold,
+      b2ShapeType.b2_chainSegmentShape,
+      b2ShapeType.b2_circleShape
+    );
+    b2AddType(
+      b2ChainSegmentAndCapsuleManifold,
+      b2ShapeType.b2_chainSegmentShape,
+      b2ShapeType.b2_capsuleShape
+    );
+    b2AddType(
+      b2ChainSegmentAndPolygonManifold,
+      b2ShapeType.b2_chainSegmentShape,
+      b2ShapeType.b2_polygonShape
+    );
     s_initialized = true;
   }
 }
@@ -13061,7 +14397,10 @@ function b2CreateContact(world, shapeA, shapeB) {
   const bodyA = b2GetBody(world, shapeA.bodyId);
   const bodyB = b2GetBody(world, shapeB.bodyId);
   let setIndex;
-  if (bodyA.setIndex === b2SetType.b2_awakeSet || bodyB.setIndex === b2SetType.b2_awakeSet) {
+  if (
+    bodyA.setIndex === b2SetType.b2_awakeSet ||
+    bodyB.setIndex === b2SetType.b2_awakeSet
+  ) {
     setIndex = b2SetType.b2_awakeSet;
   } else {
     setIndex = b2SetType.b2_disabledSet;
@@ -13098,7 +14437,7 @@ function b2CreateContact(world, shapeA, shapeB) {
     contact.edges[0].bodyId = shapeA.bodyId;
     contact.edges[0].prevKey = B2_NULL_INDEX;
     contact.edges[0].nextKey = bodyA.headContactKey;
-    const keyA = contactId << 1 | 0;
+    const keyA = (contactId << 1) | 0;
     const headContactKey = bodyA.headContactKey;
     if (headContactKey !== B2_NULL_INDEX) {
       const headContact = world.contactArray[headContactKey >> 1];
@@ -13111,7 +14450,7 @@ function b2CreateContact(world, shapeA, shapeB) {
     contact.edges[1].bodyId = shapeB.bodyId;
     contact.edges[1].prevKey = B2_NULL_INDEX;
     contact.edges[1].nextKey = bodyB.headContactKey;
-    const keyB = contactId << 1 | 1;
+    const keyB = (contactId << 1) | 1;
     const headContactKey = bodyB.headContactKey;
     if (bodyB.headContactKey !== B2_NULL_INDEX) {
       const headContact = world.contactArray[headContactKey >> 1];
@@ -13135,7 +14474,10 @@ function b2CreateContact(world, shapeA, shapeB) {
   contactSim.shapeIdA = shapeIdA;
   contactSim.shapeIdB = shapeIdB;
   contactSim.friction = b2MixFriction(shapeA.friction, shapeB.friction);
-  contactSim.restitution = b2MixRestitution(shapeA.restitution, shapeB.restitution);
+  contactSim.restitution = b2MixRestitution(
+    shapeA.restitution,
+    shapeB.restitution
+  );
   contactSim.tangentSpeed = 0;
   contactSim.simFlags = 0;
   if (shapeA.enablePreSolveEvents || shapeB.enablePreSolveEvents) {
@@ -13152,17 +14494,32 @@ function b2DestroyContact(world, contact, wakeBodies) {
   const bodyA = b2GetBody(world, bodyIdA);
   const bodyB = b2GetBody(world, bodyIdB);
   const flags = contact.flags;
-  if ((flags & (b2ContactFlags.b2_contactTouchingFlag | b2ContactFlags.b2_contactSensorTouchingFlag)) != 0 && (flags & (b2ContactFlags.b2_contactEnableContactEvents | b2ContactFlags.b2_contactEnableSensorEvents)) != 0) {
+  if (
+    (flags &
+      (b2ContactFlags.b2_contactTouchingFlag |
+        b2ContactFlags.b2_contactSensorTouchingFlag)) !=
+      0 &&
+    (flags &
+      (b2ContactFlags.b2_contactEnableContactEvents |
+        b2ContactFlags.b2_contactEnableSensorEvents)) !=
+      0
+  ) {
     const worldId = world.worldId;
     const shapeA = world.shapeArray[contact.shapeIdA];
     const shapeB = world.shapeArray[contact.shapeIdB];
     const shapeIdA = new b2ShapeId(shapeA.id + 1, worldId, shapeA.revision);
     const shapeIdB = new b2ShapeId(shapeB.id + 1, worldId, shapeB.revision);
-    if ((flags & b2ContactFlags.b2_contactTouchingFlag) != 0 && (flags & b2ContactFlags.b2_contactEnableContactEvents) != 0) {
+    if (
+      (flags & b2ContactFlags.b2_contactTouchingFlag) != 0 &&
+      (flags & b2ContactFlags.b2_contactEnableContactEvents) != 0
+    ) {
       const event = new b2ContactEndTouchEvent(shapeIdA, shapeIdB);
       world.contactEndArray.push(event);
     }
-    if ((flags & b2ContactFlags.b2_contactSensorTouchingFlag) != 0 && (flags & b2ContactFlags.b2_contactEnableSensorEvents) != 0) {
+    if (
+      (flags & b2ContactFlags.b2_contactSensorTouchingFlag) != 0 &&
+      (flags & b2ContactFlags.b2_contactEnableSensorEvents) != 0
+    ) {
       const event = new b2SensorEndTouchEvent();
       if (shapeA.isSensor) {
         event.sensorShapeId = shapeIdA;
@@ -13185,7 +14542,7 @@ function b2DestroyContact(world, contact, wakeBodies) {
     nextEdge.prevKey = edgeA.prevKey;
   }
   const contactId = contact.contactId;
-  const edgeKeyA = contactId << 1 | 0;
+  const edgeKeyA = (contactId << 1) | 0;
   if (bodyA.headContactKey === edgeKeyA) {
     bodyA.headContactKey = edgeA.nextKey;
   }
@@ -13200,7 +14557,7 @@ function b2DestroyContact(world, contact, wakeBodies) {
     const nextEdge = nextContact.edges[edgeB.nextKey & 1];
     nextEdge.prevKey = edgeB.prevKey;
   }
-  const edgeKeyB = contactId << 1 | 1;
+  const edgeKeyB = (contactId << 1) | 1;
   if (bodyB.headContactKey === edgeKeyB) {
     bodyB.headContactKey = edgeB.nextKey;
   }
@@ -13209,13 +14566,20 @@ function b2DestroyContact(world, contact, wakeBodies) {
     b2UnlinkContact(world, contact);
   }
   if (contact.colorIndex !== B2_NULL_INDEX) {
-    b2RemoveContactFromGraph(world, bodyIdA, bodyIdB, contact.colorIndex, contact.localIndex);
+    b2RemoveContactFromGraph(
+      world,
+      bodyIdA,
+      bodyIdB,
+      contact.colorIndex,
+      contact.localIndex
+    );
   } else {
     const set = world.solverSetArray[contact.setIndex];
     const movedIndex = b2RemoveContact(set.contacts, contact.localIndex);
     if (movedIndex !== B2_NULL_INDEX) {
       const movedContact = set.contacts.data[contact.localIndex];
-      world.contactArray[movedContact.contactId].localIndex = contact.localIndex;
+      world.contactArray[movedContact.contactId].localIndex =
+        contact.localIndex;
     }
   }
   contact.contactId = B2_NULL_INDEX;
@@ -13229,7 +14593,10 @@ function b2DestroyContact(world, contact, wakeBodies) {
   }
 }
 function b2GetContactSim(world, contact) {
-  if (contact.setIndex === b2SetType.b2_awakeSet && contact.colorIndex !== B2_NULL_INDEX) {
+  if (
+    contact.setIndex === b2SetType.b2_awakeSet &&
+    contact.colorIndex !== B2_NULL_INDEX
+  ) {
     const color = world.constraintGraph.colors[contact.colorIndex];
     const sim = color.contacts.data[contact.localIndex];
     return sim;
@@ -13241,7 +14608,9 @@ function b2ShouldShapesCollide(filterA, filterB) {
   if (filterA.groupIndex === filterB.groupIndex && filterA.groupIndex !== 0) {
     return filterA.groupIndex > 0;
   }
-  const collide = (filterA.maskBits & filterB.categoryBits) !== 0 && (filterA.categoryBits & filterB.maskBits) !== 0;
+  const collide =
+    (filterA.maskBits & filterB.categoryBits) !== 0 &&
+    (filterA.categoryBits & filterB.maskBits) !== 0;
   return collide;
 }
 function b2TestShapeOverlap(shapeA, xfA, shapeB, xfB, cache) {
@@ -13255,20 +14624,59 @@ function b2TestShapeOverlap(shapeA, xfA, shapeB, xfB, cache) {
   return output.distance < 10 * eps;
 }
 var oldManifold = new b2Manifold();
-function b2UpdateContact(world, contactSim, shapeA, transformA, centerOffsetA2, shapeB, transformB, centerOffsetB2) {
+function b2UpdateContact(
+  world,
+  contactSim,
+  shapeA,
+  transformA,
+  centerOffsetA2,
+  shapeB,
+  transformB,
+  centerOffsetB2
+) {
   let touching;
   if (shapeA.isSensor || shapeB.isSensor) {
-    touching = b2TestShapeOverlap(shapeA, transformA, shapeB, transformB, contactSim.cache);
+    touching = b2TestShapeOverlap(
+      shapeA,
+      transformA,
+      shapeB,
+      transformB,
+      contactSim.cache
+    );
   } else {
     contactSim.manifold.copyTo(oldManifold);
     const fcn = s_registers[shapeA.type][shapeB.type].fcn;
-    fcn(shapeA, transformA, shapeB, transformB, contactSim.cache, contactSim.manifold);
+    fcn(
+      shapeA,
+      transformA,
+      shapeB,
+      transformB,
+      contactSim.cache,
+      contactSim.manifold
+    );
     const pointCount = contactSim.manifold.pointCount;
     touching = pointCount > 0;
-    if (touching && world.preSolveFcn && (contactSim.simFlags & b2ContactSimFlags.b2_simEnablePreSolveEvents) != 0) {
-      const shapeIdA = new b2ShapeId(shapeA.id + 1, world.worldId, shapeA.revision);
-      const shapeIdB = new b2ShapeId(shapeB.id + 1, world.worldId, shapeB.revision);
-      touching = world.preSolveFcn(shapeIdA, shapeIdB, contactSim.manifold, world.preSolveContext);
+    if (
+      touching &&
+      world.preSolveFcn &&
+      (contactSim.simFlags & b2ContactSimFlags.b2_simEnablePreSolveEvents) != 0
+    ) {
+      const shapeIdA = new b2ShapeId(
+        shapeA.id + 1,
+        world.worldId,
+        shapeA.revision
+      );
+      const shapeIdB = new b2ShapeId(
+        shapeB.id + 1,
+        world.worldId,
+        shapeB.revision
+      );
+      touching = world.preSolveFcn(
+        shapeIdA,
+        shapeIdB,
+        contactSim.manifold,
+        world.preSolveContext
+      );
       if (touching == false) {
         contactSim.manifold.pointCount = 0;
       }
@@ -13321,13 +14729,15 @@ var b2ContactSimFlags = {
   b2_simStartedTouching: 262144,
   b2_simStoppedTouching: 524288,
   b2_simEnableHitEvent: 1048576,
-  b2_simEnablePreSolveEvents: 2097152
+  b2_simEnablePreSolveEvents: 2097152,
 };
 
 // src/broad_phase_c.js
 var b2BroadPhase = class {
   constructor() {
-    this.trees = new Array(b2BodyType.b2_bodyTypeCount).fill().map(() => new b2DynamicTree());
+    this.trees = new Array(b2BodyType.b2_bodyTypeCount)
+      .fill()
+      .map(() => new b2DynamicTree());
     this.moveSet = null;
     this.moveArray = null;
     this.moveResults = null;
@@ -13339,7 +14749,7 @@ var b2BroadPhase = class {
 };
 var B2_PROXY_TYPE = (KEY) => KEY & 3;
 var B2_PROXY_ID = (KEY) => KEY >> 2;
-var B2_PROXY_KEY = (ID, TYPE) => ID << 2 | TYPE;
+var B2_PROXY_KEY = (ID, TYPE) => (ID << 2) | TYPE;
 function b2BufferMove(bp, queryProxy) {
   if (!b2AddKey(bp.moveSet, queryProxy + 1)) {
     bp.moveArray.push(queryProxy);
@@ -13379,8 +14789,20 @@ function b2UnBufferMove(bp, proxyKey) {
     }
   }
 }
-function b2BroadPhase_CreateProxy(bp, proxyType, aabb, categoryBits, shapeIndex, forcePairCreation) {
-  const proxyId = b2DynamicTree_CreateProxy(bp.trees[proxyType], aabb, categoryBits, shapeIndex);
+function b2BroadPhase_CreateProxy(
+  bp,
+  proxyType,
+  aabb,
+  categoryBits,
+  shapeIndex,
+  forcePairCreation
+) {
+  const proxyId = b2DynamicTree_CreateProxy(
+    bp.trees[proxyType],
+    aabb,
+    categoryBits,
+    shapeIndex
+  );
   const proxyKey = B2_PROXY_KEY(proxyId, proxyType);
   if (proxyType !== b2BodyType.b2_staticBody || forcePairCreation) {
     b2BufferMove(bp, proxyKey);
@@ -13434,7 +14856,10 @@ function b2PairQueryCallback(proxyId, shapeId, context) {
     return true;
   }
   if (queryContext.queryTreeType !== b2BodyType.b2_staticBody) {
-    if (proxyKey < queryContext.queryProxyKey && b2ContainsKey(bp.moveSet, proxyKey + 1)) {
+    if (
+      proxyKey < queryContext.queryProxyKey &&
+      b2ContainsKey(bp.moveSet, proxyKey + 1)
+    ) {
       return true;
     }
   }
@@ -13473,7 +14898,11 @@ function b2PairQueryCallback(proxyId, shapeId, context) {
   if (customFilterFcn) {
     const idA = new b2ShapeId(shapeIdA + 1, world.worldId, shapeA.revision);
     const idB = new b2ShapeId(shapeIdB + 1, world.worldId, shapeB.revision);
-    const shouldCollide = customFilterFcn(idA, idB, queryContext.world.customFilterContext);
+    const shouldCollide = customFilterFcn(
+      idA,
+      idB,
+      queryContext.world.customFilterContext
+    );
     if (!shouldCollide) {
       return true;
     }
@@ -13498,12 +14927,21 @@ function b2UpdateBroadPhasePairs(world) {
     return;
   }
   const alloc = world.stackAllocator;
-  bp.moveResults = b2AllocateStackItem(alloc, moveCount, "move results", () => new b2MoveResult());
+  bp.moveResults = b2AllocateStackItem(
+    alloc,
+    moveCount,
+    "move results",
+    () => new b2MoveResult()
+  );
   b2FindPairsTask(0, moveCount, world);
   const shapes = world.shapeArray;
   for (const result of bp.moveResults) {
     for (let pair = result.pairList; pair; pair = pair.next) {
-      b2CreateContact(world, shapes[pair.shapeIndexA], shapes[pair.shapeIndexB]);
+      b2CreateContact(
+        world,
+        shapes[pair.shapeIndexA],
+        shapes[pair.shapeIndexB]
+      );
     }
   }
   bp.moveArray.length = 0;
@@ -13531,11 +14969,20 @@ function b2FindPairsTask(startIndex, endIndex, world) {
     moveResult.pairList = null;
     queryContext.moveResult = moveResult;
     if (proxyType === b2BodyType.b2_dynamicBody) {
-      b2QueryTreeForPairs(bp, fatAABB, queryContext, b2BodyType.b2_kinematicBody);
+      b2QueryTreeForPairs(
+        bp,
+        fatAABB,
+        queryContext,
+        b2BodyType.b2_kinematicBody
+      );
       b2QueryTreeForPairs(bp, fatAABB, queryContext, b2BodyType.b2_staticBody);
     }
     queryContext.queryTreeType = b2BodyType.b2_dynamicBody;
-    b2DynamicTree_QueryAll(bp.trees[b2BodyType.b2_dynamicBody], fatAABB, queryContext);
+    b2DynamicTree_QueryAll(
+      bp.trees[b2BodyType.b2_dynamicBody],
+      fatAABB,
+      queryContext
+    );
   }
 }
 function b2QueryTreeForPairs(bp, fatAABB, queryContext, treeType) {
@@ -13548,12 +14995,12 @@ function b2BroadPhase_RebuildTrees(bp) {
 }
 
 // src/world_c.js
-var b2_maxWorlds = 32;
+var B2_MAX_WORLDS = 32;
 var b2SetType = {
   b2_staticSet: 0,
   b2_disabledSet: 1,
   b2_awakeSet: 2,
-  b2_firstSleepingSet: 3
+  b2_firstSleepingSet: 3,
 };
 var b2World = class {
   stackAllocator = new b2StackAllocator();
@@ -13660,7 +15107,7 @@ function b2CreateWorldArray() {
     return;
   }
   b2_worlds = [];
-  for (let i = 0; i < b2_maxWorlds; i++) {
+  for (let i = 0; i < B2_MAX_WORLDS; i++) {
     b2_worlds[i] = new b2World();
     b2_worlds[i].inUse = false;
   }
@@ -13740,7 +15187,8 @@ function b2CreateWorld(def) {
   for (let i = 0; i < world.workerCount; ++i) {
     const context = new b2TaskContext();
     context.contactStateBitSet = b2CreateBitSet(1024);
-    context.enlargedSimBitSet = b2CreateBitSet(256), context.awakeIslandBitSet = b2CreateBitSet(256);
+    (context.enlargedSimBitSet = b2CreateBitSet(256)),
+      (context.awakeIslandBitSet = b2CreateBitSet(256));
     world.taskContextArray[i] = context;
   }
   world.debugBodySet = b2CreateBitSet(256);
@@ -13822,24 +15270,48 @@ function b2CollideTask(startIndex, endIndex, threadIndex, context) {
       contactSim.simFlags &= ~b2ContactSimFlags.b2_simTouchingFlag;
       b2SetBit(taskContext.contactStateBitSet, contactId);
     } else {
-      const wasTouching = (contactSim.simFlags & b2ContactSimFlags.b2_simTouchingFlag) !== 0;
+      const wasTouching =
+        (contactSim.simFlags & b2ContactSimFlags.b2_simTouchingFlag) !== 0;
       const bodyA = bodies[shapeA.bodyId];
       const bodyB = bodies[shapeB.bodyId];
       const bodySimA = b2GetBodySim(world, bodyA);
       const bodySimB = b2GetBodySim(world, bodyB);
-      contactSim.bodySimIndexA = bodyA.setIndex === b2SetType.b2_awakeSet ? bodyA.localIndex : B2_NULL_INDEX;
+      contactSim.bodySimIndexA =
+        bodyA.setIndex === b2SetType.b2_awakeSet
+          ? bodyA.localIndex
+          : B2_NULL_INDEX;
       contactSim.invMassA = bodySimA.invMass;
       contactSim.invIA = bodySimA.invInertia;
-      contactSim.bodySimIndexB = bodyB.setIndex === b2SetType.b2_awakeSet ? bodyB.localIndex : B2_NULL_INDEX;
+      contactSim.bodySimIndexB =
+        bodyB.setIndex === b2SetType.b2_awakeSet
+          ? bodyB.localIndex
+          : B2_NULL_INDEX;
       contactSim.invMassB = bodySimB.invMass;
       contactSim.invIB = bodySimB.invInertia;
       const transformA = bodySimA.transform;
       const transformB = bodySimB.transform;
-      centerOffsetA.x = transformA.q.c * bodySimA.localCenter.x - transformA.q.s * bodySimA.localCenter.y;
-      centerOffsetA.y = transformA.q.s * bodySimA.localCenter.x + transformA.q.c * bodySimA.localCenter.y;
-      centerOffsetB.x = transformB.q.c * bodySimB.localCenter.x - transformB.q.s * bodySimB.localCenter.y;
-      centerOffsetB.y = transformB.q.s * bodySimB.localCenter.x + transformB.q.c * bodySimB.localCenter.y;
-      const touching = b2UpdateContact(world, contactSim, shapeA, transformA, centerOffsetA, shapeB, transformB, centerOffsetB);
+      centerOffsetA.x =
+        transformA.q.c * bodySimA.localCenter.x -
+        transformA.q.s * bodySimA.localCenter.y;
+      centerOffsetA.y =
+        transformA.q.s * bodySimA.localCenter.x +
+        transformA.q.c * bodySimA.localCenter.y;
+      centerOffsetB.x =
+        transformB.q.c * bodySimB.localCenter.x -
+        transformB.q.s * bodySimB.localCenter.y;
+      centerOffsetB.y =
+        transformB.q.s * bodySimB.localCenter.x +
+        transformB.q.c * bodySimB.localCenter.y;
+      const touching = b2UpdateContact(
+        world,
+        contactSim,
+        shapeA,
+        transformA,
+        centerOffsetA,
+        shapeB,
+        transformB,
+        centerOffsetB
+      );
       if (touching && !wasTouching) {
         contactSim.simFlags |= b2ContactSimFlags.b2_simStartedTouching;
         b2SetBit(taskContext.contactStateBitSet, contactId);
@@ -13874,7 +15346,8 @@ function b2Collide(context) {
   for (let i = 0; i < b2_graphColorCount; ++i) {
     contactCount += graphColors[i].contacts.count;
   }
-  const nonTouchingCount = world.solverSetArray[b2SetType.b2_awakeSet].contacts.count;
+  const nonTouchingCount =
+    world.solverSetArray[b2SetType.b2_awakeSet].contacts.count;
   contactCount += nonTouchingCount;
   if (contactCount == 0) {
     return;
@@ -13900,7 +15373,10 @@ function b2Collide(context) {
   context.contacts = contactSims;
   const contactIdCapacity = b2GetIdCapacity(world.contactIdPool);
   for (let i = 0; i < world.workerCount; ++i) {
-    world.taskContextArray[i].contactStateBitSet = b2SetBitCountAndClear(world.taskContextArray[i].contactStateBitSet, contactIdCapacity);
+    world.taskContextArray[i].contactStateBitSet = b2SetBitCountAndClear(
+      world.taskContextArray[i].contactStateBitSet,
+      contactIdCapacity
+    );
   }
   b2CollideTask(0, contactCount, 0, context);
   context.contacts = null;
@@ -13934,7 +15410,10 @@ function b2Collide(context) {
       const flags = contact.flags;
       const simFlags = contactSim.simFlags;
       if (simFlags & b2ContactSimFlags.b2_simDisjoint) {
-        if ((flags & b2ContactFlags.b2_contactTouchingFlag) != 0 && (flags & b2ContactFlags.b2_contactEnableContactEvents) != 0) {
+        if (
+          (flags & b2ContactFlags.b2_contactTouchingFlag) != 0 &&
+          (flags & b2ContactFlags.b2_contactEnableContactEvents) != 0
+        ) {
           const event = new b2ContactEndTouchEvent();
           event.shapeIdA = shapeIdA;
           event.shapeIdB = shapeIdB;
@@ -14005,10 +15484,16 @@ function b2Collide(context) {
           const bodyIdA = contact.edges[0].bodyId;
           const bodyIdB = contact.edges[1].bodyId;
           b2AddNonTouchingContact(world, contact, contactSim);
-          b2RemoveContactFromGraph(world, bodyIdA, bodyIdB, colorIndex, localIndex);
+          b2RemoveContactFromGraph(
+            world,
+            bodyIdA,
+            bodyIdB,
+            colorIndex,
+            localIndex
+          );
         }
       }
-      bits = bits & bits - 1n;
+      bits = bits & (bits - 1n);
     }
   }
   b2ValidateSolverSets(world);
@@ -14059,9 +15544,21 @@ function b2World_Step(worldId, timeStep, subStepCount) {
   world.inv_h = context.inv_h;
   const contactHertz = Math.min(world.contactHertz, 0.25 * context.inv_h);
   const jointHertz = Math.min(world.jointHertz, 0.125 * context.inv_h);
-  context.contactSoftness = b2MakeSoft(contactHertz, world.contactDampingRatio, context.h);
-  context.staticSoftness = b2MakeSoft(2 * contactHertz, world.contactDampingRatio, context.h);
-  context.jointSoftness = b2MakeSoft(jointHertz, world.jointDampingRatio, context.h);
+  context.contactSoftness = b2MakeSoft(
+    contactHertz,
+    world.contactDampingRatio,
+    context.h
+  );
+  context.staticSoftness = b2MakeSoft(
+    2 * contactHertz,
+    world.contactDampingRatio,
+    context.h
+  );
+  context.jointSoftness = b2MakeSoft(
+    jointHertz,
+    world.jointDampingRatio,
+    context.h
+  );
   context.restitutionThreshold = world.restitutionThreshold;
   context.maxLinearVelocity = world.maxLinearVelocity;
   context.enableWarmStarting = world.enableWarmStarting;
@@ -14107,7 +15604,14 @@ function b2DrawShape(draw, shape, transform, color) {
         if (shape.image) {
           draw.DrawImagePolygon(xf2, shape, draw.context);
         } else if (!shape.imageNoDebug) {
-          draw.DrawSolidPolygon(xf2, poly.vertices, poly.count, poly.radius, color, draw.context);
+          draw.DrawSolidPolygon(
+            xf2,
+            poly.vertices,
+            poly.count,
+            poly.radius,
+            color,
+            draw.context
+          );
         }
       }
       break;
@@ -14121,9 +15625,9 @@ function b2DrawShape(draw, shape, transform, color) {
         }
       }
       break;
-    case b2ShapeType.b2_smoothSegmentShape:
+    case b2ShapeType.b2_chainSegmentShape:
       {
-        const segment = shape.smoothSegment.segment;
+        const segment = shape.chainSegment.segment;
         b2TransformPointOut(xf2, segment.point1, p13);
         b2TransformPointOut(xf2, segment.point2, p22);
         if (!shape.imageNoDebug) {
@@ -14184,7 +15688,7 @@ function DrawQueryCallback(proxyId, shapeId, context) {
       new b2Vec2(aabb.lowerBoundX, aabb.lowerBoundY),
       new b2Vec2(aabb.upperBoundX, aabb.lowerBoundY),
       new b2Vec2(aabb.upperBoundX, aabb.upperBoundY),
-      new b2Vec2(aabb.lowerBoundX, aabb.upperBoundY)
+      new b2Vec2(aabb.lowerBoundX, aabb.upperBoundY),
     ];
     draw.DrawPolygon(vs, 4, b2HexColor.b2_colorGold, draw.context);
   }
@@ -14211,20 +15715,26 @@ function b2DrawWithBounds(world, draw) {
     b2HexColor.b2_colorChocolate,
     b2HexColor.b2_colorGoldenrod,
     b2HexColor.b2_colorCoral,
-    b2HexColor.b2_colorBlack
+    b2HexColor.b2_colorBlack,
   ];
   const bodyCapacity = b2GetIdCapacity(world.bodyIdPool);
   world.debugBodySet = b2SetBitCountAndClear(world.debugBodySet, bodyCapacity);
   const jointCapacity = b2GetIdCapacity(world.jointIdPool);
-  world.debugJointSet = b2SetBitCountAndClear(world.debugJointSet, jointCapacity);
+  world.debugJointSet = b2SetBitCountAndClear(
+    world.debugJointSet,
+    jointCapacity
+  );
   const contactCapacity = b2GetIdCapacity(world.contactIdPool);
-  world.debugContactSet = b2SetBitCountAndClear(world.debugContactSet, contactCapacity);
+  world.debugContactSet = b2SetBitCountAndClear(
+    world.debugContactSet,
+    contactCapacity
+  );
   const drawContext = new DrawContext(world, draw);
   for (let i = 0; i < b2BodyType.b2_bodyTypeCount; ++i) {
     b2DynamicTree_Query(
       world.broadPhase.trees[i],
       draw.drawingBounds,
-      b2_defaultMaskBits,
+      B2_DEFAULT_MASK_BITS,
       DrawQueryCallback,
       drawContext
     );
@@ -14260,32 +15770,67 @@ function b2DrawWithBounds(world, draw) {
         }
       }
       const linearSlop = b2_linearSlop;
-      if (draw.drawContacts && body.type === b2BodyType.b2_dynamicBody && body.setIndex === b2SetType.b2_awakeSet) {
+      if (
+        draw.drawContacts &&
+        body.type === b2BodyType.b2_dynamicBody &&
+        body.setIndex === b2SetType.b2_awakeSet
+      ) {
         let contactKey = body.headContactKey;
         while (contactKey !== B2_NULL_INDEX) {
           const contactId = contactKey >> 1;
           const edgeIndex = contactKey & 1;
           const contact = world.contactArray[contactId];
           contactKey = contact.edges[edgeIndex].nextKey;
-          if (contact.setIndex !== b2SetType.b2_awakeSet || contact.colorIndex === B2_NULL_INDEX) {
+          if (
+            contact.setIndex !== b2SetType.b2_awakeSet ||
+            contact.colorIndex === B2_NULL_INDEX
+          ) {
             continue;
           }
           if (b2GetBit2(world.debugContactSet, contactId) === false) {
             const gc = world.constraintGraph.colors[contact.colorIndex];
             const contactSim = gc.contacts.data[contact.localIndex];
             const pointCount = contactSim.manifold.pointCount;
-            const normal = new b2Vec2(contactSim.manifold.normalX, contactSim.manifold.normalY);
+            const normal = new b2Vec2(
+              contactSim.manifold.normalX,
+              contactSim.manifold.normalY
+            );
             for (let j = 0; j < pointCount; ++j) {
               const point = contactSim.manifold.points[j];
               if (draw.drawGraphColors) {
-                const pointSize = contact.colorIndex === b2_overflowIndex ? 7.5 : 5;
-                draw.DrawPoint(point.pointX, point.pointY, pointSize, graphColors[contact.colorIndex], draw.context);
+                const pointSize =
+                  contact.colorIndex === b2_overflowIndex ? 7.5 : 5;
+                draw.DrawPoint(
+                  point.pointX,
+                  point.pointY,
+                  pointSize,
+                  graphColors[contact.colorIndex],
+                  draw.context
+                );
               } else if (point.separation > linearSlop) {
-                draw.DrawPoint(point.pointX, point.pointY, 5, speculativeColor, draw.context);
+                draw.DrawPoint(
+                  point.pointX,
+                  point.pointY,
+                  5,
+                  speculativeColor,
+                  draw.context
+                );
               } else if (point.persisted === false) {
-                draw.DrawPoint(point.pointX, point.pointY, 10, addColor, draw.context);
+                draw.DrawPoint(
+                  point.pointX,
+                  point.pointY,
+                  10,
+                  addColor,
+                  draw.context
+                );
               } else if (point.persisted === true) {
-                draw.DrawPoint(point.pointX, point.pointY, 5, persistColor, draw.context);
+                draw.DrawPoint(
+                  point.pointX,
+                  point.pointY,
+                  5,
+                  persistColor,
+                  draw.context
+                );
               }
               if (draw.drawContactNormals) {
                 const p14 = new b2Vec2(point.pointX, point.pointY);
@@ -14293,7 +15838,11 @@ function b2DrawWithBounds(world, draw) {
                 draw.DrawSegment(p14, p23, normalColor, draw.context);
               } else if (draw.drawContactImpulses) {
                 const p14 = new b2Vec2(point.pointX, point.pointY);
-                const p23 = b2MulAdd(p14, k_impulseScale * point.normalImpulse, normal);
+                const p23 = b2MulAdd(
+                  p14,
+                  k_impulseScale * point.normalImpulse,
+                  normal
+                );
                 draw.DrawSegment(p14, p23, impulseColor, draw.context);
                 const buffer = `${(1e3 * point.normalImpulse).toFixed(1)}`;
                 draw.DrawString(p14, buffer, draw.context);
@@ -14301,7 +15850,11 @@ function b2DrawWithBounds(world, draw) {
               if (draw.drawFrictionImpulses) {
                 const tangent = b2RightPerp(normal);
                 const p14 = new b2Vec2(point.pointX, point.pointY);
-                const p23 = b2MulAdd(p14, k_impulseScale * point.tangentImpulse, tangent);
+                const p23 = b2MulAdd(
+                  p14,
+                  k_impulseScale * point.tangentImpulse,
+                  tangent
+                );
                 draw.DrawSegment(p14, p23, frictionColor, draw.context);
                 const buffer = `${(1e3 * point.tangentImpulse).toFixed(1)}`;
                 draw.DrawString(p14, buffer, draw.context);
@@ -14312,7 +15865,7 @@ function b2DrawWithBounds(world, draw) {
           contactKey = contact.edges[edgeIndex].nextKey;
         }
       }
-      word = word & word - 1;
+      word = word & (word - 1);
     }
   }
 }
@@ -14342,13 +15895,19 @@ function b2World_Draw(worldId, draw) {
             color = b2HexColor.b2_colorGray;
           } else if (shape.customColor !== 0) {
             color = shape.customColor;
-          } else if (body.type === b2BodyType.b2_dynamicBody && bodySim.mass === 0) {
+          } else if (
+            body.type === b2BodyType.b2_dynamicBody &&
+            bodySim.mass === 0
+          ) {
             color = b2HexColor.b2_colorRed;
           } else if (body.setIndex === b2SetType.b2_disabledSet) {
             color = b2HexColor.b2_colorSlateGray;
           } else if (shape.isSensor) {
             color = b2HexColor.b2_colorWheat;
-          } else if (bodySim.isBullet && body.setIndex === b2SetType.b2_awakeSet) {
+          } else if (
+            bodySim.isBullet &&
+            body.setIndex === b2SetType.b2_awakeSet
+          ) {
             color = b2HexColor.b2_colorTurquoise;
           } else if (body.isSpeedCapped) {
             color = b2HexColor.b2_colorYellow;
@@ -14397,7 +15956,7 @@ function b2World_Draw(worldId, draw) {
             new b2Vec2(aabb.lowerBoundX, aabb.lowerBoundY),
             new b2Vec2(aabb.upperBoundX, aabb.lowerBoundY),
             new b2Vec2(aabb.upperBoundX, aabb.upperBoundY),
-            new b2Vec2(aabb.lowerBoundX, aabb.upperBoundY)
+            new b2Vec2(aabb.lowerBoundX, aabb.upperBoundY),
           ];
           draw.DrawPolygon(xf2, vs, 4, color, draw.context);
           shapeId = shape.nextShapeId;
@@ -14443,7 +16002,7 @@ function b2World_Draw(worldId, draw) {
       b2HexColor.b2_colorChocolate,
       b2HexColor.b2_colorGoldenrod,
       b2HexColor.b2_colorCoral,
-      b2HexColor.b2_colorBlack
+      b2HexColor.b2_colorBlack,
     ];
     for (let colorIndex = 0; colorIndex < b2_graphColorCount; ++colorIndex) {
       const graphColor = world.constraintGraph.colors[colorIndex];
@@ -14451,18 +16010,49 @@ function b2World_Draw(worldId, draw) {
       for (let contactIndex = 0; contactIndex < contactCount; ++contactIndex) {
         const contact = graphColor.contacts.data[contactIndex];
         const pointCount = contact.manifold.pointCount;
-        const normal = new b2Vec2(contact.manifold.normalX, contact.manifold.normalY);
+        const normal = new b2Vec2(
+          contact.manifold.normalX,
+          contact.manifold.normalY
+        );
         for (let j = 0; j < pointCount; ++j) {
           const point = contact.manifold.points[j];
-          if (draw.drawGraphColors && 0 <= colorIndex && colorIndex <= b2_graphColorCount) {
+          if (
+            draw.drawGraphColors &&
+            0 <= colorIndex &&
+            colorIndex <= b2_graphColorCount
+          ) {
             const pointSize = colorIndex === b2_overflowIndex ? 7.5 : 5;
-            draw.DrawPoint(point.pointX, point.pointY, pointSize, colors[colorIndex], draw.context);
+            draw.DrawPoint(
+              point.pointX,
+              point.pointY,
+              pointSize,
+              colors[colorIndex],
+              draw.context
+            );
           } else if (point.separation > linearSlop) {
-            draw.DrawPoint(point.pointX, point.pointY, 5, speculativeColor, draw.context);
+            draw.DrawPoint(
+              point.pointX,
+              point.pointY,
+              5,
+              speculativeColor,
+              draw.context
+            );
           } else if (point.persisted === false) {
-            draw.DrawPoint(point.pointX, point.pointY, 10, addColor, draw.context);
+            draw.DrawPoint(
+              point.pointX,
+              point.pointY,
+              10,
+              addColor,
+              draw.context
+            );
           } else if (point.persisted === true) {
-            draw.DrawPoint(point.pointX, point.pointY, 5, persistColor, draw.context);
+            draw.DrawPoint(
+              point.pointX,
+              point.pointY,
+              5,
+              persistColor,
+              draw.context
+            );
           }
           if (draw.drawContactNormals) {
             const p14 = new b2Vec2(point.pointX, point.pointY);
@@ -14470,7 +16060,11 @@ function b2World_Draw(worldId, draw) {
             draw.DrawSegment(p14, p23, normalColor, draw.context);
           } else if (draw.drawContactImpulses) {
             const p14 = new b2Vec2(point.pointX, point.pointY);
-            const p23 = b2MulAdd(p14, k_impulseScale * point.normalImpulse, normal);
+            const p23 = b2MulAdd(
+              p14,
+              k_impulseScale * point.normalImpulse,
+              normal
+            );
             draw.DrawSegment(p14, p23, impulseColor, draw.context);
             const buffer = `${(1e3 * point.normalImpulse).toFixed(2)}`;
             draw.DrawString(p14, buffer, draw.context);
@@ -14478,7 +16072,11 @@ function b2World_Draw(worldId, draw) {
           if (draw.drawFrictionImpulses) {
             const tangent = b2RightPerp(normal);
             const p14 = new b2Vec2(point.pointX, point.pointY);
-            const p23 = b2MulAdd(p14, k_impulseScale * point.tangentImpulse, tangent);
+            const p23 = b2MulAdd(
+              p14,
+              k_impulseScale * point.tangentImpulse,
+              tangent
+            );
             draw.DrawSegment(p14, p23, frictionColor, draw.context);
             const buffer = `${point.normalImpulse.toFixed(2)}`;
             draw.DrawString(p14, buffer, draw.context);
@@ -14534,7 +16132,7 @@ function b2World_IsValid(id) {
   if (id === void 0) {
     return false;
   }
-  if (id.index1 < 1 || b2_maxWorlds < id.index1) {
+  if (id.index1 < 1 || B2_MAX_WORLDS < id.index1) {
     return false;
   }
   const world = b2_worlds[id.index1 - 1];
@@ -14550,7 +16148,7 @@ function b2Body_IsValid(id) {
   if (!(id instanceof b2BodyId)) {
     return false;
   }
-  if (id.world0 < 0 || b2_maxWorlds <= id.world0) {
+  if (id.world0 < 0 || B2_MAX_WORLDS <= id.world0) {
     return false;
   }
   const world = b2_worlds[id.world0];
@@ -14573,7 +16171,7 @@ function b2Shape_IsValid(id) {
   if (id === void 0) {
     return false;
   }
-  if (b2_maxWorlds <= id.world0) {
+  if (B2_MAX_WORLDS <= id.world0) {
     return false;
   }
   const world = b2_worlds[id.world0];
@@ -14594,7 +16192,7 @@ function b2Chain_IsValid(id) {
   if (id === void 0) {
     return false;
   }
-  if (id.world0 < 0 || b2_maxWorlds <= id.world0) {
+  if (id.world0 < 0 || B2_MAX_WORLDS <= id.world0) {
     return false;
   }
   const world = b2_worlds[id.world0];
@@ -14615,7 +16213,7 @@ function b2Joint_IsValid(id) {
   if (id === void 0) {
     return false;
   }
-  if (id.world0 < 0 || b2_maxWorlds <= id.world0) {
+  if (id.world0 < 0 || B2_MAX_WORLDS <= id.world0) {
     return false;
   }
   const world = b2_worlds[id.world0];
@@ -14694,7 +16292,10 @@ function TreeQueryCallback(proxyId, shapeId, context) {
   const shape = world.shapeArray[shapeId];
   const shapeFilter = shape.filter;
   const queryFilter = worldContext.filter;
-  if ((shapeFilter.categoryBits & queryFilter.maskBits) === 0 || (shapeFilter.maskBits & queryFilter.categoryBits) === 0) {
+  if (
+    (shapeFilter.categoryBits & queryFilter.maskBits) === 0 ||
+    (shapeFilter.maskBits & queryFilter.categoryBits) === 0
+  ) {
     return true;
   }
   const id = new b2ShapeId(shapeId + 1, world.worldId, shape.revision);
@@ -14716,7 +16317,13 @@ function b2World_OverlapAABB(worldId, aabb, filter, fcn, context) {
   }
   const worldContext = new WorldQueryContext(world, fcn, filter, context);
   for (let i = 0; i < b2BodyType.b2_bodyTypeCount; ++i) {
-    b2DynamicTree_Query(world.broadPhase.trees[i], aabb, filter.maskBits, TreeQueryCallback, worldContext);
+    b2DynamicTree_Query(
+      world.broadPhase.trees[i],
+      aabb,
+      filter.maskBits,
+      TreeQueryCallback,
+      worldContext
+    );
   }
 }
 function TreeOverlapCallback(proxyId, shapeId, context) {
@@ -14725,7 +16332,10 @@ function TreeOverlapCallback(proxyId, shapeId, context) {
   const shape = world.shapeArray[shapeId];
   const shapeFilter = shape.filter;
   const queryFilter = worldContext.filter;
-  if ((shapeFilter.categoryBits & queryFilter.maskBits) === 0 || (shapeFilter.maskBits & queryFilter.categoryBits) === 0) {
+  if (
+    (shapeFilter.categoryBits & queryFilter.maskBits) === 0 ||
+    (shapeFilter.maskBits & queryFilter.categoryBits) === 0
+  ) {
     return true;
   }
   const body = b2GetBody(world, shape.bodyId);
@@ -14745,7 +16355,14 @@ function TreeOverlapCallback(proxyId, shapeId, context) {
   const result = worldContext.fcn(id, worldContext.userContext);
   return result;
 }
-function b2World_OverlapCircle(worldId, circle, transform, filter, fcn, context) {
+function b2World_OverlapCircle(
+  worldId,
+  circle,
+  transform,
+  filter,
+  fcn,
+  context
+) {
   const world = b2GetWorldFromId(worldId);
   if (world.locked) {
     return;
@@ -14759,10 +16376,23 @@ function b2World_OverlapCircle(worldId, circle, transform, filter, fcn, context)
   worldContext.transform = transform;
   worldContext.userContext = context;
   for (let i = 0; i < b2BodyType.b2_bodyTypeCount; ++i) {
-    b2DynamicTree_Query(world.broadPhase.trees[i], aabb, filter.maskBits, TreeOverlapCallback, worldContext);
+    b2DynamicTree_Query(
+      world.broadPhase.trees[i],
+      aabb,
+      filter.maskBits,
+      TreeOverlapCallback,
+      worldContext
+    );
   }
 }
-function b2World_OverlapCapsule(worldId, capsule, transform, filter, fcn, context) {
+function b2World_OverlapCapsule(
+  worldId,
+  capsule,
+  transform,
+  filter,
+  fcn,
+  context
+) {
   const world = b2GetWorldFromId(worldId);
   if (world.locked) {
     return;
@@ -14776,10 +16406,23 @@ function b2World_OverlapCapsule(worldId, capsule, transform, filter, fcn, contex
   worldContext.transform = transform;
   worldContext.userContext = context;
   for (let i = 0; i < b2BodyType.b2_bodyTypeCount; ++i) {
-    b2DynamicTree_Query(world.broadPhase.trees[i], aabb, filter.maskBits, TreeOverlapCallback, worldContext);
+    b2DynamicTree_Query(
+      world.broadPhase.trees[i],
+      aabb,
+      filter.maskBits,
+      TreeOverlapCallback,
+      worldContext
+    );
   }
 }
-function b2World_OverlapPolygon(worldId, polygon, transform, filter, fcn, context) {
+function b2World_OverlapPolygon(
+  worldId,
+  polygon,
+  transform,
+  filter,
+  fcn,
+  context
+) {
   const world = b2GetWorldFromId(worldId);
   if (world.locked) {
     return;
@@ -14789,10 +16432,21 @@ function b2World_OverlapPolygon(worldId, polygon, transform, filter, fcn, contex
   worldContext.world = world;
   worldContext.fcn = fcn;
   worldContext.filter = filter;
-  worldContext.proxy = b2MakeProxy(polygon.vertices, polygon.count, polygon.radius), worldContext.transform = transform;
+  (worldContext.proxy = b2MakeProxy(
+    polygon.vertices,
+    polygon.count,
+    polygon.radius
+  )),
+    (worldContext.transform = transform);
   worldContext.userContext = context;
   for (let i = 0; i < b2BodyType.b2_bodyTypeCount; ++i) {
-    b2DynamicTree_Query(world.broadPhase.trees[i], aabb, filter.maskBits, TreeOverlapCallback, worldContext);
+    b2DynamicTree_Query(
+      world.broadPhase.trees[i],
+      aabb,
+      filter.maskBits,
+      TreeOverlapCallback,
+      worldContext
+    );
   }
 }
 function RayCastCallback(input, proxyId, shapeId, context) {
@@ -14801,7 +16455,10 @@ function RayCastCallback(input, proxyId, shapeId, context) {
   const shape = world.shapeArray[shapeId];
   const shapeFilter = shape.filter;
   const queryFilter = worldContext.filter;
-  if ((shapeFilter.categoryBits & queryFilter.maskBits) === 0 || (shapeFilter.maskBits & queryFilter.categoryBits) === 0) {
+  if (
+    (shapeFilter.categoryBits & queryFilter.maskBits) === 0 ||
+    (shapeFilter.maskBits & queryFilter.categoryBits) === 0
+  ) {
     return input.maxFraction;
   }
   const body = b2GetBody(world, shape.bodyId);
@@ -14809,8 +16466,16 @@ function RayCastCallback(input, proxyId, shapeId, context) {
   const output = b2RayCastShape(input, shape, transform);
   if (output.hit) {
     const id = new b2ShapeId(shapeId + 1, world.worldId, shape.revision);
-    const fraction = worldContext.fcn(id, output.point, output.normal, output.fraction, worldContext.userContext);
-    worldContext.fraction = fraction;
+    const fraction = worldContext.fcn(
+      id,
+      output.point,
+      output.normal,
+      output.fraction,
+      worldContext.userContext
+    );
+    if (fraction >= 0 && fraction <= 1) {
+      worldContext.fraction = fraction;
+    }
     return fraction;
   }
   return input.maxFraction;
@@ -14831,7 +16496,13 @@ function b2World_CastRay(worldId, origin, translation, filter, fcn, context) {
   worldContext.fraction = 1;
   worldContext.userContext = context;
   for (let i = 0; i < b2BodyType.b2_bodyTypeCount; ++i) {
-    b2DynamicTree_RayCast(world.broadPhase.trees[i], input, filter.maskBits, RayCastCallback, worldContext);
+    b2DynamicTree_RayCast(
+      world.broadPhase.trees[i],
+      input,
+      filter.maskBits,
+      RayCastCallback,
+      worldContext
+    );
     if (worldContext.fraction === 0) {
       return;
     }
@@ -14863,7 +16534,13 @@ function b2World_CastRayClosest(worldId, origin, translation, filter) {
   worldContext.fraction = 1;
   worldContext.userContext = result;
   for (let i = 0; i < b2BodyType.b2_bodyTypeCount; ++i) {
-    b2DynamicTree_RayCast(world.broadPhase.trees[i], input, filter.maskBits, RayCastCallback, worldContext);
+    b2DynamicTree_RayCast(
+      world.broadPhase.trees[i],
+      input,
+      filter.maskBits,
+      RayCastCallback,
+      worldContext
+    );
     if (worldContext.fraction == 0) {
       return result;
     }
@@ -14877,7 +16554,10 @@ function ShapeCastCallback(input, proxyId, shapeId, context) {
   const shape = world.shapeArray[shapeId];
   const shapeFilter = shape.filter;
   const queryFilter = worldContext.filter;
-  if ((shapeFilter.categoryBits & queryFilter.maskBits) == 0 || (shapeFilter.maskBits & queryFilter.categoryBits) == 0) {
+  if (
+    (shapeFilter.categoryBits & queryFilter.maskBits) == 0 ||
+    (shapeFilter.maskBits & queryFilter.categoryBits) == 0
+  ) {
     return input.maxFraction;
   }
   const body = b2GetBody(world, shape.bodyId);
@@ -14885,13 +16565,27 @@ function ShapeCastCallback(input, proxyId, shapeId, context) {
   const output = b2ShapeCastShape(input, shape, transform);
   if (output.hit) {
     const id = new b2ShapeId(shapeId + 1, world.worldId, shape.revision);
-    const fraction = worldContext.fcn(id, output.point, output.normal, output.fraction, worldContext.userContext);
+    const fraction = worldContext.fcn(
+      id,
+      output.point,
+      output.normal,
+      output.fraction,
+      worldContext.userContext
+    );
     worldContext.fraction = fraction;
     return fraction;
   }
   return input.maxFraction;
 }
-function b2World_CastCircle(worldId, circle, originTransform, translation, filter, fcn, context) {
+function b2World_CastCircle(
+  worldId,
+  circle,
+  originTransform,
+  translation,
+  filter,
+  fcn,
+  context
+) {
   const world = b2GetWorldFromId(worldId);
   if (world.locked) {
     return;
@@ -14909,20 +16603,37 @@ function b2World_CastCircle(worldId, circle, originTransform, translation, filte
   worldContext.fraction = 1;
   worldContext.userContext = context;
   for (let i = 0; i < b2BodyType.b2_bodyTypeCount; ++i) {
-    b2DynamicTree_ShapeCast(world.broadPhase.trees[i], input, filter.maskBits, ShapeCastCallback, worldContext);
+    b2DynamicTree_ShapeCast(
+      world.broadPhase.trees[i],
+      input,
+      filter.maskBits,
+      ShapeCastCallback,
+      worldContext
+    );
     if (worldContext.fraction == 0) {
       return;
     }
     input.maxFraction = worldContext.fraction;
   }
 }
-function b2World_CastCapsule(worldId, capsule, originTransform, translation, filter, fcn, context) {
+function b2World_CastCapsule(
+  worldId,
+  capsule,
+  originTransform,
+  translation,
+  filter,
+  fcn,
+  context
+) {
   const world = b2GetWorldFromId(worldId);
   if (world.locked) {
     return;
   }
   const input = new b2ShapeCastInput();
-  input.points = [b2TransformPoint(originTransform, capsule.center1), b2TransformPoint(originTransform, capsule.center2)];
+  input.points = [
+    b2TransformPoint(originTransform, capsule.center1),
+    b2TransformPoint(originTransform, capsule.center2),
+  ];
   input.count = 2;
   input.radius = capsule.radius;
   input.translation = translation;
@@ -14934,20 +16645,36 @@ function b2World_CastCapsule(worldId, capsule, originTransform, translation, fil
   worldContext.fraction = 1;
   worldContext.userContext = context;
   for (let i = 0; i < b2BodyType.b2_bodyTypeCount; ++i) {
-    b2DynamicTree_ShapeCast(world.broadPhase.trees[i], input, filter.maskBits, ShapeCastCallback, worldContext);
+    b2DynamicTree_ShapeCast(
+      world.broadPhase.trees[i],
+      input,
+      filter.maskBits,
+      ShapeCastCallback,
+      worldContext
+    );
     if (worldContext.fraction == 0) {
       return;
     }
     input.maxFraction = worldContext.fraction;
   }
 }
-function b2World_CastPolygon(worldId, polygon, originTransform, translation, filter, fcn, context) {
+function b2World_CastPolygon(
+  worldId,
+  polygon,
+  originTransform,
+  translation,
+  filter,
+  fcn,
+  context
+) {
   const world = b2GetWorldFromId(worldId);
   if (world.locked) {
     return;
   }
   const input = new b2ShapeCastInput();
-  input.points = polygon.vertices.map((vertex) => b2TransformPoint(originTransform, vertex));
+  input.points = polygon.vertices.map((vertex) =>
+    b2TransformPoint(originTransform, vertex)
+  );
   input.count = polygon.count;
   input.radius = polygon.radius;
   input.translation = translation;
@@ -14959,7 +16686,13 @@ function b2World_CastPolygon(worldId, polygon, originTransform, translation, fil
   worldContext.fraction = 1;
   worldContext.userContext = context;
   for (let i = 0; i < b2BodyType.b2_bodyTypeCount; ++i) {
-    b2DynamicTree_ShapeCast(world.broadPhase.trees[i], input, filter.maskBits, ShapeCastCallback, worldContext);
+    b2DynamicTree_ShapeCast(
+      world.broadPhase.trees[i],
+      input,
+      filter.maskBits,
+      ShapeCastCallback,
+      worldContext
+    );
     if (worldContext.fraction == 0) {
       return;
     }
@@ -15023,15 +16756,23 @@ function ExplosionCallback(proxyId, shapeId, context) {
   }
   const falloff = 0.4;
   const perimeter = b2GetShapePerimeter(shape);
-  const magnitude = explosionContext.magnitude * perimeter * (1 - falloff * output.distance / explosionContext.radius);
+  const magnitude =
+    explosionContext.magnitude *
+    perimeter *
+    (1 - (falloff * output.distance) / explosionContext.radius);
   const direction = b2Normalize(b2Sub(closestPoint, explosionContext.position));
   const impulse = b2MulSV(magnitude, direction);
   const localIndex = body.localIndex;
   const set = world.solverSetArray[b2SetType.b2_awakeSet];
   const state = set.states.data[localIndex];
   const bodySim = set.sims.data[localIndex];
-  state.linearVelocity = b2MulAdd(state.linearVelocity, bodySim.invMass, impulse);
-  state.angularVelocity += bodySim.invInertia * b2Cross(b2Sub(closestPoint, bodySim.center), impulse);
+  state.linearVelocity = b2MulAdd(
+    state.linearVelocity,
+    bodySim.invMass,
+    impulse
+  );
+  state.angularVelocity +=
+    bodySim.invInertia * b2Cross(b2Sub(closestPoint, bodySim.center), impulse);
   return true;
 }
 function b2World_Explode(worldId, position, radius, magnitude) {
@@ -15039,12 +16780,22 @@ function b2World_Explode(worldId, position, radius, magnitude) {
   if (world.locked) {
     return;
   }
-  const explosionContext = new ExplosionContext(world, position, radius, magnitude);
-  const aabb = new b2AABB(position.x - radius, position.y - radius, position.x + radius, position.y + radius);
+  const explosionContext = new ExplosionContext(
+    world,
+    position,
+    radius,
+    magnitude
+  );
+  const aabb = new b2AABB(
+    position.x - radius,
+    position.y - radius,
+    position.x + radius,
+    position.y + radius
+  );
   b2DynamicTree_Query(
     world.broadPhase.trees[b2BodyType.b2_dynamicBody],
     aabb,
-    b2_defaultMaskBits,
+    B2_DEFAULT_MASK_BITS,
     ExplosionCallback,
     explosionContext
   );
@@ -15062,8 +16813,7 @@ function b2GetRootIslandId(world, islandId) {
   }
   return rootId;
 }
-function b2CheckId(a, id) {
-}
+function b2CheckId(a, id) {}
 function b2CheckIndex(a, i) {
   if (Array.isArray(a)) {
   } else {
@@ -15086,8 +16836,12 @@ function b2ValidateConnectivity(world) {
       const contactId = contactKey >> 1;
       const edgeIndex = contactKey & 1;
       const contact = world.contactArray[contactId];
-      const touching = (contact.flags & b2ContactFlags.b2_contactTouchingFlag) !== 0;
-      if (touching && (contact.flags & b2ContactFlags.b2_contactSensorFlag) === 0) {
+      const touching =
+        (contact.flags & b2ContactFlags.b2_contactTouchingFlag) !== 0;
+      if (
+        touching &&
+        (contact.flags & b2ContactFlags.b2_contactSensorFlag) === 0
+      ) {
         if (bodySetIndex !== b2SetType.b2_staticSet) {
           const contactIslandId = b2GetRootIslandId(world, contact.islandId);
         }
@@ -15102,7 +16856,10 @@ function b2ValidateConnectivity(world) {
       const joint = world.jointArray[jointId];
       const otherEdgeIndex = edgeIndex ^ 1;
       const otherBody = world.bodyArray[joint.edges[otherEdgeIndex].bodyId];
-      if (bodySetIndex === b2SetType.b2_disabledSet || otherBody.setIndex === b2SetType.b2_disabledSet) {
+      if (
+        bodySetIndex === b2SetType.b2_disabledSet ||
+        otherBody.setIndex === b2SetType.b2_disabledSet
+      ) {
       } else if (bodySetIndex === b2SetType.b2_staticSet) {
         if (otherBody.setIndex === b2SetType.b2_staticSet) {
         }
@@ -15171,9 +16928,16 @@ function b2ValidateSolverSets(world) {
             const joint = world.jointArray[jointId];
             const otherEdgeIndex = edgeIndex ^ 1;
             b2CheckIndex(world.bodyArray, joint.edges[otherEdgeIndex].bodyId);
-            const otherBody = world.bodyArray[joint.edges[otherEdgeIndex].bodyId];
-            if (setIndex === b2SetType.b2_disabledSet || otherBody.setIndex === b2SetType.b2_disabledSet) {
-            } else if (setIndex === b2SetType.b2_staticSet && otherBody.setIndex === b2SetType.b2_staticSet) {
+            const otherBody =
+              world.bodyArray[joint.edges[otherEdgeIndex].bodyId];
+            if (
+              setIndex === b2SetType.b2_disabledSet ||
+              otherBody.setIndex === b2SetType.b2_disabledSet
+            ) {
+            } else if (
+              setIndex === b2SetType.b2_staticSet &&
+              otherBody.setIndex === b2SetType.b2_staticSet
+            ) {
             } else if (setIndex === b2SetType.b2_awakeSet) {
             } else if (setIndex >= b2SetType.b2_firstSleepingSet) {
             }
@@ -15259,7 +17023,10 @@ function b2GetBit2(bitSet, bitIndex) {
   if (blockIndex >= bitSet.blockCount) {
     return false;
   }
-  return (bitSet.bits[blockIndex] & BigInt(1) << BigInt(bitIndex % 64)) !== BigInt(0);
+  return (
+    (bitSet.bits[blockIndex] & (BigInt(1) << BigInt(bitIndex % 64))) !==
+    BigInt(0)
+  );
 }
 function b2ValidateContacts(world) {
   if (!b2Validation) {
@@ -15273,9 +17040,12 @@ function b2ValidateContacts(world) {
       continue;
     }
     allocatedContactCount += 1;
-    const touching = (contact.flags & b2ContactFlags.b2_contactTouchingFlag) !== 0;
-    const sensorTouching = (contact.flags & b2ContactFlags.b2_contactSensorTouchingFlag) !== 0;
-    const isSensor = (contact.flags & b2ContactFlags.b2_contactSensorFlag) !== 0;
+    const touching =
+      (contact.flags & b2ContactFlags.b2_contactTouchingFlag) !== 0;
+    const sensorTouching =
+      (contact.flags & b2ContactFlags.b2_contactSensorTouchingFlag) !== 0;
+    const isSensor =
+      (contact.flags & b2ContactFlags.b2_contactSensorFlag) !== 0;
     const setId = contact.setIndex;
     if (setId === b2SetType.b2_awakeSet) {
       if (touching && isSensor === false) {
@@ -15285,245 +17055,16 @@ function b2ValidateContacts(world) {
     } else {
     }
     const contactSim = b2GetContactSim(world, contact);
-    const simTouching = (contactSim.simFlags & b2ContactSimFlags.b2_simTouchingFlag) !== 0;
+    const simTouching =
+      (contactSim.simFlags & b2ContactSimFlags.b2_simTouchingFlag) !== 0;
   }
   const contactIdCount = b2GetIdCount(world.contactIdPool);
 }
 
 // src/include/world_h.js
-function b2World_GetProfile() {
-}
-function b2World_GetCounters() {
-}
-function b2World_DumpMemoryStats() {
-}
-
-// src/debug_draw.js
-var p02 = new b2Vec2();
-
-// src/ragdoll.js
-var JointedBone = class {
-  constructor() {
-    this.bodyId = null;
-    this.jointId = null;
-    this.frictionScale = 1;
-    this.parentIndex = -1;
-    this.name = "";
-  }
-};
-var Skeletons = class {
-  static HumanBones = {
-    e_hip: 0,
-    e_torso: 1,
-    e_head: 2,
-    e_upperLeftLeg: 3,
-    e_lowerLeftLeg: 4,
-    e_upperRightLeg: 5,
-    e_lowerRightLeg: 6,
-    e_upperLeftArm: 7,
-    e_lowerLeftArm: 8,
-    e_upperRightArm: 9,
-    e_lowerRightArm: 10,
-    e_count: 11
-  };
-  static sideViewHuman11 = {
-    BONE_DATA: [
-      { name: "hip", parentIndex: -1, position: [0, 0.95], capsule: { center1: [0, -0.02], center2: [0, 0.02], radius: 0.095 } },
-      { name: "torso", parentIndex: 0, position: [0, 1.2], capsule: { center1: [0, -0.135], center2: [0, 0.135], radius: 0.09 }, frictionScale: 0.5 },
-      { name: "head", parentIndex: 1, position: [0, 1.5], capsule: { center1: [0, -0.0325], center2: [0, 0.0325], radius: 0.08 }, frictionScale: 0.25, linearDamping: 0.1 },
-      { name: "upperLeftLeg", parentIndex: 0, position: [0, 0.775], capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.06 } },
-      { name: "lowerLeftLeg", parentIndex: 3, position: [0, 0.475], capsule: { center1: [0, -0.14], center2: [0, 0.125], radius: 0.05 }, frictionScale: 0.5, foot: "right" },
-      { name: "upperRightLeg", parentIndex: 0, position: [0, 0.775], capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.06 } },
-      { name: "lowerRightLeg", parentIndex: 5, position: [0, 0.475], capsule: { center1: [0, -0.14], center2: [0, 0.125], radius: 0.05 }, frictionScale: 0.5, foot: "right" },
-      { name: "upperLeftArm", parentIndex: 1, position: [0, 1.225], capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.035 }, frictionScale: 0.5 },
-      { name: "lowerLeftArm", parentIndex: 7, position: [0, 0.975], capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.03 }, frictionScale: 0.1, linearDamping: 0.1 },
-      { name: "upperRightArm", parentIndex: 1, position: [0, 1.225], capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.035 }, frictionScale: 0.5 },
-      { name: "lowerRightArm", parentIndex: 9, position: [0, 0.975], capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.03 }, frictionScale: 0.1, linearDamping: 0.1 }
-    ],
-    JOINT_DATA: [
-      { boneName: "torso", pivot: [0, 1], limits: [-0.25 * Math.PI, 0] },
-      { boneName: "head", pivot: [0, 1.4], limits: [-0.3 * Math.PI, 0.1 * Math.PI] },
-      { boneName: "upperLeftLeg", pivot: [0, 0.9], limits: [-0.05 * Math.PI, 0.4 * Math.PI] },
-      { boneName: "lowerLeftLeg", pivot: [0, 0.625], limits: [-0.5 * Math.PI, -0.02 * Math.PI] },
-      { boneName: "upperRightLeg", pivot: [0, 0.9], limits: [-0.05 * Math.PI, 0.4 * Math.PI] },
-      { boneName: "lowerRightLeg", pivot: [0, 0.625], limits: [-0.5 * Math.PI, -0.02 * Math.PI] },
-      { boneName: "upperLeftArm", pivot: [0, 1.35], limits: [-0.1 * Math.PI, 0.8 * Math.PI] },
-      { boneName: "lowerLeftArm", pivot: [0, 1.1], limits: [0.01 * Math.PI, 0.5 * Math.PI] },
-      { boneName: "upperRightArm", pivot: [0, 1.35], limits: null },
-      { boneName: "lowerRightArm", pivot: [0, 1.1], limits: [0.01 * Math.PI, 0.5 * Math.PI] }
-    ]
-  };
-  static frontViewHuman11 = {
-    BONE_DATA: [
-      { name: "hip", parentIndex: -1, position: [0, 0.95], capsule: { center1: [-0.03, 0], center2: [0.03, 0], radius: 0.095 } },
-      { name: "torso", parentIndex: 0, position: [0, 1.2], capsule: { center1: [0, -0.135], center2: [0, 0.135], radius: 0.09 }, frictionScale: 0.5 },
-      { name: "head", parentIndex: 1, position: [0, 1.5], capsule: { center1: [0, -0.0325], center2: [0, 0.0325], radius: 0.08 }, frictionScale: 0.25, linearDamping: 0.1 },
-      { name: "upperLeftLeg", parentIndex: 0, position: [-0.1, 0.775], capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.06 } },
-      { name: "lowerLeftLeg", parentIndex: 3, position: [-0.1, 0.475], capsule: { center1: [0, -0.14], center2: [0, 0.125], radius: 0.05 }, frictionScale: 0.5, foot: "left" },
-      { name: "upperRightLeg", parentIndex: 0, position: [0.1, 0.775], capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.06 } },
-      { name: "lowerRightLeg", parentIndex: 5, position: [0.1, 0.475], capsule: { center1: [0, -0.14], center2: [0, 0.125], radius: 0.05 }, frictionScale: 0.5, foot: "right" },
-      { name: "upperLeftArm", parentIndex: 1, position: [-0.15, 1.22], capsule: { center1: [0, -0.125], center2: [0.05, 0.125], radius: 0.035 }, frictionScale: 0.5 },
-      { name: "lowerLeftArm", parentIndex: 7, position: [-0.15, 0.97], capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.03 }, frictionScale: 0.1, linearDamping: 0.1 },
-      { name: "upperRightArm", parentIndex: 1, position: [0.15, 1.22], capsule: { center1: [0, -0.125], center2: [-0.05, 0.125], radius: 0.035 }, frictionScale: 0.5 },
-      { name: "lowerRightArm", parentIndex: 9, position: [0.15, 0.97], capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.03 }, frictionScale: 0.1, linearDamping: 0.1 }
-    ],
-    JOINT_DATA: [
-      { boneName: "torso", pivot: [0, 1], limits: [-0.1 * Math.PI, 0.1 * Math.PI] },
-      { boneName: "head", pivot: [0, 1.4], limits: [-0.2 * Math.PI, 0.2 * Math.PI] },
-      { boneName: "upperLeftLeg", pivot: [-0.1, 0.9], limits: [-0.3 * Math.PI, 0.1 * Math.PI] },
-      { boneName: "lowerLeftLeg", pivot: [-0.1, 0.625], limits: [0, 0.5 * Math.PI] },
-      { boneName: "upperRightLeg", pivot: [0.1, 0.9], limits: [-0.1 * Math.PI, 0.3 * Math.PI] },
-      { boneName: "lowerRightLeg", pivot: [0.1, 0.625], limits: [-0.5 * Math.PI, 0] },
-      { boneName: "upperLeftArm", pivot: [-0.12, 1.35], limits: [-0.7 * Math.PI, 0.1 * Math.PI] },
-      { boneName: "lowerLeftArm", pivot: [-0.16, 1.1], limits: [0, 0.75 * Math.PI] },
-      { boneName: "upperRightArm", pivot: [0.12, 1.35], limits: [-0.1 * Math.PI, 0.7 * Math.PI] },
-      { boneName: "lowerRightArm", pivot: [0.14, 1.1], limits: [0, 0.75 * Math.PI] }
-    ]
-  };
-  static ElephantBones = {
-    e_torso: 0,
-    e_head: 1,
-    e_trunkBase: 2,
-    e_trunkMid: 3,
-    e_trunkTip: 4,
-    e_upperFrontLegL: 5,
-    e_lowerFrontLegL: 6,
-    e_upperRearLegL: 7,
-    e_lowerRearLegL: 8,
-    e_tail: 9,
-    e_ear: 10,
-    e_count: 11
-  };
-  static sideViewElephant = {
-    BONE_DATA: [
-      { name: "torso", parentIndex: -1, position: [0, 1.5], capsule: { center1: [0.8, 0], center2: [-0.8, 0], radius: 0.6 }, frictionScale: 0.5 },
-      { name: "head", parentIndex: 0, position: [-1.4, 2.2], capsule: { center1: [0.3, 0], center2: [-0.3, 0], radius: 0.35 }, frictionScale: 0.25, linearDamping: 0.1 },
-      { name: "trunkBase", parentIndex: 1, position: [-1.95, 1.85], capsule: { center1: [0, -0.2], center2: [0, 0.2], radius: 0.15 } },
-      { name: "trunkMid", parentIndex: 2, position: [-1.95, 1.4], capsule: { center1: [0, -0.2], center2: [0, 0.2], radius: 0.12 } },
-      { name: "trunkTip", parentIndex: 3, position: [-1.95, 1.05], capsule: { center1: [0, -0.2], center2: [0, 0.2], radius: 0.08 }, frictionScale: 0.1, linearDamping: 0.1 },
-      { name: "upperFrontLeg", parentIndex: 0, position: [-0.6, 0.8], capsule: { center1: [0, -0.3], center2: [0, 0.3], radius: 0.2 } },
-      { name: "lowerFrontLeg", parentIndex: 5, position: [-0.6, 0.2], capsule: { center1: [0, -0.3], center2: [0, 0.3], radius: 0.18 }, frictionScale: 0.5 },
-      { name: "upperBackLeg", parentIndex: 0, position: [0.7, 0.8], capsule: { center1: [0, -0.3], center2: [0, 0.3], radius: 0.22 } },
-      { name: "lowerBackLeg", parentIndex: 7, position: [0.7, 0.2], capsule: { center1: [0, -0.3], center2: [0, 0.3], radius: 0.2 }, frictionScale: 0.5 },
-      { name: "tail", parentIndex: 0, position: [1.2, 1.6], capsule: { center1: [0, -0.3], center2: [0, 0.3], radius: 0.05 }, frictionScale: 0.1, linearDamping: 0.1 },
-      { name: "ear", parentIndex: 1, position: [-1.1, 2], capsule: { center1: [0, -0.15], center2: [0, 0.15], radius: 0.3 }, frictionScale: 0.1, linearDamping: 0.1 }
-    ],
-    JOINT_DATA: [
-      { boneName: "head", pivot: [-1, 2], limits: [-0.1 * Math.PI, 0.3 * Math.PI] },
-      { boneName: "trunkBase", pivot: [-1.95, 2], limits: [-0.5 * Math.PI, 0.5 * Math.PI] },
-      { boneName: "trunkMid", pivot: [-1.95, 1.55], limits: [-0.7 * Math.PI, 0.7 * Math.PI] },
-      { boneName: "trunkTip", pivot: [-1.95, 1.15], limits: [-0.9 * Math.PI, 0.9 * Math.PI] },
-      { boneName: "upperFrontLeg", pivot: [-0.6, 1.1], limits: [-0.2 * Math.PI, 0.2 * Math.PI] },
-      { boneName: "lowerFrontLeg", pivot: [-0.6, 0.5], limits: [-0.3 * Math.PI, 0.1 * Math.PI] },
-      { boneName: "upperBackLeg", pivot: [0.7, 1.1], limits: [-0.2 * Math.PI, 0.2 * Math.PI] },
-      { boneName: "lowerBackLeg", pivot: [0.7, 0.5], limits: [-0.1 * Math.PI, 0.3 * Math.PI] },
-      { boneName: "tail", pivot: [1.2, 1.9], limits: [-0.4 * Math.PI, 0.4 * Math.PI] },
-      { boneName: "ear", pivot: [-1.1, 2.2], limits: [-0.3 * Math.PI, 0.9 * Math.PI] }
-    ]
-  };
-};
-var Ragdoll = class {
-  constructor(skeleton, x, y, worldId, groupIndex, color, size = 2) {
-    this.skeleton = skeleton;
-    this.position = new b2Vec2(x, y);
-    this.worldId = worldId;
-    this.groupIndex = groupIndex;
-    this.color = color;
-    this.m_scale = size;
-    this.frictionTorque = 0.05;
-    this.hertz = 0;
-    this.dampingRatio = 0.5;
-    this.jointDrawSize = 0.5;
-    this.maxTorque = this.frictionTorque * this.m_scale;
-    this.m_bones = [];
-    this.create();
-  }
-  createBone(boneData) {
-    const { bodyId } = CreateCapsule({
-      worldId: this.worldId,
-      position: b2Add(new b2Vec2(boneData.position[0] * this.m_scale, boneData.position[1] * this.m_scale), this.position),
-      type: b2BodyType.b2_dynamicBody,
-      center1: new b2Vec2(boneData.capsule.center1[0] * this.m_scale, boneData.capsule.center1[1] * this.m_scale),
-      center2: new b2Vec2(boneData.capsule.center2[0] * this.m_scale, boneData.capsule.center2[1] * this.m_scale),
-      radius: boneData.capsule.radius * this.m_scale,
-      density: 1,
-      friction: 0.2,
-      groupIndex: -this.groupIndex,
-      color: this.color
-    });
-    const bone = new JointedBone();
-    bone.name = boneData.name;
-    bone.parentIndex = boneData.parentIndex;
-    bone.frictionScale = boneData.frictionScale || 1;
-    bone.bodyId = bodyId;
-    if (boneData.foot) {
-      const footShapeDef = b2DefaultShapeDef();
-      footShapeDef.density = 1;
-      footShapeDef.friction = 0.2;
-      footShapeDef.filter.groupIndex = -this.groupIndex;
-      footShapeDef.filter.maskBits = 1;
-      footShapeDef.customColor = this.color;
-      const footDir = boneData.foot == "left" ? -1 : 1;
-      const footCapsule = new b2Capsule();
-      footCapsule.center1 = new b2Vec2(footDir * -0.02 * this.m_scale, -0.175 * this.m_scale);
-      footCapsule.center2 = new b2Vec2(footDir * 0.13 * this.m_scale, -0.175 * this.m_scale);
-      footCapsule.radius = 0.03 * this.m_scale;
-      b2CreateCapsuleShape(bodyId, footShapeDef, footCapsule);
-    }
-    return bone;
-  }
-  createJoint(jointData) {
-    const bone = this.m_bones.find((b) => b.name === jointData.boneName);
-    const parentBone = this.m_bones[bone.parentIndex];
-    const pivot = b2Add(new b2Vec2(jointData.pivot[0] * this.m_scale, jointData.pivot[1] * this.m_scale), this.position);
-    const jointDef = new b2RevoluteJointDef();
-    jointDef.bodyIdA = parentBone.bodyId;
-    jointDef.bodyIdB = bone.bodyId;
-    jointDef.localAnchorA = b2Body_GetLocalPoint(jointDef.bodyIdA, pivot);
-    jointDef.localAnchorB = b2Body_GetLocalPoint(jointDef.bodyIdB, pivot);
-    if (jointData.limits) {
-      jointDef.enableLimit = true;
-      jointDef.lowerAngle = jointData.limits[0];
-      jointDef.upperAngle = jointData.limits[1];
-    }
-    jointDef.enableMotor = true;
-    jointDef.maxMotorTorque = bone.frictionScale * this.maxTorque;
-    jointDef.enableSpring = this.hertz > 0;
-    jointDef.hertz = this.hertz;
-    jointDef.dampingRatio = this.dampingRatio;
-    jointDef.drawSize = this.jointDrawSize;
-    return b2CreateRevoluteJoint(this.worldId, jointDef);
-  }
-  create() {
-    this.m_bones = this.skeleton.BONE_DATA.map((boneData) => this.createBone(boneData));
-    this.skeleton.JOINT_DATA.forEach((jointData) => {
-      const bone = this.m_bones.find((b) => b.name === jointData.boneName);
-      bone.jointId = this.createJoint(jointData);
-    });
-    this.m_bones.forEach((bone) => b2Body_SetUserData(bone.bodyId, this));
-    return this;
-  }
-  destroy() {
-    for (let i = 0; i < this.m_bones.length; ++i) {
-      if (this.m_bones[i].jointId) {
-        if (this.m_bones[i].jointId.index1 - 1 != B2_NULL_INDEX) {
-          b2DestroyJoint(this.m_bones[i].jointId);
-          this.m_bones[i].jointId = new b2JointId();
-        }
-      }
-    }
-    for (let i = 0; i < this.m_bones.length; ++i) {
-      if (this.m_bones[i].bodyId.index1 - 1 != B2_NULL_INDEX) {
-        b2DestroyBody(this.m_bones[i].bodyId);
-        this.m_bones[i].bodyId = null;
-      }
-    }
-    this.m_bones = null;
-  }
-};
-
-// src/main.js
-var DYNAMIC = 2;
+function b2World_GetProfile() {}
+function b2World_GetCounters() {}
+function b2World_DumpMemoryStats() {}
 
 // src/physics.js
 function setIfDef(obj, prop, value) {
@@ -15600,7 +17141,7 @@ function SpriteToBox(worldId, sprite, data) {
   const props = {
     worldId,
     type: DYNAMIC,
-    size: pxmVec2(sprite.width * scaleX / 2, sprite.height * scaleY / 2)
+    size: pxmVec2((sprite.width * scaleX) / 2, (sprite.height * scaleY) / 2),
   };
   const body = CreateBoxPolygon({ ...props, ...data });
   b2Body_SetTransform(
@@ -15616,7 +17157,7 @@ function SpriteToCircle(worldId, sprite, data) {
   const props = {
     worldId,
     type: DYNAMIC,
-    size: pxmVec2(sprite.width * scaleX / 2, sprite.height * scaleY / 2)
+    size: pxmVec2((sprite.width * scaleX) / 2, (sprite.height * scaleY) / 2),
   };
   const body = CreateCircle({ ...props, ...data });
   b2Body_SetTransform(
@@ -15646,14 +17187,21 @@ function WorldStep(data) {
     subStepCount = 4;
   }
   const borrowedTime = fixedTimeStep * 2;
-  _accumulator = Math.min(_accumulator + data.deltaTime, fixedTimeStep + borrowedTime);
+  _accumulator = Math.min(
+    _accumulator + data.deltaTime,
+    fixedTimeStep + borrowedTime
+  );
   const catchUpMax = 2;
   let c2 = catchUpMax;
   if (data.deltaTime > fixedTimeStep) {
     c2 = 0;
   }
   let totalTime = 0;
-  while (_accumulator >= fixedTimeStep && c2-- >= 0 && totalTime < fixedTimeStep) {
+  while (
+    _accumulator >= fixedTimeStep &&
+    c2-- >= 0 &&
+    totalTime < fixedTimeStep
+  ) {
     const start = performance.now();
     b2World_Step(data.worldId, fixedTimeStep, subStepCount);
     const end = performance.now();
@@ -15663,7 +17211,8 @@ function WorldStep(data) {
   return totalTime;
 }
 function CreateChain(data) {
-  const chainSpacing = b2Distance(data.firstLinkPosition, data.lastLinkPosition) / data.chainLinks;
+  const chainSpacing =
+    b2Distance(data.firstLinkPosition, data.lastLinkPosition) / data.chainLinks;
   const type = data.type !== void 0 ? data.type : b2BodyType.b2_dynamicBody;
   const density = data.density !== void 0 ? data.density : 1;
   const friction = data.friction !== void 0 ? data.friction : 0.5;
@@ -15673,7 +17222,18 @@ function CreateChain(data) {
   var position = b2Add(data.firstLinkPosition, new b2Vec2(data.linkLength, 0));
   const listLinks = [];
   for (let i = 0; i < data.chainLinks; i++) {
-    const link = CreateCapsule({ worldId: data.worldId, type, position, center1: new b2Vec2(-data.linkLength / 2 + data.radius, 0), center2: new b2Vec2(data.linkLength / 2 - data.radius, 0), radius, density, friction, groupIndex: -1, color });
+    const link = CreateCapsule({
+      worldId: data.worldId,
+      type,
+      position,
+      center1: new b2Vec2(-data.linkLength / 2 + data.radius, 0),
+      center2: new b2Vec2(data.linkLength / 2 - data.radius, 0),
+      radius,
+      density,
+      friction,
+      groupIndex: -1,
+      color,
+    });
     listLinks.push(link);
     if (i == 0) {
       if (data.fixEnds) {
@@ -15682,7 +17242,7 @@ function CreateChain(data) {
           bodyIdA: data.groundId,
           bodyIdB: link.bodyId,
           anchorA: data.firstLinkPosition,
-          anchorB: new b2Vec2(-data.linkLength / 2, 0)
+          anchorB: new b2Vec2(-data.linkLength / 2, 0),
         });
       }
     } else {
@@ -15691,7 +17251,7 @@ function CreateChain(data) {
         bodyIdA: lastLink.bodyId,
         bodyIdB: link.bodyId,
         anchorA: new b2Vec2(data.linkLength / 2, 0),
-        anchorB: new b2Vec2(-data.linkLength / 2, 0)
+        anchorB: new b2Vec2(-data.linkLength / 2, 0),
       });
     }
     lastLink = link;
@@ -15703,7 +17263,7 @@ function CreateChain(data) {
       bodyIdA: data.groundId,
       bodyIdB: lastLink.bodyId,
       anchorA: data.lastLinkPosition,
-      anchorB: new b2Vec2(data.linkLength / 2, 0)
+      anchorB: new b2Vec2(data.linkLength / 2, 0),
     });
   }
   return listLinks;
@@ -15811,7 +17371,12 @@ function CreateBoxPolygon(data) {
   let box;
   if (data.size instanceof b2Vec2) {
     if (data.bodyId) {
-      box = b2MakeOffsetBox(data.size.x, data.size.y, data.position, 0);
+      box = b2MakeOffsetBox(
+        data.size.x,
+        data.size.y,
+        data.position,
+        b2MakeRot(0)
+      );
     } else {
       box = b2MakeBox(data.size.x, data.size.y);
     }
@@ -15822,7 +17387,7 @@ function CreateBoxPolygon(data) {
   return { bodyId, shapeId, object: box };
 }
 function CreateNGonPolygon(data) {
-  if (data.sides < 3 || data.sides > b2_maxPolygonVertices) {
+  if (data.sides < 3 || data.sides > B2_MAX_POLYGON_VERTICES) {
     return null;
   }
   const bodyDef = data.bodyDef || b2DefaultBodyDef();
@@ -15838,7 +17403,7 @@ function CreateNGonPolygon(data) {
   setIfDef(shapeDef.filter, "groupIndex", data.groupIndex);
   setIfDef(shapeDef, "customColor", data.color);
   const vertices = [];
-  const angleStep = 2 * Math.PI / data.sides;
+  const angleStep = (2 * Math.PI) / data.sides;
   for (let i = 0; i < data.sides; i++) {
     const angle = i * angleStep;
     const x = data.radius * Math.cos(angle);
@@ -15858,7 +17423,10 @@ function CreateNGonPolygon(data) {
   return { bodyId, shapeId, object: nGon };
 }
 function CreatePolygon(data) {
-  if (data.vertices.length < 3 || data.vertices.length > b2_maxPolygonVertices) {
+  if (
+    data.vertices.length < 3 ||
+    data.vertices.length > B2_MAX_POLYGON_VERTICES
+  ) {
     return null;
   }
   const bodyDef = data.bodyDef || b2DefaultBodyDef();
@@ -15911,7 +17479,12 @@ function CreatePolygonFromEarcut(data) {
     const part = [];
     for (let j = 0; j < 3; j++) {
       const index = data.indices[0][i + j] * 2;
-      part.push(new b2Vec2((data.vertices[index] + offset.x) * scale.x, (data.vertices[index + 1] + offset.y) * scale.y));
+      part.push(
+        new b2Vec2(
+          (data.vertices[index] + offset.x) * scale.x,
+          (data.vertices[index + 1] + offset.y) * scale.y
+        )
+      );
     }
     parts.push(part);
   }
@@ -15926,7 +17499,7 @@ function CreatePolygonFromEarcut(data) {
         vertices: part,
         density: 1,
         friction: 0.3,
-        color: b2HexColor.b2_colorSkyBlue
+        color: b2HexColor.b2_colorSkyBlue,
       });
     } else {
       const hull = b2ComputeHull(part, part.length);
@@ -15962,7 +17535,12 @@ function CreatePolygonFromVertices(data) {
     const indices = data.indices[i];
     for (let p4 = 0, pl = indices.length; p4 < pl; p4++) {
       const index = indices[p4] * 2;
-      part.push(new b2Vec2((data.vertices[index] + offset.x) * scale.x, (data.vertices[index + 1] + offset.y) * scale.y));
+      part.push(
+        new b2Vec2(
+          (data.vertices[index] + offset.x) * scale.x,
+          (data.vertices[index + 1] + offset.y) * scale.y
+        )
+      );
     }
     parts.push(part);
   }
@@ -15977,7 +17555,7 @@ function CreatePolygonFromVertices(data) {
         vertices: part,
         density: 1,
         friction: 0.3,
-        color: b2HexColor.b2_colorSkyBlue
+        color: b2HexColor.b2_colorSkyBlue,
       });
     } else {
       const hull = b2ComputeHull(part, part.length);
@@ -16001,14 +17579,19 @@ function CreatePhysicsEditorShape(data) {
     }
   }
   function extractPolygons(key2, xmlDoc) {
-    const polygonElements = xmlDoc.querySelectorAll(`body[name=${key2}] fixtures polygon`);
+    const polygonElements = xmlDoc.querySelectorAll(
+      `body[name=${key2}] fixtures polygon`
+    );
     const uniqueVertices = [];
     const polygonIndices = [];
     function getVertexIndex(x, y) {
       const epsilon = 1e-6;
       const last = uniqueVertices.length;
       for (let i = 0; i < last; i += 2) {
-        if (Math.abs(uniqueVertices[i] - x) < epsilon && Math.abs(uniqueVertices[i + 1] - y) < epsilon) {
+        if (
+          Math.abs(uniqueVertices[i] - x) < epsilon &&
+          Math.abs(uniqueVertices[i + 1] - y) < epsilon
+        ) {
           return i / 2;
         }
       }
@@ -16016,7 +17599,10 @@ function CreatePhysicsEditorShape(data) {
       return last / 2;
     }
     Array.from(polygonElements).forEach((polygon) => {
-      const numbers = polygon.textContent.trim().split(/[,\s]+/).map(Number);
+      const numbers = polygon.textContent
+        .trim()
+        .split(/[,\s]+/)
+        .map(Number);
       const polygonIndexList = [];
       for (let i = 0; i < numbers.length; i += 2) {
         const vertexIndex = getVertexIndex(numbers[i], numbers[i + 1]);
@@ -16027,7 +17613,7 @@ function CreatePhysicsEditorShape(data) {
     return {
       vertices: uniqueVertices,
       // a flat array of x,y coordinates
-      indices: polygonIndices
+      indices: polygonIndices,
       // an array of index arrays, one per polygon
     };
   }
@@ -16035,7 +17621,7 @@ function CreatePhysicsEditorShape(data) {
     return CreatePolygonFromVertices({
       ...data,
       indices: polygons.indices,
-      vertices: polygons.vertices
+      vertices: polygons.vertices,
     });
   }
   return new Promise(async (resolve, reject) => {
@@ -16190,22 +17776,1214 @@ function CreateMouseJoint(data) {
   return { jointId };
 }
 
-// src/main-prod.js
+// src/debug_draw.js
+var p02 = new b2Vec2();
+var disableDrawing = false;
+function CreateDebugDraw(canvas, ctx, scale = 20) {
+  let wide = 1280;
+  let high = 720;
+  if (canvas) {
+    let resizeCanvas = function () {
+      if (window.innerWidth < window.innerHeight) {
+        wide = canvas.width = 720;
+        high = canvas.height = 1280;
+      } else {
+        wide = canvas.width = 1280;
+        high = canvas.height = 720;
+      }
+      const dpi = window.devicePixelRatio;
+      canvas.width = wide * dpi;
+      canvas.height = high * dpi;
+      canvas.style.width = wide + "px";
+      canvas.style.height = high + "px";
+      ctx.scale(dpi, dpi);
+    };
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+  }
+  const draw = new b2DebugDraw();
+  if (disableDrawing) {
+    draw.DrawCapsule = () => {
+      return;
+    };
+    draw.DrawCircle = () => {
+      return;
+    };
+    draw.DrawPoint = () => {
+      return;
+    };
+    draw.DrawPolygon = () => {
+      return;
+    };
+    draw.DrawImageCapsule = () => {
+      return;
+    };
+    draw.DrawImageCircle = () => {
+      return;
+    };
+    draw.DrawImagePolygon = () => {
+      return;
+    };
+    draw.DrawSegment = () => {
+      return;
+    };
+    draw.DrawSolidCapsule = () => {
+      return;
+    };
+    draw.DrawSolidCircle = () => {
+      return;
+    };
+    draw.DrawSolidPolygon = () => {
+      return;
+    };
+    draw.DrawString = () => {
+      return;
+    };
+    draw.DrawTransform = () => {
+      return;
+    };
+    return draw;
+  }
+  draw.DrawPolygon = function (xf2, vs, ps, col, ctx2) {
+    ctx2.beginPath();
+    const r = (col >> 16) & 255;
+    const g = (col >> 8) & 255;
+    const b = col & 255;
+    const a = 0.5;
+    const cX = (wide >> 1) + this.positionOffset.x;
+    const cY = (high >> 1) + this.positionOffset.y;
+    for (let i = 0; i < ps; i++) {
+      b2TransformPointOut(xf2, vs[i], p02);
+      p02.y = -p02.y;
+      let p1X = scale * p02.x;
+      let p1Y = scale * p02.y;
+      let vX = p1X + cX;
+      let vY = p1Y + cY;
+      if (i === 0) {
+        ctx2.moveTo(vX, vY);
+      } else {
+        ctx2.lineTo(vX, vY);
+      }
+    }
+    ctx2.closePath();
+    ctx2.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx2.lineWidth = 1;
+    ctx2.stroke();
+  };
+  draw.DrawImagePolygon = function (xf2, shape, ctx2) {
+    let aabb = b2ComputeShapeAABB(shape, xf2);
+    const cX = (wide >> 1) + this.positionOffset.x;
+    const cY = (high >> 1) + this.positionOffset.y;
+    const centerX = xf2.p.x;
+    const centerY = xf2.p.y;
+    const scaleCenterX = scale * centerX;
+    const scaleCenterY = scale * centerY;
+    let transformedCenterX = scaleCenterX + cX;
+    let transformedCenterY = scaleCenterY - cY;
+    transformedCenterY = -transformedCenterY;
+    ctx2.save();
+    ctx2.translate(transformedCenterX, transformedCenterY);
+    const angle = -Math.atan2(xf2.q.s, xf2.q.c);
+    ctx2.rotate(angle);
+    const image = shape.image;
+    const imageScale = shape.imageScale || new b2Vec2(1, 1);
+    const imageOffset = shape.imageOffset || new b2Vec2(0, 0);
+    let drawWidth = aabb.upperBoundX - aabb.lowerBoundX;
+    let drawHeight = aabb.upperBoundY - aabb.lowerBoundY;
+    const aspectRatio = drawWidth / drawHeight;
+    if (aspectRatio > 1) {
+      drawHeight *= scale * imageScale.x;
+      drawWidth = drawHeight * aspectRatio * imageScale.y;
+    } else {
+      drawWidth *= scale * imageScale.x;
+      drawHeight = (drawWidth / aspectRatio) * imageScale.y;
+    }
+    ctx2.drawImage(
+      image,
+      shape.imageRect.lowerBoundX,
+      shape.imageRect.lowerBoundY,
+      shape.imageRect.upperBoundX,
+      shape.imageRect.upperBoundY,
+      -drawWidth / 2 + drawWidth * imageOffset.x,
+      -drawHeight / 2 + drawHeight * imageOffset.y,
+      drawWidth,
+      drawHeight
+    );
+    ctx2.restore();
+  };
+  draw.DrawSolidPolygon = function (xf2, vs, ps, rad, col, ctx2) {
+    ctx2.beginPath();
+    const r = (col >> 16) & 255;
+    const g = (col >> 8) & 255;
+    const b = col & 255;
+    const a = 0.5;
+    const cX = (wide >> 1) + this.positionOffset.x;
+    const cY = (high >> 1) + this.positionOffset.y;
+    for (let i = 0; i < ps; i++) {
+      b2TransformPointOut(xf2, vs[i], p02);
+      p02.y = -p02.y;
+      let p1X = scale * p02.x;
+      let p1Y = scale * p02.y;
+      let vX = p1X + cX;
+      let vY = p1Y + cY;
+      if (i === 0) {
+        ctx2.moveTo(vX, vY);
+      } else {
+        ctx2.lineTo(vX, vY);
+      }
+    }
+    ctx2.closePath();
+    ctx2.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+    ctx2.fill();
+    ctx2.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx2.lineWidth = rad * 2;
+    ctx2.stroke();
+  };
+  draw.DrawCircle = function (center, rad, col, ctx2) {
+    ctx2.beginPath();
+    const r = (col >> 16) & 255;
+    const g = (col >> 8) & 255;
+    const b = col & 255;
+    const a = 0.5;
+    const cX = (wide >> 1) + this.positionOffset.x;
+    const cY = (high >> 1) + this.positionOffset.y;
+    const scaleCenterX = scale * cX;
+    const scaleCenterY = scale * cY;
+    let transformedCenterX = scaleCenterX + cX;
+    let transformedCenterY = scaleCenterY + cY;
+    transformedCenterY = -transformedCenterY;
+    ctx2.arc(
+      transformedCenterX,
+      transformedCenterY,
+      rad * scale,
+      0,
+      2 * Math.PI
+    );
+    ctx2.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx2.lineWidth = 2;
+    ctx2.stroke();
+  };
+  draw.DrawImageCircle = function (xf2, rad, shape, ctx2) {
+    const cX = (wide >> 1) + this.positionOffset.x;
+    const cY = (high >> 1) + this.positionOffset.y;
+    const centerX = xf2.p.x;
+    const centerY = -xf2.p.y;
+    const scaleCenterX = scale * centerX;
+    const scaleCenterY = scale * centerY;
+    let transformedCenterX = scaleCenterX + cX;
+    let transformedCenterY = scaleCenterY + cY;
+    transformedCenterY = -transformedCenterY;
+    ctx2.save();
+    ctx2.translate(transformedCenterX, transformedCenterY);
+    const angle = -Math.atan2(xf2.q.s, xf2.q.c);
+    ctx2.rotate(angle);
+    const image = shape.image;
+    const imageScale = shape.imageScale || new b2Vec2(1, 1);
+    const imageOffset = shape.imageOffset || new b2Vec2(0, 0);
+    const aspectRatio = image.width / image.height;
+    let drawWidth, drawHeight;
+    if (aspectRatio > 1) {
+      drawHeight = rad * 2 * scale * imageScale.x;
+      drawWidth = drawHeight * aspectRatio * imageScale.y;
+    } else {
+      drawWidth = rad * 2 * scale * imageScale.x;
+      drawHeight = (drawWidth / aspectRatio) * imageScale.y;
+    }
+    ctx2.drawImage(
+      image,
+      -drawWidth / 2 + drawWidth * imageOffset.x,
+      -drawHeight / 2 + drawHeight * imageOffset.y,
+      drawWidth,
+      drawHeight
+    );
+    ctx2.restore();
+  };
+  draw.DrawSolidCircle = function (xf2, rad, col, ctx2) {
+    ctx2.beginPath();
+    const r = (col >> 16) & 255;
+    const g = (col >> 8) & 255;
+    const b = col & 255;
+    const a = 0.5;
+    const cX = (wide >> 1) + this.positionOffset.x;
+    const cY = (high >> 1) + this.positionOffset.y;
+    const centerX = xf2.p.x;
+    const centerY = -xf2.p.y;
+    const scaleCenterX = scale * centerX;
+    const scaleCenterY = scale * centerY;
+    let transformedCenterX = scaleCenterX + cX;
+    let transformedCenterY = scaleCenterY + cY;
+    ctx2.arc(
+      transformedCenterX,
+      transformedCenterY,
+      rad * scale,
+      0,
+      2 * Math.PI
+    );
+    ctx2.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+    ctx2.fill();
+    ctx2.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx2.lineWidth = 2;
+    ctx2.stroke();
+  };
+  draw.DrawImageCapsule = function (p14, p23, radius, shape, ctx2) {
+    const cX = (wide >> 1) + this.positionOffset.x;
+    const cY = (high >> 1) + this.positionOffset.y;
+    const rs = radius * scale;
+    const tp1 = p14;
+    const tp2 = p23;
+    tp1.y = -tp1.y;
+    tp2.y = -tp2.y;
+    const scaledP1X = scale * tp1.x;
+    const scaledP1Y = scale * tp1.y;
+    const scaledP2X = scale * tp2.x;
+    const scaledP2Y = scale * tp2.y;
+    let transformedP1X = scaledP1X + cX;
+    let transformedP1Y = scaledP1Y + cY;
+    let transformedP2X = scaledP2X + cX;
+    let transformedP2Y = scaledP2Y + cY;
+    let dx = transformedP2X - transformedP1X;
+    let dy = transformedP2Y - transformedP1Y;
+    let angle = Math.atan2(dy, dx);
+    let length = Math.sqrt(dx * dx + dy * dy);
+    ctx2.save();
+    ctx2.translate(transformedP1X + dx / 2, transformedP1Y + dy / 2);
+    ctx2.rotate(angle + Math.PI / 2);
+    const image = shape.image;
+    const imageScale = shape.imageScale || new b2Vec2(1, 1);
+    const imageOffset = shape.imageOffset || new b2Vec2(0, 0);
+    const aspectRatio = image.width / image.height;
+    const overlap = 1.1;
+    let drawHeight = (length + rs * 2) * overlap * imageScale.y;
+    let drawWidth = rs * 2 * overlap * Math.abs(imageScale.x);
+    ctx2.scale(Math.sign(imageScale.x), 1);
+    ctx2.drawImage(
+      image,
+      shape.imageRect.lowerBoundX,
+      shape.imageRect.lowerBoundY,
+      shape.imageRect.upperBoundX,
+      shape.imageRect.upperBoundY,
+      -drawWidth / 2 + drawWidth * imageOffset.x,
+      -drawHeight / 2 + drawHeight * imageOffset.y,
+      drawWidth,
+      drawHeight
+    );
+    ctx2.restore();
+  };
+  draw.DrawSolidCapsule = function (p14, p23, radius, col, ctx2) {
+    const r = (col >> 16) & 255;
+    const g = (col >> 8) & 255;
+    const b = col & 255;
+    const a = 0.5;
+    const cX = (wide >> 1) + this.positionOffset.x;
+    const cY = (high >> 1) + this.positionOffset.y;
+    const tp1 = p14;
+    const tp2 = p23;
+    tp1.y = -tp1.y;
+    tp2.y = -tp2.y;
+    const scaledP1X = scale * tp1.x;
+    const scaledP1Y = scale * tp1.y;
+    const scaledP2X = scale * tp2.x;
+    const scaledP2Y = scale * tp2.y;
+    let transformedP1X = scaledP1X + cX;
+    let transformedP1Y = scaledP1Y + cY;
+    let transformedP2X = scaledP2X + cX;
+    let transformedP2Y = scaledP2Y + cY;
+    let dx = transformedP2X - transformedP1X;
+    let dy = transformedP2Y - transformedP1Y;
+    let angle = Math.atan2(dy, dx);
+    let length = Math.sqrt(dx * dx + dy * dy);
+    ctx2.save();
+    ctx2.translate(transformedP1X, transformedP1Y);
+    ctx2.rotate(angle);
+    ctx2.beginPath();
+    ctx2.arc(0, 0, radius * scale, Math.PI / 2, -Math.PI / 2);
+    ctx2.lineTo(length, -radius * scale);
+    ctx2.arc(length, 0, radius * scale, -Math.PI / 2, Math.PI / 2);
+    ctx2.lineTo(0, radius * scale);
+    ctx2.closePath();
+    ctx2.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+    ctx2.fill();
+    ctx2.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx2.lineWidth = 2;
+    ctx2.stroke();
+    ctx2.restore();
+  };
+  draw.DrawSegment = function (p14, p23, col, ctx2) {
+    ctx2.beginPath();
+    const r = (col >> 16) & 255;
+    const g = (col >> 8) & 255;
+    const b = col & 255;
+    const a = 0.5;
+    const cX = (wide >> 1) + this.positionOffset.x;
+    const cY = (high >> 1) + this.positionOffset.y;
+    const tp1 = p14;
+    const tp2 = p23;
+    tp1.y = -tp1.y;
+    tp2.y = -tp2.y;
+    const v1X = scale * tp1.x + cX;
+    const v1Y = scale * tp1.y + cY;
+    const v2X = scale * tp2.x + cX;
+    const v2Y = scale * tp2.y + cY;
+    ctx2.moveTo(v1X, v1Y);
+    ctx2.lineTo(v2X, v2Y);
+    ctx2.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+    ctx2.lineWidth = 2;
+    ctx2.stroke();
+  };
+  draw.DrawPoint = function (x, y, radius, col, ctx2) {
+    const r = (col >> 16) & 255;
+    const g = (col >> 8) & 255;
+    const b = col & 255;
+    const a = 0.5;
+    const cX = (wide >> 1) + this.positionOffset.x;
+    const cY = (high >> 1) + this.positionOffset.y;
+    y = -y;
+    const vX = scale * x + cX;
+    const vY = scale * y + cY;
+    ctx2.beginPath();
+    ctx2.arc(vX, vY, radius, 0, 2 * Math.PI);
+    ctx2.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+    ctx2.fill();
+    ctx2.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx2.lineWidth = 1;
+    ctx2.stroke();
+  };
+  draw.SetPosition = function (x, y) {
+    draw.positionOffset.x = wide / 2 - x;
+    draw.positionOffset.y = y - high / 2;
+  };
+  draw.context = ctx;
+  return draw;
+}
+function RAF(callback) {
+  let lastTime = 0;
+  let totalTime = 0;
+  let frameCount = 0;
+  let lastFpsUpdateTime = 0;
+  let currentFps = 0;
+  function update(currentTime) {
+    requestAnimationFrame(update);
+    if (lastTime === 0) {
+      lastTime = currentTime;
+    }
+    const deltaTime = Math.min((currentTime - lastTime) / 1e3, 1 / 10);
+    lastTime = currentTime;
+    totalTime += deltaTime;
+    callback(deltaTime, totalTime, currentFps);
+    frameCount++;
+    if (currentTime - lastFpsUpdateTime >= 1e3) {
+      currentFps = Math.round(
+        (frameCount * 1e3) / (currentTime - lastFpsUpdateTime)
+      );
+      frameCount = 0;
+      lastFpsUpdateTime = currentTime;
+    }
+  }
+  requestAnimationFrame(update);
+}
+function loadPNGImage(imageUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = (event) => {
+      const errorDetails = {
+        message: "Failed to load image",
+        url: imageUrl,
+        event,
+      };
+      reject(new Error(JSON.stringify(errorDetails, null, 2)));
+    };
+    img.src = imageUrl;
+  });
+}
+function AttachImage(
+  worldId,
+  bodyId,
+  path,
+  imgName,
+  drawOffset = null,
+  drawScale = null,
+  sourcePosition = null,
+  sourceSize = null
+) {
+  const world = b2GetWorldFromId(worldId);
+  const shapes = [];
+  b2Body_GetShapes(bodyId, shapes);
+  const shape = world.shapeArray[shapes[shapes.length - 1].index1 - 1];
+  shape.imageOffset = drawOffset;
+  shape.imageScale = drawScale;
+  shape.imageRect = new b2AABB(
+    sourcePosition.x,
+    sourcePosition.y,
+    sourceSize.x,
+    sourceSize.y
+  );
+  const fullPath = path + "/" + imgName;
+  loadPNGImage(fullPath)
+    .then((loadedImage) => {
+      shape.image = loadedImage;
+    })
+    .catch((error) => {});
+  return shape;
+}
+function getMousePosUV(canvas, ps) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    u: (ps.x - rect.left) / rect.width,
+    v: 1 - (ps.y - rect.top) / rect.height,
+  };
+}
+function ConvertScreenToWorld(canvas, drawScale, ps) {
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  let uv = getMousePosUV(canvas, ps);
+  var ratio = w / h;
+  var center = new b2Vec2(0, 0);
+  var zoom = h / 2 / drawScale;
+  var extents = new b2Vec2(zoom * ratio, zoom);
+  var lower = b2Sub(center, extents);
+  var upper = b2Add(center, extents);
+  var pw = new b2Vec2(
+    (1 - uv.u) * lower.x + uv.u * upper.x,
+    (1 - uv.v) * lower.y + uv.v * upper.y
+  );
+  return pw;
+}
+function ConvertWorldToScreen(canvas, drawScale, pw) {
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  var ratio = w / h;
+  var center = new b2Vec2(0, 0);
+  var zoom = h / 2 / drawScale;
+  var extents = new b2Vec2(zoom * ratio, zoom);
+  var lower = b2Sub(center, extents);
+  var upper = b2Add(center, extents);
+  var u = (pw.x - lower.x) / (upper.x - lower.x);
+  var v = (pw.y - lower.y) / (upper.y - lower.y);
+  var ps = new b2Vec2(u * w, v * h);
+  return ps;
+}
+
+// src/ragdoll.js
+var JointedBone = class {
+  constructor() {
+    this.bodyId = null;
+    this.jointId = null;
+    this.frictionScale = 1;
+    this.parentIndex = -1;
+    this.name = "";
+  }
+};
+var Skeletons = class {
+  static HumanBones = {
+    e_hip: 0,
+    e_torso: 1,
+    e_head: 2,
+    e_upperLeftLeg: 3,
+    e_lowerLeftLeg: 4,
+    e_upperRightLeg: 5,
+    e_lowerRightLeg: 6,
+    e_upperLeftArm: 7,
+    e_lowerLeftArm: 8,
+    e_upperRightArm: 9,
+    e_lowerRightArm: 10,
+    e_count: 11,
+  };
+  static sideViewHuman11 = {
+    BONE_DATA: [
+      {
+        name: "hip",
+        parentIndex: -1,
+        position: [0, 0.95],
+        capsule: { center1: [0, -0.02], center2: [0, 0.02], radius: 0.095 },
+      },
+      {
+        name: "torso",
+        parentIndex: 0,
+        position: [0, 1.2],
+        capsule: { center1: [0, -0.135], center2: [0, 0.135], radius: 0.09 },
+        frictionScale: 0.5,
+      },
+      {
+        name: "head",
+        parentIndex: 1,
+        position: [0, 1.5],
+        capsule: { center1: [0, -0.0325], center2: [0, 0.0325], radius: 0.08 },
+        frictionScale: 0.25,
+        linearDamping: 0.1,
+      },
+      {
+        name: "upperLeftLeg",
+        parentIndex: 0,
+        position: [0, 0.775],
+        capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.06 },
+      },
+      {
+        name: "lowerLeftLeg",
+        parentIndex: 3,
+        position: [0, 0.475],
+        capsule: { center1: [0, -0.14], center2: [0, 0.125], radius: 0.05 },
+        frictionScale: 0.5,
+        foot: "right",
+      },
+      {
+        name: "upperRightLeg",
+        parentIndex: 0,
+        position: [0, 0.775],
+        capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.06 },
+      },
+      {
+        name: "lowerRightLeg",
+        parentIndex: 5,
+        position: [0, 0.475],
+        capsule: { center1: [0, -0.14], center2: [0, 0.125], radius: 0.05 },
+        frictionScale: 0.5,
+        foot: "right",
+      },
+      {
+        name: "upperLeftArm",
+        parentIndex: 1,
+        position: [0, 1.225],
+        capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.035 },
+        frictionScale: 0.5,
+      },
+      {
+        name: "lowerLeftArm",
+        parentIndex: 7,
+        position: [0, 0.975],
+        capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.03 },
+        frictionScale: 0.1,
+        linearDamping: 0.1,
+      },
+      {
+        name: "upperRightArm",
+        parentIndex: 1,
+        position: [0, 1.225],
+        capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.035 },
+        frictionScale: 0.5,
+      },
+      {
+        name: "lowerRightArm",
+        parentIndex: 9,
+        position: [0, 0.975],
+        capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.03 },
+        frictionScale: 0.1,
+        linearDamping: 0.1,
+      },
+    ],
+    JOINT_DATA: [
+      { boneName: "torso", pivot: [0, 1], limits: [-0.25 * Math.PI, 0] },
+      {
+        boneName: "head",
+        pivot: [0, 1.4],
+        limits: [-0.3 * Math.PI, 0.1 * Math.PI],
+      },
+      {
+        boneName: "upperLeftLeg",
+        pivot: [0, 0.9],
+        limits: [-0.05 * Math.PI, 0.4 * Math.PI],
+      },
+      {
+        boneName: "lowerLeftLeg",
+        pivot: [0, 0.625],
+        limits: [-0.5 * Math.PI, -0.02 * Math.PI],
+      },
+      {
+        boneName: "upperRightLeg",
+        pivot: [0, 0.9],
+        limits: [-0.05 * Math.PI, 0.4 * Math.PI],
+      },
+      {
+        boneName: "lowerRightLeg",
+        pivot: [0, 0.625],
+        limits: [-0.5 * Math.PI, -0.02 * Math.PI],
+      },
+      {
+        boneName: "upperLeftArm",
+        pivot: [0, 1.35],
+        limits: [-0.1 * Math.PI, 0.8 * Math.PI],
+      },
+      {
+        boneName: "lowerLeftArm",
+        pivot: [0, 1.1],
+        limits: [0.01 * Math.PI, 0.5 * Math.PI],
+      },
+      { boneName: "upperRightArm", pivot: [0, 1.35], limits: null },
+      {
+        boneName: "lowerRightArm",
+        pivot: [0, 1.1],
+        limits: [0.01 * Math.PI, 0.5 * Math.PI],
+      },
+    ],
+  };
+  static frontViewHuman11 = {
+    BONE_DATA: [
+      {
+        name: "hip",
+        parentIndex: -1,
+        position: [0, 0.95],
+        capsule: { center1: [-0.03, 0], center2: [0.03, 0], radius: 0.095 },
+      },
+      {
+        name: "torso",
+        parentIndex: 0,
+        position: [0, 1.2],
+        capsule: { center1: [0, -0.135], center2: [0, 0.135], radius: 0.09 },
+        frictionScale: 0.5,
+      },
+      {
+        name: "head",
+        parentIndex: 1,
+        position: [0, 1.5],
+        capsule: { center1: [0, -0.0325], center2: [0, 0.0325], radius: 0.08 },
+        frictionScale: 0.25,
+        linearDamping: 0.1,
+      },
+      {
+        name: "upperLeftLeg",
+        parentIndex: 0,
+        position: [-0.1, 0.775],
+        capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.06 },
+      },
+      {
+        name: "lowerLeftLeg",
+        parentIndex: 3,
+        position: [-0.1, 0.475],
+        capsule: { center1: [0, -0.14], center2: [0, 0.125], radius: 0.05 },
+        frictionScale: 0.5,
+        foot: "left",
+      },
+      {
+        name: "upperRightLeg",
+        parentIndex: 0,
+        position: [0.1, 0.775],
+        capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.06 },
+      },
+      {
+        name: "lowerRightLeg",
+        parentIndex: 5,
+        position: [0.1, 0.475],
+        capsule: { center1: [0, -0.14], center2: [0, 0.125], radius: 0.05 },
+        frictionScale: 0.5,
+        foot: "right",
+      },
+      {
+        name: "upperLeftArm",
+        parentIndex: 1,
+        position: [-0.15, 1.22],
+        capsule: {
+          center1: [0, -0.125],
+          center2: [0.05, 0.125],
+          radius: 0.035,
+        },
+        frictionScale: 0.5,
+      },
+      {
+        name: "lowerLeftArm",
+        parentIndex: 7,
+        position: [-0.15, 0.97],
+        capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.03 },
+        frictionScale: 0.1,
+        linearDamping: 0.1,
+      },
+      {
+        name: "upperRightArm",
+        parentIndex: 1,
+        position: [0.15, 1.22],
+        capsule: {
+          center1: [0, -0.125],
+          center2: [-0.05, 0.125],
+          radius: 0.035,
+        },
+        frictionScale: 0.5,
+      },
+      {
+        name: "lowerRightArm",
+        parentIndex: 9,
+        position: [0.15, 0.97],
+        capsule: { center1: [0, -0.125], center2: [0, 0.125], radius: 0.03 },
+        frictionScale: 0.1,
+        linearDamping: 0.1,
+      },
+    ],
+    JOINT_DATA: [
+      {
+        boneName: "torso",
+        pivot: [0, 1],
+        limits: [-0.1 * Math.PI, 0.1 * Math.PI],
+      },
+      {
+        boneName: "head",
+        pivot: [0, 1.4],
+        limits: [-0.2 * Math.PI, 0.2 * Math.PI],
+      },
+      {
+        boneName: "upperLeftLeg",
+        pivot: [-0.1, 0.9],
+        limits: [-0.3 * Math.PI, 0.1 * Math.PI],
+      },
+      {
+        boneName: "lowerLeftLeg",
+        pivot: [-0.1, 0.625],
+        limits: [0, 0.5 * Math.PI],
+      },
+      {
+        boneName: "upperRightLeg",
+        pivot: [0.1, 0.9],
+        limits: [-0.1 * Math.PI, 0.3 * Math.PI],
+      },
+      {
+        boneName: "lowerRightLeg",
+        pivot: [0.1, 0.625],
+        limits: [-0.5 * Math.PI, 0],
+      },
+      {
+        boneName: "upperLeftArm",
+        pivot: [-0.12, 1.35],
+        limits: [-0.7 * Math.PI, 0.1 * Math.PI],
+      },
+      {
+        boneName: "lowerLeftArm",
+        pivot: [-0.16, 1.1],
+        limits: [0, 0.75 * Math.PI],
+      },
+      {
+        boneName: "upperRightArm",
+        pivot: [0.12, 1.35],
+        limits: [-0.1 * Math.PI, 0.7 * Math.PI],
+      },
+      {
+        boneName: "lowerRightArm",
+        pivot: [0.14, 1.1],
+        limits: [0, 0.75 * Math.PI],
+      },
+    ],
+  };
+  static ElephantBones = {
+    e_torso: 0,
+    e_head: 1,
+    e_trunkBase: 2,
+    e_trunkMid: 3,
+    e_trunkTip: 4,
+    e_upperFrontLegL: 5,
+    e_lowerFrontLegL: 6,
+    e_upperRearLegL: 7,
+    e_lowerRearLegL: 8,
+    e_tail: 9,
+    e_ear: 10,
+    e_count: 11,
+  };
+  static sideViewElephant = {
+    BONE_DATA: [
+      {
+        name: "torso",
+        parentIndex: -1,
+        position: [0, 1.5],
+        capsule: { center1: [0.8, 0], center2: [-0.8, 0], radius: 0.6 },
+        frictionScale: 0.5,
+      },
+      {
+        name: "head",
+        parentIndex: 0,
+        position: [-1.4, 2.2],
+        capsule: { center1: [0.3, 0], center2: [-0.3, 0], radius: 0.35 },
+        frictionScale: 0.25,
+        linearDamping: 0.1,
+      },
+      {
+        name: "trunkBase",
+        parentIndex: 1,
+        position: [-1.95, 1.85],
+        capsule: { center1: [0, -0.2], center2: [0, 0.2], radius: 0.15 },
+      },
+      {
+        name: "trunkMid",
+        parentIndex: 2,
+        position: [-1.95, 1.4],
+        capsule: { center1: [0, -0.2], center2: [0, 0.2], radius: 0.12 },
+      },
+      {
+        name: "trunkTip",
+        parentIndex: 3,
+        position: [-1.95, 1.05],
+        capsule: { center1: [0, -0.2], center2: [0, 0.2], radius: 0.08 },
+        frictionScale: 0.1,
+        linearDamping: 0.1,
+      },
+      {
+        name: "upperFrontLeg",
+        parentIndex: 0,
+        position: [-0.6, 0.8],
+        capsule: { center1: [0, -0.3], center2: [0, 0.3], radius: 0.2 },
+      },
+      {
+        name: "lowerFrontLeg",
+        parentIndex: 5,
+        position: [-0.6, 0.2],
+        capsule: { center1: [0, -0.3], center2: [0, 0.3], radius: 0.18 },
+        frictionScale: 0.5,
+      },
+      {
+        name: "upperBackLeg",
+        parentIndex: 0,
+        position: [0.7, 0.8],
+        capsule: { center1: [0, -0.3], center2: [0, 0.3], radius: 0.22 },
+      },
+      {
+        name: "lowerBackLeg",
+        parentIndex: 7,
+        position: [0.7, 0.2],
+        capsule: { center1: [0, -0.3], center2: [0, 0.3], radius: 0.2 },
+        frictionScale: 0.5,
+      },
+      {
+        name: "tail",
+        parentIndex: 0,
+        position: [1.2, 1.6],
+        capsule: { center1: [0, -0.3], center2: [0, 0.3], radius: 0.05 },
+        frictionScale: 0.1,
+        linearDamping: 0.1,
+      },
+      {
+        name: "ear",
+        parentIndex: 1,
+        position: [-1.1, 2],
+        capsule: { center1: [0, -0.15], center2: [0, 0.15], radius: 0.3 },
+        frictionScale: 0.1,
+        linearDamping: 0.1,
+      },
+    ],
+    JOINT_DATA: [
+      {
+        boneName: "head",
+        pivot: [-1, 2],
+        limits: [-0.1 * Math.PI, 0.3 * Math.PI],
+      },
+      {
+        boneName: "trunkBase",
+        pivot: [-1.95, 2],
+        limits: [-0.5 * Math.PI, 0.5 * Math.PI],
+      },
+      {
+        boneName: "trunkMid",
+        pivot: [-1.95, 1.55],
+        limits: [-0.7 * Math.PI, 0.7 * Math.PI],
+      },
+      {
+        boneName: "trunkTip",
+        pivot: [-1.95, 1.15],
+        limits: [-0.9 * Math.PI, 0.9 * Math.PI],
+      },
+      {
+        boneName: "upperFrontLeg",
+        pivot: [-0.6, 1.1],
+        limits: [-0.2 * Math.PI, 0.2 * Math.PI],
+      },
+      {
+        boneName: "lowerFrontLeg",
+        pivot: [-0.6, 0.5],
+        limits: [-0.3 * Math.PI, 0.1 * Math.PI],
+      },
+      {
+        boneName: "upperBackLeg",
+        pivot: [0.7, 1.1],
+        limits: [-0.2 * Math.PI, 0.2 * Math.PI],
+      },
+      {
+        boneName: "lowerBackLeg",
+        pivot: [0.7, 0.5],
+        limits: [-0.1 * Math.PI, 0.3 * Math.PI],
+      },
+      {
+        boneName: "tail",
+        pivot: [1.2, 1.9],
+        limits: [-0.4 * Math.PI, 0.4 * Math.PI],
+      },
+      {
+        boneName: "ear",
+        pivot: [-1.1, 2.2],
+        limits: [-0.3 * Math.PI, 0.9 * Math.PI],
+      },
+    ],
+  };
+};
+var Ragdoll = class {
+  constructor(skeleton, x, y, worldId, groupIndex, color, size = 2) {
+    this.skeleton = skeleton;
+    this.position = new b2Vec2(x, y);
+    this.worldId = worldId;
+    this.groupIndex = groupIndex;
+    this.color = color;
+    this.m_scale = size;
+    this.frictionTorque = 0.05;
+    this.hertz = 0;
+    this.dampingRatio = 0.5;
+    this.jointDrawSize = 0.5;
+    this.maxTorque = this.frictionTorque * this.m_scale;
+    this.m_bones = [];
+    this.create();
+  }
+  createBone(boneData) {
+    const { bodyId } = CreateCapsule({
+      worldId: this.worldId,
+      position: b2Add(
+        new b2Vec2(
+          boneData.position[0] * this.m_scale,
+          boneData.position[1] * this.m_scale
+        ),
+        this.position
+      ),
+      type: b2BodyType.b2_dynamicBody,
+      center1: new b2Vec2(
+        boneData.capsule.center1[0] * this.m_scale,
+        boneData.capsule.center1[1] * this.m_scale
+      ),
+      center2: new b2Vec2(
+        boneData.capsule.center2[0] * this.m_scale,
+        boneData.capsule.center2[1] * this.m_scale
+      ),
+      radius: boneData.capsule.radius * this.m_scale,
+      density: 1,
+      friction: 0.2,
+      groupIndex: -this.groupIndex,
+      color: this.color,
+    });
+    const bone = new JointedBone();
+    bone.name = boneData.name;
+    bone.parentIndex = boneData.parentIndex;
+    bone.frictionScale = boneData.frictionScale || 1;
+    bone.bodyId = bodyId;
+    if (boneData.foot) {
+      const footShapeDef = b2DefaultShapeDef();
+      footShapeDef.density = 1;
+      footShapeDef.friction = 0.2;
+      footShapeDef.filter.groupIndex = -this.groupIndex;
+      footShapeDef.filter.maskBits = 1;
+      footShapeDef.customColor = this.color;
+      const footDir = boneData.foot == "left" ? -1 : 1;
+      const footCapsule = new b2Capsule();
+      footCapsule.center1 = new b2Vec2(
+        footDir * -0.02 * this.m_scale,
+        -0.175 * this.m_scale
+      );
+      footCapsule.center2 = new b2Vec2(
+        footDir * 0.13 * this.m_scale,
+        -0.175 * this.m_scale
+      );
+      footCapsule.radius = 0.03 * this.m_scale;
+      b2CreateCapsuleShape(bodyId, footShapeDef, footCapsule);
+    }
+    return bone;
+  }
+  createJoint(jointData) {
+    const bone = this.m_bones.find((b) => b.name === jointData.boneName);
+    const parentBone = this.m_bones[bone.parentIndex];
+    const pivot = b2Add(
+      new b2Vec2(
+        jointData.pivot[0] * this.m_scale,
+        jointData.pivot[1] * this.m_scale
+      ),
+      this.position
+    );
+    const jointDef = new b2RevoluteJointDef();
+    jointDef.bodyIdA = parentBone.bodyId;
+    jointDef.bodyIdB = bone.bodyId;
+    jointDef.localAnchorA = b2Body_GetLocalPoint(jointDef.bodyIdA, pivot);
+    jointDef.localAnchorB = b2Body_GetLocalPoint(jointDef.bodyIdB, pivot);
+    if (jointData.limits) {
+      jointDef.enableLimit = true;
+      jointDef.lowerAngle = jointData.limits[0];
+      jointDef.upperAngle = jointData.limits[1];
+    }
+    jointDef.enableMotor = true;
+    jointDef.maxMotorTorque = bone.frictionScale * this.maxTorque;
+    jointDef.enableSpring = this.hertz > 0;
+    jointDef.hertz = this.hertz;
+    jointDef.dampingRatio = this.dampingRatio;
+    jointDef.drawSize = this.jointDrawSize;
+    return b2CreateRevoluteJoint(this.worldId, jointDef);
+  }
+  create() {
+    this.m_bones = this.skeleton.BONE_DATA.map((boneData) =>
+      this.createBone(boneData)
+    );
+    this.skeleton.JOINT_DATA.forEach((jointData) => {
+      const bone = this.m_bones.find((b) => b.name === jointData.boneName);
+      bone.jointId = this.createJoint(jointData);
+    });
+    this.m_bones.forEach((bone) => b2Body_SetUserData(bone.bodyId, this));
+    return this;
+  }
+  destroy() {
+    for (let i = 0; i < this.m_bones.length; ++i) {
+      if (this.m_bones[i].jointId) {
+        if (this.m_bones[i].jointId.index1 - 1 != B2_NULL_INDEX) {
+          b2DestroyJoint(this.m_bones[i].jointId);
+          this.m_bones[i].jointId = new b2JointId();
+        }
+      }
+    }
+    for (let i = 0; i < this.m_bones.length; ++i) {
+      if (this.m_bones[i].bodyId.index1 - 1 != B2_NULL_INDEX) {
+        b2DestroyBody(this.m_bones[i].bodyId);
+        this.m_bones[i].bodyId = null;
+      }
+    }
+    this.m_bones = null;
+  }
+};
+
+// src/fun_stuff.js
+function approx(value, variation) {
+  return value + (Math.random() - 0.5) * variation;
+}
+var ActiveBall = class {
+  constructor(id, createdTime) {
+    this.id = id;
+    this.created = createdTime;
+  }
+};
+function shootBall(startPosition, startForce, radius, density, color, worldId) {
+  const bodyDefBall = b2DefaultBodyDef();
+  bodyDefBall.type = b2BodyType.b2_dynamicBody;
+  bodyDefBall.fixedRotation = false;
+  bodyDefBall.position = startPosition.clone();
+  const shapeDefBall = b2DefaultShapeDef();
+  shapeDefBall.density = density;
+  shapeDefBall.friction = 0.05;
+  shapeDefBall.restitution = 0.5;
+  shapeDefBall.customColor = color;
+  const ballId = b2CreateBody(worldId, bodyDefBall);
+  const ball = new b2Circle();
+  ball.center = new b2Vec2(0, 0);
+  ball.radius = radius;
+  b2CreateCircleShape(ballId, shapeDefBall, ball);
+  const force = new b2Vec2(
+    approx(startForce.x, 400),
+    approx(startForce.y, 1500)
+  );
+  b2Body_ApplyForceToCenter(ballId, force, true);
+  return ballId;
+}
+var Gun = class {
+  constructor(
+    position,
+    power,
+    frequency,
+    life,
+    radius,
+    density,
+    color,
+    worldId
+  ) {
+    this.worldId = worldId;
+    this.position = position;
+    this.power = power;
+    this.frequency = frequency;
+    this.life = life;
+    this.radius = radius;
+    this.density = density;
+    this.color = color;
+    this.activeBalls = [];
+    this.nextShotTime = this.frequency;
+    this.totalTime = 0;
+  }
+  update(dt) {
+    if (isNaN(dt)) {
+      return;
+    }
+    this.totalTime += dt;
+    this.nextShotTime -= dt;
+    if (this.nextShotTime <= 0) {
+      this.nextShotTime = Math.max(this.nextShotTime + this.frequency, 1 / 240);
+      const ballId = shootBall(
+        this.position,
+        this.power,
+        this.radius,
+        this.density,
+        this.color,
+        this.worldId
+      );
+      const ab = new ActiveBall(ballId, this.totalTime);
+      this.activeBalls.push(ab);
+      b2Body_SetUserData(ballId, ab);
+    }
+    for (let i = this.activeBalls.length - 1; i >= 0; --i) {
+      const ab = this.activeBalls[i];
+      if (this.totalTime - ab.created >= this.life) {
+        this.destroyBall(ab);
+      }
+    }
+  }
+  destroyBall(ab) {
+    const i = this.activeBalls.indexOf(ab);
+    if (i != -1) {
+      b2DestroyBody(ab.id);
+      this.activeBalls.splice(i, 1);
+      return true;
+    }
+    return false;
+  }
+};
+var Spinner = class {
+  constructor(position, torque, speed, color, size = 1, worldId) {
+    const bodyDefBall = b2DefaultBodyDef();
+    bodyDefBall.type = b2BodyType.b2_staticBody;
+    bodyDefBall.position = position;
+    const ballId = b2CreateBody(worldId, bodyDefBall);
+    const ball = new b2Circle();
+    ball.center = new b2Vec2(0, 0);
+    ball.radius = 2 * size;
+    const shapeDefBall = b2DefaultShapeDef();
+    shapeDefBall.density = 1;
+    shapeDefBall.friction = 0.05;
+    shapeDefBall.filter.maskBits = 0;
+    shapeDefBall.customColor = color;
+    b2CreateCircleShape(ballId, shapeDefBall, ball);
+    const paddleDef = b2DefaultBodyDef();
+    paddleDef.type = b2BodyType.b2_dynamicBody;
+    paddleDef.position = position;
+    paddleDef.fixedRotation = false;
+    const boxId = b2CreateBody(worldId, paddleDef);
+    const dynamicBox = b2MakeBox(12 * size, 0.5 * size);
+    const shapeDefBox = b2DefaultShapeDef();
+    shapeDefBox.density = 5;
+    shapeDefBox.friction = 1;
+    shapeDefBox.customColor = color;
+    b2CreatePolygonShape(boxId, shapeDefBox, dynamicBox);
+    const jointDef = b2DefaultRevoluteJointDef();
+    jointDef.bodyIdA = boxId;
+    jointDef.bodyIdB = ballId;
+    jointDef.localAnchorA = new b2Vec2(0, 0);
+    jointDef.localAnchorB = new b2Vec2(0, 0);
+    jointDef.enableMotor = true;
+    jointDef.motorSpeed = speed;
+    jointDef.maxMotorTorque = torque;
+    b2CreateRevoluteJoint(worldId, jointDef);
+  }
+};
+
+// src/main.js
 var STATIC = 0;
 var KINEMATIC = 1;
-var DYNAMIC2 = 2;
+var DYNAMIC = 2;
 export {
+  ActiveBall,
   AddSpriteToWorld,
+  AttachImage,
   B2_ID_EQUALS,
   B2_IS_NON_NULL,
   B2_IS_NULL,
   B2_NULL_INDEX,
   BodyToSprite,
   ClearWorldSprites,
+  ConvertScreenToWorld,
+  ConvertWorldToScreen,
   CreateBoxPolygon,
   CreateCapsule,
   CreateChain,
   CreateCircle,
+  CreateDebugDraw,
   CreateDistanceJoint,
   CreateMotorJoint,
   CreateMouseJoint,
@@ -16219,16 +18997,19 @@ export {
   CreateWeldJoint,
   CreateWheelJoint,
   CreateWorld,
-  DYNAMIC2 as DYNAMIC,
+  DYNAMIC,
   GetBodyFromSprite,
   GetWorldScale,
+  Gun,
   KINEMATIC,
+  RAF,
   Ragdoll,
   RemoveSpriteFromWorld,
   RotFromRad,
   STATIC,
   SetWorldScale,
   Skeletons,
+  Spinner,
   SpriteToBox,
   SpriteToCircle,
   UpdateWorldSprites,
@@ -16261,11 +19042,9 @@ export {
   b2Body_EnableSleep,
   b2Body_GetAngularDamping,
   b2Body_GetAngularVelocity,
-  b2Body_GetAutomaticMass,
   b2Body_GetContactCapacity,
   b2Body_GetContactData,
   b2Body_GetGravityScale,
-  b2Body_GetInertiaTensor,
   b2Body_GetJointCount,
   b2Body_GetJoints,
   b2Body_GetLinearDamping,
@@ -16277,6 +19056,7 @@ export {
   b2Body_GetMassData,
   b2Body_GetPosition,
   b2Body_GetRotation,
+  b2Body_GetRotationalInertia,
   b2Body_GetShapeCount,
   b2Body_GetShapes,
   b2Body_GetSleepThreshold,
@@ -16294,7 +19074,6 @@ export {
   b2Body_IsValid,
   b2Body_SetAngularDamping,
   b2Body_SetAngularVelocity,
-  b2Body_SetAutomaticMass,
   b2Body_SetAwake,
   b2Body_SetBullet,
   b2Body_SetFixedRotation,
@@ -16310,6 +19089,7 @@ export {
   b2CastOutput,
   b2ChainDef,
   b2ChainId,
+  b2ChainSegment,
   b2Chain_IsValid,
   b2Chain_SetFriction,
   b2Chain_SetRestitution,
@@ -16319,6 +19099,9 @@ export {
   b2ClampInt,
   b2CollideCapsuleAndCircle,
   b2CollideCapsules,
+  b2CollideChainSegmentAndCapsule,
+  b2CollideChainSegmentAndCircle,
+  b2CollideChainSegmentAndPolygon,
   b2CollideCircles,
   b2CollidePolygonAndCapsule,
   b2CollidePolygonAndCircle,
@@ -16326,9 +19109,6 @@ export {
   b2CollideSegmentAndCapsule,
   b2CollideSegmentAndCircle,
   b2CollideSegmentAndPolygon,
-  b2CollideSmoothSegmentAndCapsule,
-  b2CollideSmoothSegmentAndCircle,
-  b2CollideSmoothSegmentAndPolygon,
   b2ComputeAngularVelocity,
   b2ComputeCapsuleAABB,
   b2ComputeCapsuleMass,
@@ -16386,14 +19166,14 @@ export {
   b2DistanceJoint_EnableMotor,
   b2DistanceJoint_EnableSpring,
   b2DistanceJoint_GetCurrentLength,
-  b2DistanceJoint_GetDampingRatio,
-  b2DistanceJoint_GetHertz,
   b2DistanceJoint_GetLength,
   b2DistanceJoint_GetMaxLength,
   b2DistanceJoint_GetMaxMotorForce,
   b2DistanceJoint_GetMinLength,
   b2DistanceJoint_GetMotorForce,
   b2DistanceJoint_GetMotorSpeed,
+  b2DistanceJoint_GetSpringDampingRatio,
+  b2DistanceJoint_GetSpringHertz,
   b2DistanceJoint_IsLimitEnabled,
   b2DistanceJoint_IsMotorEnabled,
   b2DistanceJoint_IsSpringEnabled,
@@ -16600,6 +19380,7 @@ export {
   b2Shape_GetAABB,
   b2Shape_GetBody,
   b2Shape_GetCapsule,
+  b2Shape_GetChainSegment,
   b2Shape_GetCircle,
   b2Shape_GetClosestPoint,
   b2Shape_GetContactCapacity,
@@ -16611,7 +19392,6 @@ export {
   b2Shape_GetPolygon,
   b2Shape_GetRestitution,
   b2Shape_GetSegment,
-  b2Shape_GetSmoothSegment,
   b2Shape_GetType,
   b2Shape_GetUserData,
   b2Shape_IsSensor,
@@ -16629,7 +19409,6 @@ export {
   b2Shape_TestPoint,
   b2Simplex,
   b2SleepMilliseconds,
-  b2SmoothSegment,
   b2Solve22,
   b2Sub,
   b2Sweep,
@@ -16705,5 +19484,5 @@ export {
   b2Yield,
   mpx,
   pxm,
-  pxmVec2
+  pxmVec2,
 };

@@ -1,0 +1,47 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    /* Classic Node resolution */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx", // Assuming no React, but keeping for potential future use or if Phaser uses JSX-like syntax internally for some plugins
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Custom Type Paths */
+    "baseUrl": ".",
+    "paths": {
+      "@PhaserBox2D": ["./src/lib/PhaserBox2D.js"],
+      "@constants": ["./src/lib/constants.ts"],
+      "@gameState": ["./src/lib/gameState.ts"],
+      "@entities/*": ["./src/entities/*"],
+      "@scenes/*": ["./src/scenes/*"],
+      "@ui/*": ["./src/ui/*"]
+    },
+    "typeRoots": ["./node_modules/@types", "./types"], // Keep types root for potentially other types
+
+    /* Allow JS for PhaserBox2D.js */
+    "allowJs": true,
+    "checkJs": false // Don't type-check the JS file itself, just allow importing it
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "types/**/*.d.ts",
+
+    "vite.config.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

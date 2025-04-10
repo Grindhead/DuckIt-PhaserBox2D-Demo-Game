@@ -1,207 +1,254 @@
 /**
  * This file includes code that is:
- * 
+ *
  * - Copyright 2023 Erin Catto, released under the MIT license.
  * - Copyright 2024 Phaser Studio Inc, released under the MIT license.
  */
 
-import { B2_HUGE, B2_NULL_INDEX, b2_aabbMargin, b2_graphColorCount, b2_speculativeDistance } from './include/core_h.js';
-import { b2AABB, b2AABB_Contains, b2AABB_Union, b2Add, b2Cross, b2CrossSV, b2Dot, b2InvRotateVector, b2InvTransformPoint, b2IsValid, b2LengthSquared, b2MulAdd, b2MulSV, b2Rot, b2Rot_IsValid, b2RotateVector, b2Sub, b2Transform, b2TransformPoint, b2Vec2, b2Vec2_IsValid } from './include/math_functions_h.js';
-import { b2AddBodySim, b2AddBodyState, b2RemoveBodySim, b2RemoveBodyState } from './include/block_array_h.js';
-import { b2AllocId, b2FreeId } from './include/id_pool_h.js';
-import { b2BodyId, b2JointId, b2ShapeId } from './include/id_h.js';
-import { b2ComputeShapeAABB, b2ComputeShapeExtent, b2ComputeShapeMass, b2CreateShapeProxy, b2DestroyShapeProxy } from './include/shape_h.js';
-import { b2ContactFlags, b2DestroyContact, b2GetContactSim } from './include/contact_h.js';
-import { b2CreateIsland, b2DestroyIsland, b2LinkJoint, b2MergeAwakeIslands, b2SplitIsland, b2UnlinkJoint, b2ValidateIsland } from './include/island_h.js';
-import { b2DestroyJointInternal, b2GetJoint } from './include/joint_h.js';
-import { b2DestroySolverSet, b2SolverSet, b2TransferBody, b2TransferJoint, b2TrySleepIsland, b2WakeSolverSet } from './include/solver_set_h.js';
-import { b2GetWorld, b2GetWorldLocked } from './include/world_h.js';
-import { b2GetWorldFromId, b2SetType, b2ValidateConnectivity, b2ValidateSolverSets } from './include/world_h.js';
+import {
+  B2_HUGE,
+  B2_NULL_INDEX,
+  b2_aabbMargin,
+  b2_graphColorCount,
+  b2_speculativeDistance,
+} from "./include/core_h.js";
+import {
+  b2AABB,
+  b2AABB_Contains,
+  b2AABB_Union,
+  b2Add,
+  b2Cross,
+  b2CrossSV,
+  b2Dot,
+  b2InvRotateVector,
+  b2InvTransformPoint,
+  b2IsValid,
+  b2LengthSquared,
+  b2MulAdd,
+  b2MulSV,
+  b2Rot,
+  b2Rot_IsValid,
+  b2RotateVector,
+  b2Sub,
+  b2Transform,
+  b2TransformPoint,
+  b2Vec2,
+  b2Vec2_IsValid,
+} from "./include/math_functions_h.js";
+import {
+  b2AddBodySim,
+  b2AddBodyState,
+  b2RemoveBodySim,
+  b2RemoveBodyState,
+} from "./include/block_array_h.js";
+import { b2AllocId, b2FreeId } from "./include/id_pool_h.js";
+import { b2BodyId, b2JointId, b2ShapeId, b2WorldId } from "./include/id_h.js";
+import {
+  b2ComputeShapeAABB,
+  b2ComputeShapeExtent,
+  b2ComputeShapeMass,
+  b2CreateShapeProxy,
+  b2DestroyShapeProxy,
+} from "./include/shape_h.js";
+import {
+  b2ContactFlags,
+  b2DestroyContact,
+  b2GetContactSim,
+} from "./include/contact_h.js";
+import {
+  b2CreateIsland,
+  b2DestroyIsland,
+  b2LinkJoint,
+  b2MergeAwakeIslands,
+  b2SplitIsland,
+  b2UnlinkJoint,
+  b2ValidateIsland,
+} from "./include/island_h.js";
+import { b2DestroyJointInternal, b2GetJoint } from "./include/joint_h.js";
+import {
+  b2DestroySolverSet,
+  b2SolverSet,
+  b2TransferBody,
+  b2TransferJoint,
+  b2TrySleepIsland,
+  b2WakeSolverSet,
+} from "./include/solver_set_h.js";
+import { b2GetWorld, b2GetWorldLocked } from "./include/world_h.js";
+import {
+  b2GetWorldFromId,
+  b2SetType,
+  b2ValidateConnectivity,
+  b2ValidateSolverSets,
+} from "./include/world_h.js";
 
-import { b2Body } from './include/body_h.js';
-import { b2BodyType } from './include/types_h.js';
-import { b2Body_IsValid } from './include/world_h.js';
-import { b2BroadPhase_MoveProxy } from './include/broad_phase_h.js';
-import { b2MassData } from './include/collision_h.js';
+import { b2Body } from "./include/body_h.js";
+import { b2BodyDef, b2BodyType, b2ContactData } from "./include/types_h.js";
+import { b2Body_IsValid } from "./include/world_h.js";
+import { b2BroadPhase_MoveProxy } from "./include/broad_phase_h.js";
+import { b2MassData } from "./include/collision_h.js";
 
 /**
  * @namespace Body
  */
 
-export function b2MakeSweep(bodySim, out)
-{
-    out.c1.x = bodySim.center0X;
-    out.c1.y = bodySim.center0Y;
-    out.c2.copy(bodySim.center);
-    out.q1.copy(bodySim.rotation0);
-    out.q2.copy(bodySim.transform.q);
-    out.localCenter.copy(bodySim.localCenter);
+export function b2MakeSweep(bodySim, out) {
+  out.c1.x = bodySim.center0X;
+  out.c1.y = bodySim.center0Y;
+  out.c2.copy(bodySim.center);
+  out.q1.copy(bodySim.rotation0);
+  out.q2.copy(bodySim.transform.q);
+  out.localCenter.copy(bodySim.localCenter);
 
-    return out;
+  return out;
 }
 
-export function b2GetBody(world, bodyId)
-{
-    return world.bodyArray[bodyId];
+export function b2GetBody(world, bodyId) {
+  return world.bodyArray[bodyId];
 }
 
-export function b2GetBodyFullId(world, bodyId)
-{
-    console.assert(b2Body_IsValid(bodyId), `invalid bodyId ${JSON.stringify(bodyId)}\n${new Error().stack}`);
+export function b2GetBodyFullId(world, bodyId) {
+  console.assert(
+    b2Body_IsValid(bodyId),
+    `invalid bodyId ${JSON.stringify(bodyId)}\n${new Error().stack}`
+  );
 
-    return b2GetBody(world, bodyId.index1 - 1);
+  return b2GetBody(world, bodyId.index1 - 1);
 }
 
-export function b2GetBodyTransformQuick(world, body)
-{
-    console.assert(0 <= body.setIndex && body.setIndex < world.solverSetArray.length);
-    const set = world.solverSetArray[body.setIndex];
-    console.assert(0 <= body.localIndex && body.localIndex <= set.sims.count);
-    const bodySim = set.sims.data[body.localIndex];
-    console.assert(bodySim.transform != null);
-    console.assert(bodySim.transform.p != null);
-    console.assert(!Number.isNaN(bodySim.transform.p.x));
-    console.assert(!Number.isNaN(bodySim.transform.q.c));
+export function b2GetBodyTransformQuick(world, body) {
+  console.assert(
+    0 <= body.setIndex && body.setIndex < world.solverSetArray.length
+  );
+  const set = world.solverSetArray[body.setIndex];
+  console.assert(0 <= body.localIndex && body.localIndex <= set.sims.count);
+  const bodySim = set.sims.data[body.localIndex];
+  console.assert(bodySim.transform != null);
+  console.assert(bodySim.transform.p != null);
+  console.assert(!Number.isNaN(bodySim.transform.p.x));
+  console.assert(!Number.isNaN(bodySim.transform.q.c));
 
-    return bodySim.transform;
+  return bodySim.transform;
 }
 
-export function b2GetBodyTransform(world, bodyId)
-{
-    // b2CheckIndex(world.bodyArray, bodyId);
-    const body = world.bodyArray[bodyId];
+export function b2GetBodyTransform(world, bodyId) {
+  // b2CheckIndex(world.bodyArray, bodyId);
+  const body = world.bodyArray[bodyId];
 
-    return b2GetBodyTransformQuick(world, body);
+  return b2GetBodyTransformQuick(world, body);
 }
 
-export function b2MakeBodyId(world, bodyId)
-{
-    // b2CheckIndex(world.bodyArray, bodyId);
-    const body = world.bodyArray[bodyId];
+export function b2MakeBodyId(world, bodyId) {
+  // b2CheckIndex(world.bodyArray, bodyId);
+  const body = world.bodyArray[bodyId];
 
-    return new b2BodyId(bodyId + 1, world.worldId, body.revision);
+  return new b2BodyId(bodyId + 1, world.worldId, body.revision);
 }
 
-export function b2GetBodySim(world, body)
-{
-    // b2CheckIndex(world.solverSetArray, body.setIndex);
-    console.assert(body.setIndex >= 0);
-    const set = world.solverSetArray[body.setIndex];
-    console.assert(0 <= body.localIndex && body.localIndex < set.sims.count);
+export function b2GetBodySim(world, body) {
+  // b2CheckIndex(world.solverSetArray, body.setIndex);
+  console.assert(body.setIndex >= 0);
+  const set = world.solverSetArray[body.setIndex];
+  console.assert(0 <= body.localIndex && body.localIndex < set.sims.count);
 
-    return set.sims.data[body.localIndex];
+  return set.sims.data[body.localIndex];
 }
 
-export function b2GetBodyState(world, body)
-{
-    // b2CheckIndex(world.solverSetArray, body.setIndex);
-    console.assert(body.setIndex >= 0);
+export function b2GetBodyState(world, body) {
+  // b2CheckIndex(world.solverSetArray, body.setIndex);
+  console.assert(body.setIndex >= 0);
 
-    if (body.setIndex === b2SetType.b2_awakeSet)
-    {
-        const set = world.solverSetArray[b2SetType.b2_awakeSet];
+  if (body.setIndex === b2SetType.b2_awakeSet) {
+    const set = world.solverSetArray[b2SetType.b2_awakeSet];
 
-        // console.assert(0 <= body.localIndex && body.localIndex < set.states.count);
-        return set.states.data[body.localIndex];
+    // console.assert(0 <= body.localIndex && body.localIndex < set.states.count);
+    return set.states.data[body.localIndex];
+  }
+
+  return null;
+}
+
+export function b2CreateIslandForBody(world, setIndex, body) {
+  console.assert(body.islandId === B2_NULL_INDEX);
+  console.assert(body.islandPrev === B2_NULL_INDEX);
+  console.assert(body.islandNext === B2_NULL_INDEX);
+  console.assert(setIndex !== b2SetType.b2_disabledSet);
+
+  const island = b2CreateIsland(world, setIndex);
+
+  body.islandId = island.islandId;
+  island.headBody = body.id;
+  island.tailBody = body.id;
+  island.bodyCount = 1;
+}
+
+export function b2RemoveBodyFromIsland(world, body) {
+  if (body.islandId === B2_NULL_INDEX) {
+    // console.assert(body.islandPrev === B2_NULL_INDEX);
+    // console.assert(body.islandNext === B2_NULL_INDEX);
+    return;
+  }
+
+  const islandId = body.islandId;
+
+  // b2CheckIndex(world.islandArray, islandId);
+  const island = world.islandArray[islandId];
+
+  // Fix the island's linked list of sims
+  if (body.islandPrev !== B2_NULL_INDEX) {
+    const prevBody = b2GetBody(world, body.islandPrev);
+    prevBody.islandNext = body.islandNext;
+  }
+
+  if (body.islandNext !== B2_NULL_INDEX) {
+    const nextBody = b2GetBody(world, body.islandNext);
+    nextBody.islandPrev = body.islandPrev;
+  }
+
+  console.assert(island.bodyCount > 0);
+  island.bodyCount -= 1;
+  let islandDestroyed = false;
+
+  if (island.headBody === body.id) {
+    island.headBody = body.islandNext;
+
+    if (island.headBody === B2_NULL_INDEX) {
+      // Destroy empty island
+      console.assert(island.tailBody === body.id);
+      console.assert(island.bodyCount === 0);
+      console.assert(island.contactCount === 0);
+      console.assert(island.jointCount === 0);
+
+      // Free the island
+      b2DestroyIsland(world, island.islandId);
+      islandDestroyed = true;
     }
+  } else if (island.tailBody === body.id) {
+    island.tailBody = body.islandPrev;
+  }
 
-    return null;
+  if (islandDestroyed === false) {
+    b2ValidateIsland(world, islandId);
+  }
+
+  body.islandId = B2_NULL_INDEX;
+  body.islandPrev = B2_NULL_INDEX;
+  body.islandNext = B2_NULL_INDEX;
 }
 
-export function b2CreateIslandForBody(world, setIndex, body)
-{
-    console.assert(body.islandId === B2_NULL_INDEX);
-    console.assert(body.islandPrev === B2_NULL_INDEX);
-    console.assert(body.islandNext === B2_NULL_INDEX);
-    console.assert(setIndex !== b2SetType.b2_disabledSet);
+export function b2DestroyBodyContacts(world, body, wakeBodies) {
+  // Destroy the attached contacts
+  let edgeKey = body.headContactKey;
 
-    const island = b2CreateIsland(world, setIndex);
+  while (edgeKey !== B2_NULL_INDEX) {
+    const contactId = edgeKey >> 1;
+    const edgeIndex = edgeKey & 1;
 
-    body.islandId = island.islandId;
-    island.headBody = body.id;
-    island.tailBody = body.id;
-    island.bodyCount = 1;
-}
+    const contact = world.contactArray[contactId];
+    edgeKey = contact.edges[edgeIndex].nextKey;
+    b2DestroyContact(world, contact, wakeBodies);
+  }
 
-export function b2RemoveBodyFromIsland(world, body)
-{
-    if (body.islandId === B2_NULL_INDEX)
-    {
-        // console.assert(body.islandPrev === B2_NULL_INDEX);
-        // console.assert(body.islandNext === B2_NULL_INDEX);
-        return;
-    }
-
-    const islandId = body.islandId;
-
-    // b2CheckIndex(world.islandArray, islandId);
-    const island = world.islandArray[islandId];
-
-    // Fix the island's linked list of sims
-    if (body.islandPrev !== B2_NULL_INDEX)
-    {
-        const prevBody = b2GetBody(world, body.islandPrev);
-        prevBody.islandNext = body.islandNext;
-    }
-
-    if (body.islandNext !== B2_NULL_INDEX)
-    {
-        const nextBody = b2GetBody(world, body.islandNext);
-        nextBody.islandPrev = body.islandPrev;
-    }
-
-    console.assert(island.bodyCount > 0);
-    island.bodyCount -= 1;
-    let islandDestroyed = false;
-
-    if (island.headBody === body.id)
-    {
-        island.headBody = body.islandNext;
-
-        if (island.headBody === B2_NULL_INDEX)
-        {
-            // Destroy empty island
-            console.assert(island.tailBody === body.id);
-            console.assert(island.bodyCount === 0);
-            console.assert(island.contactCount === 0);
-            console.assert(island.jointCount === 0);
-
-            // Free the island
-            b2DestroyIsland(world, island.islandId);
-            islandDestroyed = true;
-        }
-    }
-    else if (island.tailBody === body.id)
-    {
-        island.tailBody = body.islandPrev;
-    }
-
-    if (islandDestroyed === false)
-    {
-        b2ValidateIsland(world, islandId);
-    }
-
-    body.islandId = B2_NULL_INDEX;
-    body.islandPrev = B2_NULL_INDEX;
-    body.islandNext = B2_NULL_INDEX;
-}
-
-export function b2DestroyBodyContacts(world, body, wakeBodies)
-{
-    // Destroy the attached contacts
-    let edgeKey = body.headContactKey;
-
-    while (edgeKey !== B2_NULL_INDEX)
-    {
-        const contactId = edgeKey >> 1;
-        const edgeIndex = edgeKey & 1;
-
-        const contact = world.contactArray[contactId];
-        edgeKey = contact.edges[edgeIndex].nextKey;
-        b2DestroyContact(world, contact, wakeBodies);
-    }
-
-    b2ValidateSolverSets(world);
+  b2ValidateSolverSets(world);
 }
 
 /**
@@ -224,174 +271,161 @@ export function b2DestroyBodyContacts(world, body, wakeBodies)
  * - Sleep threshold is invalid or negative
  * - Gravity scale is invalid
  */
-export function b2CreateBody(worldId, def)
-{
-    // b2CheckDef(def);
-    console.assert(b2Vec2_IsValid(def.position));
-    console.assert(b2Rot_IsValid(def.rotation));
-    console.assert(b2Vec2_IsValid(def.linearVelocity));
-    console.assert(b2IsValid(def.angularVelocity));
-    console.assert(b2IsValid(def.linearDamping) && def.linearDamping >= 0.0);
-    console.assert(b2IsValid(def.angularDamping) && def.angularDamping >= 0.0);
-    console.assert(b2IsValid(def.sleepThreshold) && def.sleepThreshold >= 0.0);
-    console.assert(b2IsValid(def.gravityScale));
+export function b2CreateBody(worldId, def) {
+  // b2CheckDef(def);
+  console.assert(b2Vec2_IsValid(def.position));
+  console.assert(b2Rot_IsValid(def.rotation));
+  console.assert(b2Vec2_IsValid(def.linearVelocity));
+  console.assert(b2IsValid(def.angularVelocity));
+  console.assert(b2IsValid(def.linearDamping) && def.linearDamping >= 0.0);
+  console.assert(b2IsValid(def.angularDamping) && def.angularDamping >= 0.0);
+  console.assert(b2IsValid(def.sleepThreshold) && def.sleepThreshold >= 0.0);
+  console.assert(b2IsValid(def.gravityScale));
 
-    const world = b2GetWorldFromId(worldId);
+  const world = b2GetWorldFromId(worldId);
 
-    if (world.locked)
-    {
-        console.warn("Cannot create body while world is locked (are you adding a body during PreSolve callback?)");
+  if (world.locked) {
+    console.warn(
+      "Cannot create body while world is locked (are you adding a body during PreSolve callback?)"
+    );
 
-        return new b2BodyId(0, 0, 0);
+    return new b2BodyId(0, 0, 0);
+  }
+
+  const isAwake = (def.isAwake || def.enableSleep === false) && def.isEnabled;
+
+  // determine the solver set
+  let setId;
+
+  if (def.isEnabled === false) {
+    // any body type can be disabled
+    setId = b2SetType.b2_disabledSet;
+  } else if (def.type === b2BodyType.b2_staticBody) {
+    setId = b2SetType.b2_staticSet;
+  } else if (isAwake === true) {
+    setId = b2SetType.b2_awakeSet;
+  } else {
+    // new set for a sleeping body in its own island
+    setId = b2AllocId(world.solverSetIdPool);
+    console.warn("new set for a sleeping body " + setId);
+
+    if (setId === world.solverSetArray.length) {
+      const set = new b2SolverSet();
+      set.setIndex = setId;
+      world.solverSetArray.push(set);
+    } else {
+      console.assert(world.solverSetArray[setId].setIndex === B2_NULL_INDEX);
     }
 
-    const isAwake = (def.isAwake || def.enableSleep === false) && def.isEnabled;
+    world.solverSetArray[setId].setIndex = setId;
+  }
 
-    // determine the solver set
-    let setId;
+  // console.assert(0 <= setId && setId < world.solverSetArray.length);
 
-    if (def.isEnabled === false)
-    {
-        // any body type can be disabled
-        setId = b2SetType.b2_disabledSet;
-    }
-    else if (def.type === b2BodyType.b2_staticBody)
-    {
-        setId = b2SetType.b2_staticSet;
-    }
-    else if (isAwake === true)
-    {
-        setId = b2SetType.b2_awakeSet;
-    }
-    else
-    {
-        // new set for a sleeping body in its own island
-        setId = b2AllocId(world.solverSetIdPool);
-        console.warn("new set for a sleeping body " + setId);
+  const bodyId = b2AllocId(world.bodyIdPool);
 
-        if (setId === world.solverSetArray.length)
-        {
-            const set = new b2SolverSet();
-            set.setIndex = setId;
-            world.solverSetArray.push(set);
-        }
-        else
-        {
-            console.assert(world.solverSetArray[setId].setIndex === B2_NULL_INDEX);
-        }
+  const set = world.solverSetArray[setId];
+  const bodySim = b2AddBodySim(set.sims);
 
-        world.solverSetArray[setId].setIndex = setId;
-    }
+  Object.assign(bodySim, {
+    transform: new b2Transform(def.position, def.rotation),
+    center: def.position.clone(),
+    rotation0: def.rotation,
+    center0X: def.position.x,
+    center0Y: def.position.y,
+    localCenter: new b2Vec2(),
+    force: new b2Vec2(),
+    torque: 0.0,
+    mass: 0.0,
+    invMass: 0.0,
+    inertia: 0.0,
+    invInertia: 0.0,
+    minExtent: B2_HUGE,
+    maxExtent: 0.0,
+    linearDamping: def.linearDamping,
+    angularDamping: def.angularDamping,
+    gravityScale: def.gravityScale,
+    bodyId: bodyId,
+    isBullet: def.isBullet,
+    allowFastRotation: def.allowFastRotation,
+    enlargeAABB: false,
+    isFast: false,
+    isSpeedCapped: false,
+  });
+  console.assert(bodySim.transform);
 
-    // console.assert(0 <= setId && setId < world.solverSetArray.length);
+  if (setId === b2SetType.b2_awakeSet) {
+    const bodyState = b2AddBodyState(set.states);
+    console.assert((bodyState & 0x1f) === 0);
 
-    const bodyId = b2AllocId(world.bodyIdPool);
-
-    const set = world.solverSetArray[setId];
-    const bodySim = b2AddBodySim(set.sims);
-
-    Object.assign(bodySim, {
-        transform: new b2Transform(def.position, def.rotation),
-        center: def.position.clone(),
-        rotation0: def.rotation,
-        center0X: def.position.x,
-        center0Y: def.position.y,
-        localCenter: new b2Vec2(),
-        force: new b2Vec2(),
-        torque: 0.0,
-        mass: 0.0,
-        invMass: 0.0,
-        inertia: 0.0,
-        invInertia: 0.0,
-        minExtent: B2_HUGE,
-        maxExtent: 0.0,
-        linearDamping: def.linearDamping,
-        angularDamping: def.angularDamping,
-        gravityScale: def.gravityScale,
-        bodyId: bodyId,
-        isBullet: def.isBullet,
-        allowFastRotation: def.allowFastRotation,
-        enlargeAABB: false,
-        isFast: false,
-        isSpeedCapped: false
+    Object.assign(bodyState, {
+      linearVelocity: def.linearVelocity,
+      angularVelocity: def.angularVelocity,
+      deltaRotation: new b2Rot(),
     });
-    console.assert(bodySim.transform);
+  }
 
-    if (setId === b2SetType.b2_awakeSet)
-    {
-        const bodyState = b2AddBodyState(set.states);
-        console.assert((bodyState & 0x1F) === 0);
+  // PJB NOTE: this 'bodyId' is the index in the world.bodyArray (so really, bodyIndex??)
+  while (bodyId >= world.bodyArray.length) {
+    world.bodyArray.push(new b2Body());
+  }
 
-        Object.assign(bodyState, {
-            linearVelocity: def.linearVelocity,
-            angularVelocity: def.angularVelocity,
-            deltaRotation: new b2Rot()
-        });
-    }
+  console.assert(
+    world.bodyArray[bodyId].id === B2_NULL_INDEX,
+    "bodyId " + bodyId + " id " + world.bodyArray[bodyId].id
+  );
 
-    // PJB NOTE: this 'bodyId' is the index in the world.bodyArray (so really, bodyIndex??)
-    while (bodyId >= world.bodyArray.length)
-    {
-        world.bodyArray.push(new b2Body());
-    }
+  // b2CheckIndex(world.bodyArray, bodyId);
+  const body = world.bodyArray[bodyId];
+  Object.assign(body, {
+    userData: def.userData,
+    setIndex: setId,
+    localIndex: set.sims.count - 1,
+    revision: body.revision + 1,
+    headShapeId: B2_NULL_INDEX,
+    shapeCount: 0,
+    headChainId: B2_NULL_INDEX,
+    headContactKey: B2_NULL_INDEX,
+    contactCount: 0,
+    headJointKey: B2_NULL_INDEX, // PJB NOTE: combination of joint id (>> 1) and edge index (& 0x01)
+    jointCount: 0,
+    islandId: B2_NULL_INDEX,
+    islandPrev: B2_NULL_INDEX,
+    islandNext: B2_NULL_INDEX,
+    bodyMoveIndex: B2_NULL_INDEX,
+    id: bodyId, // PJB NOTE: body.id is bodyId (is index in worldBodyArray)
+    sleepThreshold: def.sleepThreshold,
+    sleepTime: 0.0,
+    type: def.type,
+    enableSleep: def.enableSleep,
+    fixedRotation: def.fixedRotation,
+    isSpeedCapped: false,
+    isMarked: false,
+    updateBodyMass: def.updateBodyMass,
+  });
 
-    console.assert(world.bodyArray[bodyId].id === B2_NULL_INDEX, "bodyId " + bodyId + " id " + world.bodyArray[bodyId].id);
+  // dynamic and kinematic bodies that are enabled need an island
+  if (setId >= b2SetType.b2_awakeSet) {
+    b2CreateIslandForBody(world, setId, body);
+  }
 
-    // b2CheckIndex(world.bodyArray, bodyId);
-    const body = world.bodyArray[bodyId];
-    Object.assign(body, {
-        userData: def.userData,
-        setIndex: setId,
-        localIndex: set.sims.count - 1,
-        revision: body.revision + 1,
-        headShapeId: B2_NULL_INDEX,
-        shapeCount: 0,
-        headChainId: B2_NULL_INDEX,
-        headContactKey: B2_NULL_INDEX,
-        contactCount: 0,
-        headJointKey: B2_NULL_INDEX,        // PJB NOTE: combination of joint id (>> 1) and edge index (& 0x01)
-        jointCount: 0,
-        islandId: B2_NULL_INDEX,
-        islandPrev: B2_NULL_INDEX,
-        islandNext: B2_NULL_INDEX,
-        bodyMoveIndex: B2_NULL_INDEX,
-        id: bodyId,                         // PJB NOTE: body.id is bodyId (is index in worldBodyArray)
-        sleepThreshold: def.sleepThreshold,
-        sleepTime: 0.0,
-        type: def.type,
-        enableSleep: def.enableSleep,
-        fixedRotation: def.fixedRotation,
-        isSpeedCapped: false,
-        isMarked: false,
-        updateBodyMass: def.updateBodyMass
-    });
+  b2ValidateSolverSets(world);
 
-    // dynamic and kinematic bodies that are enabled need an island
-    if (setId >= b2SetType.b2_awakeSet)
-    {
-        b2CreateIslandForBody(world, setId, body);
-    }
-
-    b2ValidateSolverSets(world);
-    
-    return new b2BodyId(bodyId + 1, world.worldId, body.revision);
+  return new b2BodyId(bodyId + 1, world.worldId, body.revision);
 }
 
-export function b2IsBodyAwake(world, body)
-{
-    return body.setIndex === b2SetType.b2_awakeSet;
+export function b2IsBodyAwake(world, body) {
+  return body.setIndex === b2SetType.b2_awakeSet;
 }
 
-export function b2WakeBody(world, body)
-{
-    if (body.setIndex >= b2SetType.b2_firstSleepingSet)
-    {
-        b2WakeSolverSet(world, body.setIndex);
+export function b2WakeBody(world, body) {
+  if (body.setIndex >= b2SetType.b2_firstSleepingSet) {
+    b2WakeSolverSet(world, body.setIndex);
 
-        return true;
-    }
+    return true;
+  }
 
-    return false;
+  return false;
 }
 
 /**
@@ -410,113 +444,107 @@ export function b2WakeBody(world, body)
  * - Removes the body from the island structure
  * - Cleans up solver sets and simulation data
  */
-export function b2DestroyBody(bodyId)
-{
-    // ("b2DestroyBody " + JSON.stringify(bodyId));
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2DestroyBody(bodyId) {
+  // ("b2DestroyBody " + JSON.stringify(bodyId));
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
-    }
+  if (world === null) {
+    return;
+  }
 
-    const body = b2GetBodyFullId(world, bodyId);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    // Wake bodies attached to this body, even if this body is static.
-    const wakeBodies = true;
+  // Wake bodies attached to this body, even if this body is static.
+  const wakeBodies = true;
 
-    // Destroy the attached joints
-    let edgeKey = body.headJointKey;
+  // Destroy the attached joints
+  let edgeKey = body.headJointKey;
 
-    while (edgeKey !== B2_NULL_INDEX)
-    {
-        const jointId = edgeKey >> 1;
-        const edgeIndex = edgeKey & 1;
+  while (edgeKey !== B2_NULL_INDEX) {
+    const jointId = edgeKey >> 1;
+    const edgeIndex = edgeKey & 1;
 
-        const joint = world.jointArray[jointId];
-        edgeKey = joint.edges[edgeIndex].nextKey;
+    const joint = world.jointArray[jointId];
+    edgeKey = joint.edges[edgeIndex].nextKey;
 
-        // Careful because this modifies the list being traversed
-        b2DestroyJointInternal(world, joint, wakeBodies);
-    }
+    // Careful because this modifies the list being traversed
+    b2DestroyJointInternal(world, joint, wakeBodies);
+  }
 
-    // Destroy all contacts attached to this body.
-    b2DestroyBodyContacts(world, body, wakeBodies);
+  // Destroy all contacts attached to this body.
+  b2DestroyBodyContacts(world, body, wakeBodies);
 
-    // Destroy the attached shapes and their broad-phase proxies.
-    let shapeId = body.headShapeId;
+  // Destroy the attached shapes and their broad-phase proxies.
+  let shapeId = body.headShapeId;
 
-    while (shapeId !== B2_NULL_INDEX)
-    {
-        const shape = world.shapeArray[shapeId];
+  while (shapeId !== B2_NULL_INDEX) {
+    const shape = world.shapeArray[shapeId];
 
-        b2DestroyShapeProxy(shape, world.broadPhase);
+    b2DestroyShapeProxy(shape, world.broadPhase);
 
-        // Return shape to free list.
-        b2FreeId(world.shapeIdPool, shapeId);
-        shape.id = B2_NULL_INDEX;
+    // Return shape to free list.
+    b2FreeId(world.shapeIdPool, shapeId);
+    shape.id = B2_NULL_INDEX;
 
-        shapeId = shape.nextShapeId;
-    }
+    shapeId = shape.nextShapeId;
+  }
 
-    // Destroy the attached chains. The associated shapes have already been destroyed above.
-    let chainId = body.headChainId;
+  // Destroy the attached chains. The associated shapes have already been destroyed above.
+  let chainId = body.headChainId;
 
-    while (chainId !== B2_NULL_INDEX)
-    {
-        const chain = world.chainArray[chainId];
-        chain.shapeIndices = null;
+  while (chainId !== B2_NULL_INDEX) {
+    const chain = world.chainArray[chainId];
+    chain.shapeIndices = null;
 
-        // Return chain to free list.
-        b2FreeId(world.chainIdPool, chainId);
-        chain.id = B2_NULL_INDEX;
+    // Return chain to free list.
+    b2FreeId(world.chainIdPool, chainId);
+    chain.id = B2_NULL_INDEX;
 
-        chainId = chain.nextChainId;
-    }
+    chainId = chain.nextChainId;
+  }
 
-    b2RemoveBodyFromIsland(world, body);
+  b2RemoveBodyFromIsland(world, body);
 
-    // Remove body sim from solver set that owns it
-    // (swap the last item in the list into its position, overwriting and removing its data)
-    console.assert(body.setIndex != B2_NULL_INDEX);
-    const set = world.solverSetArray[body.setIndex];
-    const movedIndex = b2RemoveBodySim(set.sims, body.localIndex);
+  // Remove body sim from solver set that owns it
+  // (swap the last item in the list into its position, overwriting and removing its data)
+  console.assert(body.setIndex != B2_NULL_INDEX);
+  const set = world.solverSetArray[body.setIndex];
+  const movedIndex = b2RemoveBodySim(set.sims, body.localIndex);
 
-    if (movedIndex !== B2_NULL_INDEX)
-    {
-        // Fix moved body index
+  if (movedIndex !== B2_NULL_INDEX) {
+    // Fix moved body index
 
-        // get the body data from the set using the 
-        const movedSim = set.sims.data[body.localIndex];
+    // get the body data from the set using the
+    const movedSim = set.sims.data[body.localIndex];
 
-        const movedId = movedSim.bodyId;
-        const movedBody = world.bodyArray[movedId];
-        console.assert(movedBody.localIndex === movedIndex);
-        movedBody.localIndex = body.localIndex;
-    }
+    const movedId = movedSim.bodyId;
+    const movedBody = world.bodyArray[movedId];
+    console.assert(movedBody.localIndex === movedIndex);
+    movedBody.localIndex = body.localIndex;
+  }
 
-    // Remove body state from awake set
-    if (body.setIndex === b2SetType.b2_awakeSet)
-    {
-        const result = b2RemoveBodyState(set.states, body.localIndex);
+  // Remove body state from awake set
+  if (body.setIndex === b2SetType.b2_awakeSet) {
+    const result = b2RemoveBodyState(set.states, body.localIndex);
 
-        // B2_MAYBE_UNUSED(result);
-        console.assert(result === movedIndex);
-    }
-    else if ( set.setIndex >= b2SetType.b2_firstSleepingSet && set.sims.count == 0 )
-    {
-        // Remove solver set if it's now an orphan.
-        b2DestroySolverSet( world, set.setIndex );
-    }
+    // B2_MAYBE_UNUSED(result);
+    console.assert(result === movedIndex);
+  } else if (
+    set.setIndex >= b2SetType.b2_firstSleepingSet &&
+    set.sims.count == 0
+  ) {
+    // Remove solver set if it's now an orphan.
+    b2DestroySolverSet(world, set.setIndex);
+  }
 
-    // Free body and id (preserve body revision)
-    b2FreeId(world.bodyIdPool, body.id);
+  // Free body and id (preserve body revision)
+  b2FreeId(world.bodyIdPool, body.id);
 
-    body.setIndex = B2_NULL_INDEX;
-    body.localIndex = B2_NULL_INDEX;
-    body.id = B2_NULL_INDEX;
+  body.setIndex = B2_NULL_INDEX;
+  body.localIndex = B2_NULL_INDEX;
+  body.id = B2_NULL_INDEX;
 
-    b2ValidateSolverSets(world);
+  b2ValidateSolverSets(world);
 }
 
 /**
@@ -528,19 +556,17 @@ export function b2DestroyBody(bodyId)
  * Retrieves the current number of contacts associated with the specified body.
  * The function first validates the world reference before accessing the body's contact count.
  */
-export function b2Body_GetContactCapacity(bodyId)
-{
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2Body_GetContactCapacity(bodyId) {
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return 0;
-    }
+  if (world === null) {
+    return 0;
+  }
 
-    const body = b2GetBodyFullId(world, bodyId);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    // Conservative and fast
-    return body.contactCount;
+  // Conservative and fast
+  return body.contactCount;
 }
 
 /**
@@ -555,49 +581,53 @@ export function b2Body_GetContactCapacity(bodyId)
  * touching flag set.
  * @throws {Error} If the world is locked or invalid
  */
-export function b2Body_GetContactData(bodyId, contactData, capacity)
-{
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2Body_GetContactData(bodyId, contactData, capacity) {
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return 0;
+  if (world === null) {
+    return 0;
+  }
+
+  const body = b2GetBodyFullId(world, bodyId);
+
+  let contactKey = body.headContactKey;
+  let index = 0;
+
+  while (contactKey !== B2_NULL_INDEX && index < capacity) {
+    const contactId = contactKey >> 1;
+    const edgeIndex = contactKey & 1;
+
+    // b2CheckIndex(world.contactArray, contactId);
+    const contact = world.contactArray[contactId];
+
+    // Is contact touching?
+    if (contact.flags & b2ContactFlags.b2_contactTouchingFlag) {
+      const shapeA = world.shapeArray[contact.shapeIdA];
+      const shapeB = world.shapeArray[contact.shapeIdB];
+
+      contactData[index].shapeIdA = new b2ShapeId(
+        shapeA.id + 1,
+        bodyId.world0,
+        shapeA.revision
+      );
+      contactData[index].shapeIdB = new b2ShapeId(
+        shapeB.id + 1,
+        bodyId.world0,
+        shapeB.revision
+      );
+
+      const contactSim = b2GetContactSim(world, contact);
+      contactData[index].manifold = contactSim.manifold;
+
+      index += 1;
     }
 
-    const body = b2GetBodyFullId(world, bodyId);
+    contactKey = contact.edges[edgeIndex].nextKey;
+  }
 
-    let contactKey = body.headContactKey;
-    let index = 0;
+  console.assert(index <= capacity);
 
-    while (contactKey !== B2_NULL_INDEX && index < capacity)
-    {
-        const contactId = contactKey >> 1;
-        const edgeIndex = contactKey & 1;
-
-        // b2CheckIndex(world.contactArray, contactId);
-        const contact = world.contactArray[contactId];
-
-        // Is contact touching?
-        if (contact.flags & b2ContactFlags.b2_contactTouchingFlag)
-        {
-            const shapeA = world.shapeArray[contact.shapeIdA];
-            const shapeB = world.shapeArray[contact.shapeIdB];
-
-            contactData[index].shapeIdA = new b2ShapeId(shapeA.id + 1, bodyId.world0, shapeA.revision);
-            contactData[index].shapeIdB = new b2ShapeId(shapeB.id + 1, bodyId.world0, shapeB.revision);
-
-            const contactSim = b2GetContactSim(world, contact);
-            contactData[index].manifold = contactSim.manifold;
-
-            index += 1;
-        }
-
-        contactKey = contact.edges[edgeIndex].nextKey;
-    }
-
-    console.assert(index <= capacity);
-
-    return index;
+  return index;
 }
 
 /**
@@ -609,143 +639,138 @@ export function b2Body_GetContactData(bodyId, contactData, capacity)
  * For bodies with no shapes, returns an AABB containing only the body's position.
  * For bodies with shapes, computes the union of AABBs of all shapes attached to the body.
  */
-export function b2Body_ComputeAABB(bodyId)
-{
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2Body_ComputeAABB(bodyId) {
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return new b2AABB();
-    }
+  if (world === null) {
+    return new b2AABB();
+  }
 
-    const body = b2GetBodyFullId(world, bodyId);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    if (body.headShapeId === B2_NULL_INDEX)
-    {
-        const transform = b2GetBodyTransform(world, body.id);
-        const aabb = new b2AABB(transform.p.x, transform.p.y, transform.p.x, transform.p.y);
-
-        return aabb;
-    }
-
-    let shape = world.shapeArray[body.headShapeId];
-    let aabb = shape.aabb;
-
-    while (shape.nextShapeId !== B2_NULL_INDEX)
-    {
-        shape = world.shapeArray[shape.nextShapeId];
-        aabb = b2AABB_Union(aabb, shape.aabb);
-    }
+  if (body.headShapeId === B2_NULL_INDEX) {
+    const transform = b2GetBodyTransform(world, body.id);
+    const aabb = new b2AABB(
+      transform.p.x,
+      transform.p.y,
+      transform.p.x,
+      transform.p.y
+    );
 
     return aabb;
+  }
+
+  let shape = world.shapeArray[body.headShapeId];
+  let aabb = shape.aabb;
+
+  while (shape.nextShapeId !== B2_NULL_INDEX) {
+    shape = world.shapeArray[shape.nextShapeId];
+    aabb = b2AABB_Union(aabb, shape.aabb);
+  }
+
+  return aabb;
 }
 
-export function b2UpdateBodyMassData(world, body)
-{
-    const bodySim = b2GetBodySim(world, body);
+export function b2UpdateBodyMassData(world, body) {
+  const bodySim = b2GetBodySim(world, body);
 
-    // Compute mass data from shapes. Each shape has its own density.
-    bodySim.mass = 0.0;
-    bodySim.invMass = 0.0;
-    bodySim.inertia = 0.0;
-    bodySim.invInertia = 0.0;
+  // Compute mass data from shapes. Each shape has its own density.
+  bodySim.mass = 0.0;
+  bodySim.invMass = 0.0;
+  bodySim.inertia = 0.0;
+  bodySim.invInertia = 0.0;
 
-    // bodySim.localCenter = new b2Vec2(); assigned in the function
-    bodySim.minExtent = B2_HUGE;
-    bodySim.maxExtent = 0.0;
+  // bodySim.localCenter = new b2Vec2(); assigned in the function
+  bodySim.minExtent = B2_HUGE;
+  bodySim.maxExtent = 0.0;
 
-    // Static and kinematic sims have zero mass.
-    if (body.type !== b2BodyType.b2_dynamicBody)
-    {
-        bodySim.center = bodySim.transform.p.clone();
+  // Static and kinematic sims have zero mass.
+  if (body.type !== b2BodyType.b2_dynamicBody) {
+    bodySim.center = bodySim.transform.p.clone();
 
-        // Need extents for kinematic bodies for sleeping to work correctly.
-        if (body.type === b2BodyType.b2_kinematicBody)
-        {
-            let shapeId = body.headShapeId;
+    // Need extents for kinematic bodies for sleeping to work correctly.
+    if (body.type === b2BodyType.b2_kinematicBody) {
+      let shapeId = body.headShapeId;
 
-            while (shapeId !== B2_NULL_INDEX)
-            {
-                const s = world.shapeArray[shapeId];
-                shapeId = s.nextShapeId;
-
-                const extent = b2ComputeShapeExtent(s, new b2Vec2());
-                bodySim.minExtent = Math.min(bodySim.minExtent, extent.minExtent);
-                bodySim.maxExtent = Math.max(bodySim.maxExtent, extent.maxExtent);
-            }
-        }
-
-        return;
-    }
-
-    // Accumulate mass over all shapes.
-    let localCenter = new b2Vec2();
-    let shapeId = body.headShapeId;
-
-    while (shapeId !== B2_NULL_INDEX)
-    {
+      while (shapeId !== B2_NULL_INDEX) {
         const s = world.shapeArray[shapeId];
         shapeId = s.nextShapeId;
 
-        if (s.density === 0.0)
-        {
-            continue;
-        }
-
-        const massData = b2ComputeShapeMass(s);
-        bodySim.mass += massData.mass;
-        localCenter = b2MulAdd(localCenter, massData.mass, massData.center);
-        bodySim.inertia += massData.rotationalInertia;
-    }
-
-    // Compute center of mass.
-    console.assert(bodySim.mass > 0.0, "A body has zero mass, check both density and size!");
-
-    if (bodySim.mass > 0.0)
-    {
-        bodySim.invMass = 1.0 / bodySim.mass;
-        localCenter = b2MulSV(bodySim.invMass, localCenter);
-    }
-
-    if (bodySim.inertia > 0.0 && body.fixedRotation === false)
-    {
-        // Center the inertia about the center of mass.
-        bodySim.inertia -= bodySim.mass * b2Dot(localCenter, localCenter);
-        console.assert(bodySim.inertia > 0.0);
-        bodySim.invInertia = 1.0 / bodySim.inertia;
-    }
-    else
-    {
-        bodySim.inertia = 0.0;
-        bodySim.invInertia = 0.0;
-    }
-
-    // Move center of mass.
-    const oldCenter = bodySim.center.clone();
-    bodySim.localCenter = localCenter;
-    bodySim.center = b2TransformPoint(bodySim.transform, bodySim.localCenter);
-
-    // Update center of mass velocity
-    const state = b2GetBodyState(world, body);
-
-    if (state !== null)
-    {
-        const deltaLinear = b2CrossSV(state.angularVelocity, b2Sub(bodySim.center, oldCenter));
-        state.linearVelocity = b2Add(state.linearVelocity, deltaLinear);
-    }
-
-    // Compute body extents relative to center of mass
-    shapeId = body.headShapeId;
-
-    while (shapeId !== B2_NULL_INDEX)
-    {
-        const s = world.shapeArray[shapeId];
-        shapeId = s.nextShapeId;
-
-        const extent = b2ComputeShapeExtent(s, localCenter);
+        const extent = b2ComputeShapeExtent(s, new b2Vec2());
         bodySim.minExtent = Math.min(bodySim.minExtent, extent.minExtent);
         bodySim.maxExtent = Math.max(bodySim.maxExtent, extent.maxExtent);
+      }
     }
+
+    return;
+  }
+
+  // Accumulate mass over all shapes.
+  let localCenter = new b2Vec2();
+  let shapeId = body.headShapeId;
+
+  while (shapeId !== B2_NULL_INDEX) {
+    const s = world.shapeArray[shapeId];
+    shapeId = s.nextShapeId;
+
+    if (s.density === 0.0) {
+      continue;
+    }
+
+    const massData = b2ComputeShapeMass(s);
+    bodySim.mass += massData.mass;
+    localCenter = b2MulAdd(localCenter, massData.mass, massData.center);
+    bodySim.inertia += massData.rotationalInertia;
+  }
+
+  // Compute center of mass.
+  console.assert(
+    bodySim.mass > 0.0,
+    "A body has zero mass, check both density and size!"
+  );
+
+  if (bodySim.mass > 0.0) {
+    bodySim.invMass = 1.0 / bodySim.mass;
+    localCenter = b2MulSV(bodySim.invMass, localCenter);
+  }
+
+  if (bodySim.inertia > 0.0 && body.fixedRotation === false) {
+    // Center the inertia about the center of mass.
+    bodySim.inertia -= bodySim.mass * b2Dot(localCenter, localCenter);
+    console.assert(bodySim.inertia > 0.0);
+    bodySim.invInertia = 1.0 / bodySim.inertia;
+  } else {
+    bodySim.inertia = 0.0;
+    bodySim.invInertia = 0.0;
+  }
+
+  // Move center of mass.
+  const oldCenter = bodySim.center.clone();
+  bodySim.localCenter = localCenter;
+  bodySim.center = b2TransformPoint(bodySim.transform, bodySim.localCenter);
+
+  // Update center of mass velocity
+  const state = b2GetBodyState(world, body);
+
+  if (state !== null) {
+    const deltaLinear = b2CrossSV(
+      state.angularVelocity,
+      b2Sub(bodySim.center, oldCenter)
+    );
+    state.linearVelocity = b2Add(state.linearVelocity, deltaLinear);
+  }
+
+  // Compute body extents relative to center of mass
+  shapeId = body.headShapeId;
+
+  while (shapeId !== B2_NULL_INDEX) {
+    const s = world.shapeArray[shapeId];
+    shapeId = s.nextShapeId;
+
+    const extent = b2ComputeShapeExtent(s, localCenter);
+    bodySim.minExtent = Math.min(bodySim.minExtent, extent.minExtent);
+    bodySim.maxExtent = Math.max(bodySim.maxExtent, extent.maxExtent);
+  }
 }
 
 /**
@@ -757,13 +782,12 @@ export function b2UpdateBodyMassData(world, body)
  * Retrieves the current position component of a body's transform from the physics world.
  * The position is returned as a b2Vec2 representing the body's location in world space.
  */
-export function b2Body_GetPosition(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const transform = b2GetBodyTransformQuick(world, body);
+export function b2Body_GetPosition(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const transform = b2GetBodyTransformQuick(world, body);
 
-    return transform.p;
+  return transform.p;
 }
 
 /**
@@ -775,13 +799,12 @@ export function b2Body_GetPosition(bodyId)
  * Retrieves the rotation component (q) from the body's transform. The returned b2Rot
  * object represents the body's angular orientation in 2D space.
  */
-export function b2Body_GetRotation(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const transform = b2GetBodyTransformQuick(world, body);
+export function b2Body_GetRotation(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const transform = b2GetBodyTransformQuick(world, body);
 
-    return transform.q;
+  return transform.q;
 }
 
 /**
@@ -796,12 +819,11 @@ export function b2Body_GetRotation(bodyId)
  * Retrieves the current transform (position and rotation) of a physics body
  * from the specified Box2D world using the body's identifier.
  */
-export function b2Body_GetTransform(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_GetTransform(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    return b2GetBodyTransformQuick(world, body);
+  return b2GetBodyTransformQuick(world, body);
 }
 
 /**
@@ -814,13 +836,12 @@ export function b2Body_GetTransform(bodyId)
  * Takes a point given in world coordinates and converts it to the body's local
  * coordinate system by applying the inverse of the body's transform.
  */
-export function b2Body_GetLocalPoint(bodyId, worldPoint)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const transform = b2GetBodyTransformQuick(world, body);
+export function b2Body_GetLocalPoint(bodyId, worldPoint) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const transform = b2GetBodyTransformQuick(world, body);
 
-    return b2InvTransformPoint(transform, worldPoint);
+  return b2InvTransformPoint(transform, worldPoint);
 }
 
 /**
@@ -833,13 +854,12 @@ export function b2Body_GetLocalPoint(bodyId, worldPoint)
  * Takes a point given in body-local coordinates and converts it to world coordinates
  * using the body's current transform (position and rotation).
  */
-export function b2Body_GetWorldPoint(bodyId, localPoint)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const transform = b2GetBodyTransformQuick(world, body);
+export function b2Body_GetWorldPoint(bodyId, localPoint) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const transform = b2GetBodyTransformQuick(world, body);
 
-    return b2TransformPoint(transform, localPoint);
+  return b2TransformPoint(transform, localPoint);
 }
 
 /**
@@ -852,13 +872,12 @@ export function b2Body_GetWorldPoint(bodyId, localPoint)
  * Takes a vector defined in world coordinates and transforms it to be relative
  * to the body's local coordinate system by applying the inverse of the body's rotation.
  */
-export function b2Body_GetLocalVector(bodyId, worldVector)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const transform = b2GetBodyTransformQuick(world, body);
+export function b2Body_GetLocalVector(bodyId, worldVector) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const transform = b2GetBodyTransformQuick(world, body);
 
-    return b2InvRotateVector(transform.q, worldVector);
+  return b2InvRotateVector(transform.q, worldVector);
 }
 
 /**
@@ -872,13 +891,12 @@ export function b2Body_GetLocalVector(bodyId, worldVector)
  * coordinate system. This operation only performs rotation (not translation)
  * using the body's current rotation matrix.
  */
-export function b2Body_GetWorldVector(bodyId, localVector)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const transform = b2GetBodyTransformQuick(world, body);
+export function b2Body_GetWorldVector(bodyId, localVector) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const transform = b2GetBodyTransformQuick(world, body);
 
-    return b2RotateVector(transform.q, localVector);
+  return b2RotateVector(transform.q, localVector);
 }
 
 /**
@@ -896,63 +914,62 @@ export function b2Body_GetWorldVector(bodyId, localVector)
  * - The world is locked
  * - The rotation (if provided) is invalid
  */
-export function b2Body_SetTransform(bodyId, position, rotation)
-{
-    console.assert(b2Vec2_IsValid(position));
-    console.assert(b2Body_IsValid(bodyId));
-    const world = b2GetWorld(bodyId.world0);
-    console.assert(world.locked === false);
+export function b2Body_SetTransform(bodyId, position, rotation) {
+  console.assert(b2Vec2_IsValid(position));
+  console.assert(b2Body_IsValid(bodyId));
+  const world = b2GetWorld(bodyId.world0);
+  console.assert(world.locked === false);
 
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
 
-    console.assert(b2Rot_IsValid(rotation) || b2Rot_IsValid(bodySim.transform.q));
+  console.assert(b2Rot_IsValid(rotation) || b2Rot_IsValid(bodySim.transform.q));
 
-    bodySim.transform.p = position;
+  bodySim.transform.p = position;
 
-    if (rotation !== undefined)
-    {
-        bodySim.transform.q = rotation;
+  if (rotation !== undefined) {
+    bodySim.transform.q = rotation;
+  }
+  bodySim.center = b2TransformPoint(bodySim.transform, bodySim.localCenter);
+
+  bodySim.rotation0 = bodySim.transform.q;
+  bodySim.center0X = bodySim.center.x;
+  bodySim.center0Y = bodySim.center.y;
+
+  const broadPhase = world.broadPhase;
+
+  const transform = bodySim.transform;
+  const margin = b2_aabbMargin;
+  const speculativeDistance = b2_speculativeDistance;
+
+  let shapeId = body.headShapeId;
+
+  while (shapeId !== B2_NULL_INDEX) {
+    const shape = world.shapeArray[shapeId];
+    const aabb = b2ComputeShapeAABB(shape, transform);
+    aabb.lowerBoundX -= speculativeDistance;
+    aabb.lowerBoundY -= speculativeDistance;
+    aabb.upperBoundX += speculativeDistance;
+    aabb.upperBoundY += speculativeDistance;
+    shape.aabb = aabb;
+
+    if (b2AABB_Contains(shape.fatAABB, aabb) === false) {
+      const fatAABB = new b2AABB(
+        aabb.lowerBoundX - margin,
+        aabb.lowerBoundY - margin,
+        aabb.upperBoundX + margin,
+        aabb.upperBoundY + margin
+      );
+      shape.fatAABB = fatAABB;
+
+      // The body could be disabled
+      if (shape.proxyKey !== B2_NULL_INDEX) {
+        b2BroadPhase_MoveProxy(broadPhase, shape.proxyKey, fatAABB);
+      }
     }
-    bodySim.center = b2TransformPoint(bodySim.transform, bodySim.localCenter);
 
-    bodySim.rotation0 = bodySim.transform.q;
-    bodySim.center0X = bodySim.center.x;
-    bodySim.center0Y = bodySim.center.y;
-
-    const broadPhase = world.broadPhase;
-
-    const transform = bodySim.transform;
-    const margin = b2_aabbMargin;
-    const speculativeDistance = b2_speculativeDistance;
-
-    let shapeId = body.headShapeId;
-
-    while (shapeId !== B2_NULL_INDEX)
-    {
-        const shape = world.shapeArray[shapeId];
-        const aabb = b2ComputeShapeAABB(shape, transform);
-        aabb.lowerBoundX -= speculativeDistance;
-        aabb.lowerBoundY -= speculativeDistance;
-        aabb.upperBoundX += speculativeDistance;
-        aabb.upperBoundY += speculativeDistance;
-        shape.aabb = aabb;
-
-        if (b2AABB_Contains(shape.fatAABB, aabb) === false)
-        {
-            const fatAABB = new b2AABB(aabb.lowerBoundX - margin, aabb.lowerBoundY - margin,
-                aabb.upperBoundX + margin, aabb.upperBoundY + margin);
-            shape.fatAABB = fatAABB;
-
-            // The body could be disabled
-            if (shape.proxyKey !== B2_NULL_INDEX)
-            {
-                b2BroadPhase_MoveProxy(broadPhase, shape.proxyKey, fatAABB);
-            }
-        }
-
-        shapeId = shape.nextShapeId;
-    }
+    shapeId = shape.nextShapeId;
+  }
 }
 
 /**
@@ -965,18 +982,16 @@ export function b2Body_SetTransform(bodyId, position, rotation)
  * If the body state cannot be found, returns a zero vector.
  * Linear velocity is often used for calculations (damping, direction, etc) and must be cloned to avoid unwanted effects in the Physics engine.
  */
-export function b2Body_GetLinearVelocity(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const state = b2GetBodyState(world, body);
+export function b2Body_GetLinearVelocity(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const state = b2GetBodyState(world, body);
 
-    if (state !== null)
-    {
-        return state.linearVelocity.clone();
-    }
+  if (state !== null) {
+    return state.linearVelocity.clone();
+  }
 
-    return new b2Vec2();
+  return new b2Vec2();
 }
 
 /**
@@ -988,18 +1003,16 @@ export function b2Body_GetLinearVelocity(bodyId)
  * Retrieves the current angular velocity of a body from its state in the physics world.
  * Angular velocity represents how fast the body is rotating.
  */
-export function b2Body_GetAngularVelocity(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const state = b2GetBodyState(world, body);
+export function b2Body_GetAngularVelocity(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const state = b2GetBodyState(world, body);
 
-    if (state !== null)
-    {
-        return state.angularVelocity;
-    }
+  if (state !== null) {
+    return state.angularVelocity;
+  }
 
-    return 0.0;
+  return 0.0;
 }
 
 /**
@@ -1013,29 +1026,25 @@ export function b2Body_GetAngularVelocity(bodyId)
  * making changes. If the new velocity has a non-zero magnitude, the body will be awakened.
  * The function will return early if the body state cannot be retrieved.
  */
-export function b2Body_SetLinearVelocity(bodyId, linearVelocity)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_SetLinearVelocity(bodyId, linearVelocity) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    if (body.type == b2BodyType.b2_staticBody)
-    {
-        return;
-    }
+  if (body.type == b2BodyType.b2_staticBody) {
+    return;
+  }
 
-    if (b2LengthSquared(linearVelocity) > 0.0)
-    {
-        b2WakeBody(world, body);
-    }
+  if (b2LengthSquared(linearVelocity) > 0.0) {
+    b2WakeBody(world, body);
+  }
 
-    const state = b2GetBodyState(world, body);
+  const state = b2GetBodyState(world, body);
 
-    if (state === null)
-    {
-        return;
-    }
+  if (state === null) {
+    return;
+  }
 
-    state.linearVelocity = linearVelocity;
+  state.linearVelocity = linearVelocity;
 }
 
 /**
@@ -1049,29 +1058,25 @@ export function b2Body_SetLinearVelocity(bodyId, linearVelocity)
  * the function returns without making changes. The body is woken up if a non-zero
  * angular velocity is set.
  */
-export function b2Body_SetAngularVelocity(bodyId, angularVelocity)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_SetAngularVelocity(bodyId, angularVelocity) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    if (body.type == b2BodyType.b2_staticBody || body.fixedRotation)
-    {
-        return;
-    }
-    
-    if (angularVelocity !== 0.0)
-    {
-        b2WakeBody(world, body);
-    }
+  if (body.type == b2BodyType.b2_staticBody || body.fixedRotation) {
+    return;
+  }
 
-    const state = b2GetBodyState(world, body);
+  if (angularVelocity !== 0.0) {
+    b2WakeBody(world, body);
+  }
 
-    if (state === null)
-    {
-        return;
-    }
+  const state = b2GetBodyState(world, body);
 
-    state.angularVelocity = angularVelocity;
+  if (state === null) {
+    return;
+  }
+
+  state.angularVelocity = angularVelocity;
 }
 
 /**
@@ -1087,22 +1092,19 @@ export function b2Body_SetAngularVelocity(bodyId, angularVelocity)
  * @note The force is accumulated and applied during the next time step. The body
  * must be awake for the force to be applied.
  */
-export function b2Body_ApplyForce(bodyId, force, point, wake)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_ApplyForce(bodyId, force, point, wake) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet)
-    {
-        b2WakeBody(world, body);
-    }
+  if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet) {
+    b2WakeBody(world, body);
+  }
 
-    if (body.setIndex === b2SetType.b2_awakeSet)
-    {
-        const bodySim = b2GetBodySim(world, body);
-        bodySim.force = b2Add(bodySim.force, force);
-        bodySim.torque += b2Cross(b2Sub(point, bodySim.center), force);
-    }
+  if (body.setIndex === b2SetType.b2_awakeSet) {
+    const bodySim = b2GetBodySim(world, body);
+    bodySim.force = b2Add(bodySim.force, force);
+    bodySim.torque += b2Cross(b2Sub(point, bodySim.center), force);
+  }
 }
 
 /**
@@ -1115,21 +1117,18 @@ export function b2Body_ApplyForce(bodyId, force, point, wake)
  * @param {boolean} wake - Whether to wake the body if it is sleeping
  * @returns {void}
  */
-export function b2Body_ApplyForceToCenter(bodyId, force, wake)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_ApplyForceToCenter(bodyId, force, wake) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet)
-    {
-        b2WakeBody(world, body);
-    }
+  if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet) {
+    b2WakeBody(world, body);
+  }
 
-    if (body.setIndex === b2SetType.b2_awakeSet)
-    {
-        const bodySim = b2GetBodySim(world, body);
-        bodySim.force = b2Add(bodySim.force, force);
-    }
+  if (body.setIndex === b2SetType.b2_awakeSet) {
+    const bodySim = b2GetBodySim(world, body);
+    bodySim.force = b2Add(bodySim.force, force);
+  }
 }
 
 /**
@@ -1144,21 +1143,18 @@ export function b2Body_ApplyForceToCenter(bodyId, force, wake)
  * is true and the body is sleeping, it will be awakened. The torque is only
  * applied if the body is in the awake set.
  */
-export function b2Body_ApplyTorque(bodyId, torque, wake)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_ApplyTorque(bodyId, torque, wake) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet)
-    {
-        b2WakeBody(world, body);
-    }
+  if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet) {
+    b2WakeBody(world, body);
+  }
 
-    if (body.setIndex === b2SetType.b2_awakeSet)
-    {
-        const bodySim = b2GetBodySim(world, body);
-        bodySim.torque += torque;
-    }
+  if (body.setIndex === b2SetType.b2_awakeSet) {
+    const bodySim = b2GetBodySim(world, body);
+    bodySim.torque += torque;
+  }
 }
 
 /**
@@ -1173,26 +1169,28 @@ export function b2Body_ApplyTorque(bodyId, torque, wake)
  * @returns {void}
  * @throws {Error} Throws an assertion error if the body's local index is invalid
  */
-export function b2Body_ApplyLinearImpulse(bodyId, impulse, point, wake)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_ApplyLinearImpulse(bodyId, impulse, point, wake) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet)
-    {
-        b2WakeBody(world, body);
-    }
+  if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet) {
+    b2WakeBody(world, body);
+  }
 
-    if (body.setIndex === b2SetType.b2_awakeSet)
-    {
-        const localIndex = body.localIndex;
-        const set = world.solverSetArray[b2SetType.b2_awakeSet];
-        console.assert(0 <= localIndex && localIndex < set.states.count);
-        const state = set.states.data[localIndex];
-        const bodySim = set.sims.data[localIndex];
-        state.linearVelocity = b2MulAdd(state.linearVelocity, bodySim.invMass, impulse);
-        state.angularVelocity += bodySim.invInertia * b2Cross(b2Sub(point, bodySim.center), impulse);
-    }
+  if (body.setIndex === b2SetType.b2_awakeSet) {
+    const localIndex = body.localIndex;
+    const set = world.solverSetArray[b2SetType.b2_awakeSet];
+    console.assert(0 <= localIndex && localIndex < set.states.count);
+    const state = set.states.data[localIndex];
+    const bodySim = set.sims.data[localIndex];
+    state.linearVelocity = b2MulAdd(
+      state.linearVelocity,
+      bodySim.invMass,
+      impulse
+    );
+    state.angularVelocity +=
+      bodySim.invInertia * b2Cross(b2Sub(point, bodySim.center), impulse);
+  }
 }
 
 /**
@@ -1207,25 +1205,26 @@ export function b2Body_ApplyLinearImpulse(bodyId, impulse, point, wake)
  * @note The impulse is applied immediately, changing the body's linear velocity based
  * on its mass and the magnitude/direction of the impulse.
  */
-export function b2Body_ApplyLinearImpulseToCenter(bodyId, impulse, wake)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_ApplyLinearImpulseToCenter(bodyId, impulse, wake) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet)
-    {
-        b2WakeBody(world, body);
-    }
+  if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet) {
+    b2WakeBody(world, body);
+  }
 
-    if (body.setIndex === b2SetType.b2_awakeSet)
-    {
-        const localIndex = body.localIndex;
-        const set = world.solverSetArray[b2SetType.b2_awakeSet];
-        console.assert(0 <= localIndex && localIndex < set.states.count);
-        const state = set.states.data[localIndex];
-        const bodySim = set.sims.data[localIndex];
-        state.linearVelocity = b2MulAdd(state.linearVelocity, bodySim.invMass, impulse);
-    }
+  if (body.setIndex === b2SetType.b2_awakeSet) {
+    const localIndex = body.localIndex;
+    const set = world.solverSetArray[b2SetType.b2_awakeSet];
+    console.assert(0 <= localIndex && localIndex < set.states.count);
+    const state = set.states.data[localIndex];
+    const bodySim = set.sims.data[localIndex];
+    state.linearVelocity = b2MulAdd(
+      state.linearVelocity,
+      bodySim.invMass,
+      impulse
+    );
+  }
 }
 
 /**
@@ -1240,32 +1239,29 @@ export function b2Body_ApplyLinearImpulseToCenter(bodyId, impulse, wake)
  * @throws {Error} Throws an assertion error if the body ID is invalid or if the body
  * revision doesn't match
  */
-export function b2Body_ApplyAngularImpulse(bodyId, impulse, wake)
-{
-    console.assert(b2Body_IsValid(bodyId));
-    const world = b2GetWorld(bodyId.world0);
+export function b2Body_ApplyAngularImpulse(bodyId, impulse, wake) {
+  console.assert(b2Body_IsValid(bodyId));
+  const world = b2GetWorld(bodyId.world0);
 
-    const id = bodyId.index1 - 1;
+  const id = bodyId.index1 - 1;
 
-    // b2CheckIndex(world.bodyArray, id);
-    const body = world.bodyArray[id];
-    console.assert(body.revision === bodyId.revision);
+  // b2CheckIndex(world.bodyArray, id);
+  const body = world.bodyArray[id];
+  console.assert(body.revision === bodyId.revision);
 
-    if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet)
-    {
-        // this will not invalidate body pointer
-        b2WakeBody(world, body);
-    }
+  if (wake && body.setIndex >= b2SetType.b2_firstSleepingSet) {
+    // this will not invalidate body pointer
+    b2WakeBody(world, body);
+  }
 
-    if (body.setIndex === b2SetType.b2_awakeSet)
-    {
-        const localIndex = body.localIndex;
-        const set = world.solverSetArray[b2SetType.b2_awakeSet];
-        console.assert(0 <= localIndex && localIndex < set.states.count);
-        const state = set.states.data[localIndex];
-        const sim = set.sims.data[localIndex];
-        state.angularVelocity += sim.invInertia * impulse;
-    }
+  if (body.setIndex === b2SetType.b2_awakeSet) {
+    const localIndex = body.localIndex;
+    const set = world.solverSetArray[b2SetType.b2_awakeSet];
+    console.assert(0 <= localIndex && localIndex < set.states.count);
+    const state = set.states.data[localIndex];
+    const sim = set.sims.data[localIndex];
+    state.angularVelocity += sim.invInertia * impulse;
+  }
 }
 
 /**
@@ -1277,12 +1273,11 @@ export function b2Body_ApplyAngularImpulse(bodyId, impulse, wake)
  * Retrieves the body type (static, kinematic, or dynamic) for a given body ID
  * by looking up the body in the physics world using the provided identifier.
  */
-export function b2Body_GetType(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_GetType(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    return body.type;
+  return body.type;
 }
 
 // Changing the body type is quite complex mainly due to joints.
@@ -1309,268 +1304,265 @@ export function b2Body_GetType(bodyId)
  * If the body is disabled or the type is unchanged, minimal processing occurs.
  * Special handling exists for transitions to/from static body type.
  */
-export function b2Body_SetType(bodyId, type)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_SetType(bodyId, type) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    const originalType = body.type;
+  const originalType = body.type;
 
-    if (originalType === type)
-    {
-        return;
-    }
+  if (originalType === type) {
+    return;
+  }
 
-    if (body.setIndex === b2SetType.b2_disabledSet)
-    {
-        // Disabled bodies don't change solver sets or islands when they change type.
-        body.type = type;
-
-        // Body type affects the mass
-        b2UpdateBodyMassData(world, body);
-
-        return;
-    }
-
-    // Destroy all contacts but don't wake bodies.
-    const wakeBodies = false;
-    b2DestroyBodyContacts(world, body, wakeBodies);
-
-    // Wake this body because we assume below that it is awake or static.
-    b2WakeBody(world, body);
-
-    // Unlink all joints and wake attached bodies.
-    {
-        let jointKey = body.headJointKey;
-
-        while (jointKey !== B2_NULL_INDEX)
-        {
-            const jointId = jointKey >> 1;
-            const edgeIndex = jointKey & 1;
-
-            const joint = world.jointArray[jointId];
-
-            if (joint.islandId !== B2_NULL_INDEX)
-            {
-                b2UnlinkJoint(world, joint);
-            }
-
-            // A body going from static to dynamic or kinematic goes to the awake set
-            // and other attached bodies must be awake as well. For consistency, this is
-            // done for all cases.
-            const bodyA = world.bodyArray[joint.edges[0].bodyId];
-            const bodyB = world.bodyArray[joint.edges[1].bodyId];
-            b2WakeBody(world, bodyA);
-            b2WakeBody(world, bodyB);
-
-            jointKey = joint.edges[edgeIndex].nextKey;
-        }
-    }
-
+  if (body.setIndex === b2SetType.b2_disabledSet) {
+    // Disabled bodies don't change solver sets or islands when they change type.
     body.type = type;
-
-    if (originalType === b2BodyType.staticBody)
-    {
-        // Body is going from static to dynamic or kinematic. It only makes sense to move it to the awake set.
-        console.assert(body.setIndex === b2SetType.b2_staticSet);
-
-        const staticSet = world.solverSetArray[b2SetType.b2_staticSet];
-        const awakeSet = world.solverSetArray[b2SetType.b2_awakeSet];
-
-        // Transfer body to awake set
-        b2TransferBody(world, awakeSet, staticSet, body);
-
-        // Create island for body
-        b2CreateIslandForBody(world, b2SetType.b2_awakeSet, body);
-
-        // Transfer static joints to awake set
-        let jointKey = body.headJointKey;
-
-        while (jointKey !== B2_NULL_INDEX)
-        {
-            const jointId = jointKey >> 1;
-            const edgeIndex = jointKey & 1;
-
-            const joint = world.jointArray[jointId];
-
-            // Transfer the joint if it is in the static set
-            if (joint.setIndex === b2SetType.b2_staticSet)
-            {
-                b2TransferJoint(world, awakeSet, staticSet, joint);
-            }
-            else if (joint.setIndex === b2SetType.b2_awakeSet)
-            {
-                // In this case the joint must be re-inserted into the constraint graph to ensure the correct
-                // graph color.
-
-                // First transfer to the static set.
-                b2TransferJoint(world, staticSet, awakeSet, joint);
-
-                // Now transfer it back to the awake set and into the graph coloring.
-                b2TransferJoint(world, awakeSet, staticSet, joint);
-            }
-            else
-            {
-                // Otherwise the joint must be disabled.
-                console.assert(joint.setIndex === b2SetType.b2_disabledSet);
-            }
-
-            jointKey = joint.edges[edgeIndex].nextKey;
-        }
-
-        // Recreate shape proxies in movable tree.
-        const transform = b2GetBodyTransformQuick(world, body);
-        let shapeId = body.headShapeId;
-
-        while (shapeId !== B2_NULL_INDEX)
-        {
-            const shape = world.shapeArray[shapeId];
-            shapeId = shape.nextShapeId;
-            b2DestroyShapeProxy(shape, world.broadPhase);
-            const forcePairCreation = true;
-            const proxyType = type;
-            b2CreateShapeProxy(shape, world.broadPhase, proxyType, transform, forcePairCreation);
-        }
-    }
-
-    // @ts-ignore
-    else if (type === b2BodyType.b2_staticBody)
-    {
-        // The body is going from dynamic/kinematic to static. It should be awake.
-        console.assert(body.setIndex === b2SetType.b2_awakeSet);
-
-        const staticSet = world.solverSetArray[b2SetType.b2_staticSet];
-        const awakeSet = world.solverSetArray[b2SetType.b2_awakeSet];
-
-        // Transfer body to static set
-        b2TransferBody(world, staticSet, awakeSet, body);
-
-        // Remove body from island.
-        b2RemoveBodyFromIsland(world, body);
-
-        // Maybe transfer joints to static set.
-        let jointKey = body.headJointKey;
-
-        while (jointKey !== B2_NULL_INDEX)
-        {
-            const jointId = jointKey >> 1;
-            const edgeIndex = jointKey & 1;
-
-            const joint = world.jointArray[jointId];
-            jointKey = joint.edges[edgeIndex].nextKey;
-
-            const otherEdgeIndex = edgeIndex ^ 1;
-            const otherBody = world.bodyArray[joint.edges[otherEdgeIndex].bodyId];
-
-            // Skip disabled joint
-            if (joint.setIndex === b2SetType.b2_disabledSet)
-            {
-                // Joint is disable, should be connected to a disabled body
-                console.assert(otherBody.setIndex === b2SetType.b2_disabledSet);
-
-                continue;
-            }
-
-            // Since the body was not static, the joint must be awake.
-            console.assert(joint.setIndex === b2SetType.b2_awakeSet);
-
-            // Only transfer joint to static set if both bodies are static.
-            if (otherBody.setIndex === b2SetType.b2_staticSet)
-            {
-                b2TransferJoint(world, staticSet, awakeSet, joint);
-            }
-            else
-            {
-                // The other body must be awake.
-                console.assert(otherBody.setIndex === b2SetType.b2_awakeSet);
-
-                // The joint must live in a graph color.
-                console.assert(0 <= joint.colorIndex && joint.colorIndex < b2_graphColorCount);
-
-                // In this case the joint must be re-inserted into the constraint graph to ensure the correct
-                // graph color.
-
-                // First transfer to the static set.
-                b2TransferJoint(world, staticSet, awakeSet, joint);
-
-                // Now transfer it back to the awake set and into the graph coloring.
-                b2TransferJoint(world, awakeSet, staticSet, joint);
-            }
-        }
-
-        // Recreate shape proxies in static tree.
-        const transform = b2GetBodyTransformQuick(world, body);
-        let shapeId = body.headShapeId;
-
-        while (shapeId !== B2_NULL_INDEX)
-        {
-            const shape = world.shapeArray[shapeId];
-            shapeId = shape.nextShapeId;
-            b2DestroyShapeProxy(shape, world.broadPhase);
-            const forcePairCreation = true;
-            b2CreateShapeProxy(shape, world.broadPhase, b2BodyType.b2_staticBody, transform, forcePairCreation);
-        }
-    }
-    else
-    {
-        console.assert(originalType === b2BodyType.b2_dynamicBody || originalType === b2BodyType.b2_kinematicBody);
-
-        // @ts-ignore
-        console.assert(type === b2BodyType.b2_dynamicBody || type === b2BodyType.b2_kinematicBody);
-
-        // Recreate shape proxies in static tree.
-        const transform = b2GetBodyTransformQuick(world, body);
-        let shapeId = body.headShapeId;
-
-        while (shapeId !== B2_NULL_INDEX)
-        {
-            const shape = world.shapeArray[shapeId];
-            shapeId = shape.nextShapeId;
-            b2DestroyShapeProxy(shape, world.broadPhase);
-            const proxyType = type;
-            const forcePairCreation = true;
-            b2CreateShapeProxy(shape, world.broadPhase, proxyType, transform, forcePairCreation);
-        }
-    }
-
-    // Relink all joints
-    {
-        let jointKey = body.headJointKey;
-
-        while (jointKey !== B2_NULL_INDEX)
-        {
-            const jointId = jointKey >> 1;
-            const edgeIndex = jointKey & 1;
-
-            const joint = world.jointArray[jointId];
-            jointKey = joint.edges[edgeIndex].nextKey;
-
-            const otherEdgeIndex = edgeIndex ^ 1;
-            const otherBodyId = joint.edges[otherEdgeIndex].bodyId;
-
-            // b2CheckIndex(world.bodyArray, otherBodyId);
-            const otherBody = world.bodyArray[otherBodyId];
-
-            if (otherBody.setIndex === b2SetType.b2_disabledSet)
-            {
-                continue;
-            }
-
-            if (body.type === b2BodyType.b2_staticBody && otherBody.type === b2BodyType.b2_staticBody)
-            {
-                continue;
-            }
-
-            b2LinkJoint(world, joint, false);
-        }
-
-        b2MergeAwakeIslands(world);
-    }
 
     // Body type affects the mass
     b2UpdateBodyMassData(world, body);
 
-    b2ValidateSolverSets(world);
+    return;
+  }
+
+  // Destroy all contacts but don't wake bodies.
+  const wakeBodies = false;
+  b2DestroyBodyContacts(world, body, wakeBodies);
+
+  // Wake this body because we assume below that it is awake or static.
+  b2WakeBody(world, body);
+
+  // Unlink all joints and wake attached bodies.
+  {
+    let jointKey = body.headJointKey;
+
+    while (jointKey !== B2_NULL_INDEX) {
+      const jointId = jointKey >> 1;
+      const edgeIndex = jointKey & 1;
+
+      const joint = world.jointArray[jointId];
+
+      if (joint.islandId !== B2_NULL_INDEX) {
+        b2UnlinkJoint(world, joint);
+      }
+
+      // A body going from static to dynamic or kinematic goes to the awake set
+      // and other attached bodies must be awake as well. For consistency, this is
+      // done for all cases.
+      const bodyA = world.bodyArray[joint.edges[0].bodyId];
+      const bodyB = world.bodyArray[joint.edges[1].bodyId];
+      b2WakeBody(world, bodyA);
+      b2WakeBody(world, bodyB);
+
+      jointKey = joint.edges[edgeIndex].nextKey;
+    }
+  }
+
+  body.type = type;
+
+  if (originalType === b2BodyType.staticBody) {
+    // Body is going from static to dynamic or kinematic. It only makes sense to move it to the awake set.
+    console.assert(body.setIndex === b2SetType.b2_staticSet);
+
+    const staticSet = world.solverSetArray[b2SetType.b2_staticSet];
+    const awakeSet = world.solverSetArray[b2SetType.b2_awakeSet];
+
+    // Transfer body to awake set
+    b2TransferBody(world, awakeSet, staticSet, body);
+
+    // Create island for body
+    b2CreateIslandForBody(world, b2SetType.b2_awakeSet, body);
+
+    // Transfer static joints to awake set
+    let jointKey = body.headJointKey;
+
+    while (jointKey !== B2_NULL_INDEX) {
+      const jointId = jointKey >> 1;
+      const edgeIndex = jointKey & 1;
+
+      const joint = world.jointArray[jointId];
+
+      // Transfer the joint if it is in the static set
+      if (joint.setIndex === b2SetType.b2_staticSet) {
+        b2TransferJoint(world, awakeSet, staticSet, joint);
+      } else if (joint.setIndex === b2SetType.b2_awakeSet) {
+        // In this case the joint must be re-inserted into the constraint graph to ensure the correct
+        // graph color.
+
+        // First transfer to the static set.
+        b2TransferJoint(world, staticSet, awakeSet, joint);
+
+        // Now transfer it back to the awake set and into the graph coloring.
+        b2TransferJoint(world, awakeSet, staticSet, joint);
+      } else {
+        // Otherwise the joint must be disabled.
+        console.assert(joint.setIndex === b2SetType.b2_disabledSet);
+      }
+
+      jointKey = joint.edges[edgeIndex].nextKey;
+    }
+
+    // Recreate shape proxies in movable tree.
+    const transform = b2GetBodyTransformQuick(world, body);
+    let shapeId = body.headShapeId;
+
+    while (shapeId !== B2_NULL_INDEX) {
+      const shape = world.shapeArray[shapeId];
+      shapeId = shape.nextShapeId;
+      b2DestroyShapeProxy(shape, world.broadPhase);
+      const forcePairCreation = true;
+      const proxyType = type;
+      b2CreateShapeProxy(
+        shape,
+        world.broadPhase,
+        proxyType,
+        transform,
+        forcePairCreation
+      );
+    }
+  }
+
+  // @ts-ignore
+  else if (type === b2BodyType.b2_staticBody) {
+    // The body is going from dynamic/kinematic to static. It should be awake.
+    console.assert(body.setIndex === b2SetType.b2_awakeSet);
+
+    const staticSet = world.solverSetArray[b2SetType.b2_staticSet];
+    const awakeSet = world.solverSetArray[b2SetType.b2_awakeSet];
+
+    // Transfer body to static set
+    b2TransferBody(world, staticSet, awakeSet, body);
+
+    // Remove body from island.
+    b2RemoveBodyFromIsland(world, body);
+
+    // Maybe transfer joints to static set.
+    let jointKey = body.headJointKey;
+
+    while (jointKey !== B2_NULL_INDEX) {
+      const jointId = jointKey >> 1;
+      const edgeIndex = jointKey & 1;
+
+      const joint = world.jointArray[jointId];
+      jointKey = joint.edges[edgeIndex].nextKey;
+
+      const otherEdgeIndex = edgeIndex ^ 1;
+      const otherBody = world.bodyArray[joint.edges[otherEdgeIndex].bodyId];
+
+      // Skip disabled joint
+      if (joint.setIndex === b2SetType.b2_disabledSet) {
+        // Joint is disable, should be connected to a disabled body
+        console.assert(otherBody.setIndex === b2SetType.b2_disabledSet);
+
+        continue;
+      }
+
+      // Since the body was not static, the joint must be awake.
+      console.assert(joint.setIndex === b2SetType.b2_awakeSet);
+
+      // Only transfer joint to static set if both bodies are static.
+      if (otherBody.setIndex === b2SetType.b2_staticSet) {
+        b2TransferJoint(world, staticSet, awakeSet, joint);
+      } else {
+        // The other body must be awake.
+        console.assert(otherBody.setIndex === b2SetType.b2_awakeSet);
+
+        // The joint must live in a graph color.
+        console.assert(
+          0 <= joint.colorIndex && joint.colorIndex < b2_graphColorCount
+        );
+
+        // In this case the joint must be re-inserted into the constraint graph to ensure the correct
+        // graph color.
+
+        // First transfer to the static set.
+        b2TransferJoint(world, staticSet, awakeSet, joint);
+
+        // Now transfer it back to the awake set and into the graph coloring.
+        b2TransferJoint(world, awakeSet, staticSet, joint);
+      }
+    }
+
+    // Recreate shape proxies in static tree.
+    const transform = b2GetBodyTransformQuick(world, body);
+    let shapeId = body.headShapeId;
+
+    while (shapeId !== B2_NULL_INDEX) {
+      const shape = world.shapeArray[shapeId];
+      shapeId = shape.nextShapeId;
+      b2DestroyShapeProxy(shape, world.broadPhase);
+      const forcePairCreation = true;
+      b2CreateShapeProxy(
+        shape,
+        world.broadPhase,
+        b2BodyType.b2_staticBody,
+        transform,
+        forcePairCreation
+      );
+    }
+  } else {
+    console.assert(
+      originalType === b2BodyType.b2_dynamicBody ||
+        originalType === b2BodyType.b2_kinematicBody
+    );
+
+    // Recreate shape proxies in static tree.
+    const transform = b2GetBodyTransformQuick(world, body);
+    let shapeId = body.headShapeId;
+
+    while (shapeId !== B2_NULL_INDEX) {
+      const shape = world.shapeArray[shapeId];
+      shapeId = shape.nextShapeId;
+      b2DestroyShapeProxy(shape, world.broadPhase);
+      const proxyType = type;
+      const forcePairCreation = true;
+      b2CreateShapeProxy(
+        shape,
+        world.broadPhase,
+        proxyType,
+        transform,
+        forcePairCreation
+      );
+    }
+  }
+
+  // Relink all joints
+  {
+    let jointKey = body.headJointKey;
+
+    while (jointKey !== B2_NULL_INDEX) {
+      const jointId = jointKey >> 1;
+      const edgeIndex = jointKey & 1;
+
+      const joint = world.jointArray[jointId];
+      jointKey = joint.edges[edgeIndex].nextKey;
+
+      const otherEdgeIndex = edgeIndex ^ 1;
+      const otherBodyId = joint.edges[otherEdgeIndex].bodyId;
+
+      // b2CheckIndex(world.bodyArray, otherBodyId);
+      const otherBody = world.bodyArray[otherBodyId];
+
+      if (otherBody.setIndex === b2SetType.b2_disabledSet) {
+        continue;
+      }
+
+      if (
+        body.type === b2BodyType.b2_staticBody &&
+        otherBody.type === b2BodyType.b2_staticBody
+      ) {
+        continue;
+      }
+
+      b2LinkJoint(world, joint, false);
+    }
+
+    b2MergeAwakeIslands(world);
+  }
+
+  // Body type affects the mass
+  b2UpdateBodyMassData(world, body);
+
+  b2ValidateSolverSets(world);
 }
 
 /**
@@ -1584,11 +1576,10 @@ export function b2Body_SetType(bodyId, type)
  * retrieved later and can be of any type. The body is located using its
  * world identifier and the user data is stored directly on the body object.
  */
-export function b2Body_SetUserData(bodyId, userData)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    body.userData = userData;
+export function b2Body_SetUserData(bodyId, userData) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  body.userData = userData;
 }
 
 /**
@@ -1601,12 +1592,11 @@ export function b2Body_SetUserData(bodyId, userData)
  * The function first gets the world from the body ID, then retrieves the full body
  * object, and finally returns its user data.
  */
-export function b2Body_GetUserData(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_GetUserData(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    return body.userData;
+  return body.userData;
 }
 
 /**
@@ -1618,13 +1608,12 @@ export function b2Body_GetUserData(bodyId)
  * Retrieves the mass value from a body's simulation data by accessing the world
  * and body objects using the provided body identifier.
  */
-export function b2Body_GetMass(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
+export function b2Body_GetMass(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
 
-    return bodySim.mass;
+  return bodySim.mass;
 }
 
 /**
@@ -1636,13 +1625,12 @@ export function b2Body_GetMass(bodyId)
  * Retrieves the rotational inertia value from a body's simulation data using the body's ID.
  * The inertia tensor represents the body's resistance to rotational acceleration.
  */
-export function b2Body_GetRotationalInertia(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
+export function b2Body_GetRotationalInertia(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
 
-    return bodySim.inertia;
+  return bodySim.inertia;
 }
 
 /**
@@ -1654,13 +1642,12 @@ export function b2Body_GetRotationalInertia(bodyId)
  * Returns a copy of the body's local center of mass position vector.
  * The local center is expressed in the body's local coordinate system.
  */
-export function b2Body_GetLocalCenterOfMass(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
+export function b2Body_GetLocalCenterOfMass(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
 
-    return bodySim.localCenter.clone();
+  return bodySim.localCenter.clone();
 }
 
 /**
@@ -1673,13 +1660,12 @@ export function b2Body_GetLocalCenterOfMass(bodyId)
  * The returned vector is a clone of the internal state, preventing external
  * modification of the body's actual center position.
  */
-export function b2Body_GetWorldCenterOfMass(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
+export function b2Body_GetWorldCenterOfMass(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
 
-    return bodySim.center.clone();
+  return bodySim.center.clone();
 }
 
 /**
@@ -1696,33 +1682,33 @@ export function b2Body_GetWorldCenterOfMass(bodyId)
  * @throws {Error} Throws assertion error if mass or rotationalInertia are invalid or negative,
  * or if the center vector is invalid
  */
-export function b2Body_SetMassData(bodyId, massData)
-{
-    console.assert(b2IsValid(massData.mass) && massData.mass >= 0.0);
-    console.assert(b2IsValid(massData.rotationalInertia) && massData.rotationalInertia >= 0.0);
-    console.assert(b2Vec2_IsValid(massData.center));
+export function b2Body_SetMassData(bodyId, massData) {
+  console.assert(b2IsValid(massData.mass) && massData.mass >= 0.0);
+  console.assert(
+    b2IsValid(massData.rotationalInertia) && massData.rotationalInertia >= 0.0
+  );
+  console.assert(b2Vec2_IsValid(massData.center));
 
-    const world = b2GetWorldLocked(bodyId.world0);
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
-    }
+  if (world === null) {
+    return;
+  }
 
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
 
-    bodySim.mass = massData.mass;
-    bodySim.inertia = massData.rotationalInertia;
-    bodySim.localCenter = massData.center;
+  bodySim.mass = massData.mass;
+  bodySim.inertia = massData.rotationalInertia;
+  bodySim.localCenter = massData.center;
 
-    const center = b2TransformPoint(bodySim.transform, massData.center);
-    bodySim.center = center;
-    bodySim.center0X = center.x;
-    bodySim.center0Y = center.y;
+  const center = b2TransformPoint(bodySim.transform, massData.center);
+  bodySim.center = center;
+  bodySim.center0X = center.x;
+  bodySim.center0Y = center.y;
 
-    bodySim.invMass = bodySim.mass > 0.0 ? 1.0 / bodySim.mass : 0.0;
-    bodySim.invInertia = bodySim.inertia > 0.0 ? 1.0 / bodySim.inertia : 0.0;
+  bodySim.invMass = bodySim.mass > 0.0 ? 1.0 / bodySim.mass : 0.0;
+  bodySim.invInertia = bodySim.inertia > 0.0 ? 1.0 / bodySim.inertia : 0.0;
 }
 
 /**
@@ -1736,17 +1722,16 @@ export function b2Body_SetMassData(bodyId, massData)
  * Retrieves the mass properties of a body, including its total mass,
  * center of mass position, and rotational inertia.
  */
-export function b2Body_GetMassData(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
-    const massData = new b2MassData();
-    massData.mass = bodySim.mass;
-    massData.center = bodySim.localCenter;
-    massData.rotationalInertia = bodySim.inertia;
+export function b2Body_GetMassData(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
+  const massData = new b2MassData();
+  massData.mass = bodySim.mass;
+  massData.center = bodySim.localCenter;
+  massData.rotationalInertia = bodySim.inertia;
 
-    return massData;
+  return massData;
 }
 
 /**
@@ -1759,17 +1744,15 @@ export function b2Body_GetMassData(bodyId)
  * properties (mass, center of mass, and rotational inertia) based on the shapes attached to it.
  * If the world cannot be accessed, the function returns without performing any operations.
  */
-export function b2Body_ApplyMassFromShapes(bodyId)
-{
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2Body_ApplyMassFromShapes(bodyId) {
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
-    }
+  if (world === null) {
+    return;
+  }
 
-    const body = b2GetBodyFullId(world, bodyId);
-    b2UpdateBodyMassData(world, body);
+  const body = b2GetBodyFullId(world, bodyId);
+  b2UpdateBodyMassData(world, body);
 }
 
 /**
@@ -1783,20 +1766,18 @@ export function b2Body_ApplyMassFromShapes(bodyId)
  * Linear damping is used to simulate air resistance or fluid friction.
  * @throws {Error} Throws an assertion error if linearDamping is invalid or negative.
  */
-export function b2Body_SetLinearDamping(bodyId, linearDamping)
-{
-    console.assert(b2IsValid(linearDamping) && linearDamping >= 0.0);
+export function b2Body_SetLinearDamping(bodyId, linearDamping) {
+  console.assert(b2IsValid(linearDamping) && linearDamping >= 0.0);
 
-    const world = b2GetWorldLocked(bodyId.world0);
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
-    }
+  if (world === null) {
+    return;
+  }
 
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
-    bodySim.linearDamping = linearDamping;
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
+  bodySim.linearDamping = linearDamping;
 }
 
 /**
@@ -1809,13 +1790,12 @@ export function b2Body_SetLinearDamping(bodyId, linearDamping)
  * Linear damping is used to reduce the linear velocity of the body in the absence
  * of forces. The damping parameter can be used to simulate fluid/air resistance.
  */
-export function b2Body_GetLinearDamping(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
+export function b2Body_GetLinearDamping(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
 
-    return bodySim.linearDamping;
+  return bodySim.linearDamping;
 }
 
 /**
@@ -1829,20 +1809,18 @@ export function b2Body_GetLinearDamping(bodyId)
  * Angular damping is a value between 0 and infinity that reduces the body's angular velocity.
  * @throws {Error} Throws an assertion error if angularDamping is invalid or negative.
  */
-export function b2Body_SetAngularDamping(bodyId, angularDamping)
-{
-    console.assert(b2IsValid(angularDamping) && angularDamping >= 0.0);
+export function b2Body_SetAngularDamping(bodyId, angularDamping) {
+  console.assert(b2IsValid(angularDamping) && angularDamping >= 0.0);
 
-    const world = b2GetWorldLocked(bodyId.world0);
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
-    }
+  if (world === null) {
+    return;
+  }
 
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
-    bodySim.angularDamping = angularDamping;
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
+  bodySim.angularDamping = angularDamping;
 }
 
 /**
@@ -1854,13 +1832,12 @@ export function b2Body_SetAngularDamping(bodyId, angularDamping)
  * Returns the angular damping coefficient that reduces the body's angular velocity
  * over time. Angular damping is specified in the range [0,1].
  */
-export function b2Body_GetAngularDamping(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
+export function b2Body_GetAngularDamping(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
 
-    return bodySim.angularDamping;
+  return bodySim.angularDamping;
 }
 
 /**
@@ -1875,21 +1852,19 @@ export function b2Body_GetAngularDamping(bodyId)
  * A value of 1.0 indicates normal gravity, 0.0 indicates no gravity, and negative
  * values reverse the effect of gravity on the body.
  */
-export function b2Body_SetGravityScale(bodyId, gravityScale)
-{
-    console.assert(b2Body_IsValid(bodyId));
-    console.assert(b2IsValid(gravityScale));
+export function b2Body_SetGravityScale(bodyId, gravityScale) {
+  console.assert(b2Body_IsValid(bodyId));
+  console.assert(b2IsValid(gravityScale));
 
-    const world = b2GetWorldLocked(bodyId.world0);
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
-    }
+  if (world === null) {
+    return;
+  }
 
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
-    bodySim.gravityScale = gravityScale;
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
+  bodySim.gravityScale = gravityScale;
 }
 
 /**
@@ -1899,14 +1874,13 @@ export function b2Body_SetGravityScale(bodyId, gravityScale)
  * @returns {number} The gravity scale factor of the body.
  * @throws {Error} Throws an assertion error if the bodyId is invalid.
  */
-export function b2Body_GetGravityScale(bodyId)
-{
-    console.assert(b2Body_IsValid(bodyId));
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
+export function b2Body_GetGravityScale(bodyId) {
+  console.assert(b2Body_IsValid(bodyId));
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
 
-    return bodySim.gravityScale;
+  return bodySim.gravityScale;
 }
 
 /**
@@ -1919,12 +1893,11 @@ export function b2Body_GetGravityScale(bodyId)
  * against the b2_awakeSet type. Bodies in the awake set are actively participating
  * in the simulation.
  */
-export function b2Body_IsAwake(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_IsAwake(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    return body.setIndex === b2SetType.b2_awakeSet;
+  return body.setIndex === b2SetType.b2_awakeSet;
 }
 
 /**
@@ -1938,33 +1911,27 @@ export function b2Body_IsAwake(bodyId)
  * When setting a body to sleep, it will split islands if there are pending constraint removals.
  * When waking a body, it will be moved from the sleeping set to the awake set.
  */
-export function b2Body_SetAwake(bodyId, awake)
-{
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2Body_SetAwake(bodyId, awake) {
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
+  if (world === null) {
+    return;
+  }
+
+  const body = b2GetBodyFullId(world, bodyId);
+
+  if (awake && body.setIndex >= b2SetType.b2_firstSleepingSet) {
+    b2WakeBody(world, body);
+  } else if (awake === false && body.setIndex === b2SetType.b2_awakeSet) {
+    // b2CheckIndex(world.islandArray, body.islandId);
+    const island = world.islandArray[body.islandId];
+
+    if (island.constraintRemoveCount > 0) {
+      b2SplitIsland(world, body.islandId);
     }
 
-    const body = b2GetBodyFullId(world, bodyId);
-
-    if (awake && body.setIndex >= b2SetType.b2_firstSleepingSet)
-    {
-        b2WakeBody(world, body);
-    }
-    else if (awake === false && body.setIndex === b2SetType.b2_awakeSet)
-    {
-        // b2CheckIndex(world.islandArray, body.islandId);
-        const island = world.islandArray[body.islandId];
-
-        if (island.constraintRemoveCount > 0)
-        {
-            b2SplitIsland(world, body.islandId);
-        }
-
-        b2TrySleepIsland(world, body.islandId);
-    }
+    b2TrySleepIsland(world, body.islandId);
+  }
 }
 
 /**
@@ -1977,12 +1944,11 @@ export function b2Body_SetAwake(bodyId, awake)
  * disabled set. A disabled body does not participate in collision detection
  * or dynamics simulation.
  */
-export function b2Body_IsEnabled(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_IsEnabled(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    return body.setIndex !== b2SetType.b2_disabledSet;
+  return body.setIndex !== b2SetType.b2_disabledSet;
 }
 
 /**
@@ -1994,12 +1960,11 @@ export function b2Body_IsEnabled(bodyId)
  * Returns whether the specified body has sleep enabled. When sleep is enabled,
  * the body can automatically enter a sleep state when it becomes inactive.
  */
-export function b2Body_IsSleepEnabled(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_IsSleepEnabled(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    return body.enableSleep;
+  return body.enableSleep;
 }
 
 /**
@@ -2012,11 +1977,10 @@ export function b2Body_IsSleepEnabled(bodyId)
  * Sets the minimum velocity threshold that determines when a body can transition to a sleeping state.
  * When a body's velocity falls below this threshold, it becomes eligible for sleeping.
  */
-export function b2Body_SetSleepThreshold(bodyId, sleepThreshold)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    body.sleepThreshold = sleepThreshold;
+export function b2Body_SetSleepThreshold(bodyId, sleepThreshold) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  body.sleepThreshold = sleepThreshold;
 }
 
 /**
@@ -2028,12 +1992,11 @@ export function b2Body_SetSleepThreshold(bodyId, sleepThreshold)
  * Returns the minimum speed threshold below which a body can be put to sleep
  * to optimize simulation performance.
  */
-export function b2Body_GetSleepThreshold(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_GetSleepThreshold(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    return body.sleepThreshold;
+  return body.sleepThreshold;
 }
 
 /**
@@ -2046,22 +2009,19 @@ export function b2Body_GetSleepThreshold(bodyId)
  * @returns {void}
  * @throws {Error} If the world associated with the bodyId is not found
  */
-export function b2Body_EnableSleep(bodyId, enableSleep)
-{
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2Body_EnableSleep(bodyId, enableSleep) {
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
-    }
+  if (world === null) {
+    return;
+  }
 
-    const body = b2GetBodyFullId(world, bodyId);
-    body.enableSleep = enableSleep;
+  const body = b2GetBodyFullId(world, bodyId);
+  body.enableSleep = enableSleep;
 
-    if (enableSleep === false)
-    {
-        b2WakeBody(world, body);
-    }
+  if (enableSleep === false) {
+    b2WakeBody(world, body);
+  }
 }
 
 // Disabling a body requires a lot of detailed bookkeeping, but it is a valuable feature.
@@ -2077,81 +2037,76 @@ export function b2Body_EnableSleep(bodyId, enableSleep)
  * broad phase, and transfers associated joints to the disabled set.
  * @throws {Error} Throws if the world is locked or invalid
  */
-export function b2Body_Disable(bodyId)
-{
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2Body_Disable(bodyId) {
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
+  if (world === null) {
+    return;
+  }
+
+  const body = b2GetBodyFullId(world, bodyId);
+
+  if (body.setIndex === b2SetType.b2_disabledSet) {
+    return;
+  }
+
+  // Destroy contacts and wake bodies touching this body. This avoid floating bodies.
+  // This is necessary even for static bodies.
+  const wakeBodies = true;
+  b2DestroyBodyContacts(world, body, wakeBodies);
+
+  // Disabled bodies are not in an island.
+  b2RemoveBodyFromIsland(world, body);
+
+  // Remove shapes from broad-phase
+  let shapeId = body.headShapeId;
+
+  while (shapeId !== B2_NULL_INDEX) {
+    const shape = world.shapeArray[shapeId];
+    shapeId = shape.nextShapeId;
+    b2DestroyShapeProxy(shape, world.broadPhase);
+  }
+
+  // Transfer simulation data to disabled set
+  // b2CheckIndex(world.solverSetArray, body.setIndex);
+  const set = world.solverSetArray[body.setIndex];
+  const disabledSet = world.solverSetArray[b2SetType.b2_disabledSet];
+
+  // Transfer body sim
+  b2TransferBody(world, disabledSet, set, body);
+
+  // Unlink joints and transfer
+  let jointKey = body.headJointKey;
+
+  while (jointKey !== B2_NULL_INDEX) {
+    const jointId = jointKey >> 1;
+    const edgeIndex = jointKey & 1;
+
+    const joint = world.jointArray[jointId];
+    jointKey = joint.edges[edgeIndex].nextKey;
+
+    // joint may already be disabled by other body
+    if (joint.setIndex === b2SetType.b2_disabledSet) {
+      continue;
     }
 
-    const body = b2GetBodyFullId(world, bodyId);
+    console.assert(
+      joint.setIndex === set.setIndex || set.setIndex === b2SetType.b2_staticSet
+    );
 
-    if (body.setIndex === b2SetType.b2_disabledSet)
-    {
-        return;
+    // Remove joint from island
+    if (joint.islandId !== B2_NULL_INDEX) {
+      b2UnlinkJoint(world, joint);
     }
 
-    // Destroy contacts and wake bodies touching this body. This avoid floating bodies.
-    // This is necessary even for static bodies.
-    const wakeBodies = true;
-    b2DestroyBodyContacts(world, body, wakeBodies);
+    // Transfer joint to disabled set
+    // b2CheckIndex(world.solverSetArray, joint.setIndex);
+    const jointSet = world.solverSetArray[joint.setIndex];
+    b2TransferJoint(world, disabledSet, jointSet, joint);
+  }
 
-    // Disabled bodies are not in an island.
-    b2RemoveBodyFromIsland(world, body);
-
-    // Remove shapes from broad-phase
-    let shapeId = body.headShapeId;
-
-    while (shapeId !== B2_NULL_INDEX)
-    {
-        const shape = world.shapeArray[shapeId];
-        shapeId = shape.nextShapeId;
-        b2DestroyShapeProxy(shape, world.broadPhase);
-    }
-
-    // Transfer simulation data to disabled set
-    // b2CheckIndex(world.solverSetArray, body.setIndex);
-    const set = world.solverSetArray[body.setIndex];
-    const disabledSet = world.solverSetArray[b2SetType.b2_disabledSet];
-
-    // Transfer body sim
-    b2TransferBody(world, disabledSet, set, body);
-
-    // Unlink joints and transfer
-    let jointKey = body.headJointKey;
-
-    while (jointKey !== B2_NULL_INDEX)
-    {
-        const jointId = jointKey >> 1;
-        const edgeIndex = jointKey & 1;
-
-        const joint = world.jointArray[jointId];
-        jointKey = joint.edges[edgeIndex].nextKey;
-
-        // joint may already be disabled by other body
-        if (joint.setIndex === b2SetType.b2_disabledSet)
-        {
-            continue;
-        }
-
-        console.assert(joint.setIndex === set.setIndex || set.setIndex === b2SetType.b2_staticSet);
-
-        // Remove joint from island
-        if (joint.islandId !== B2_NULL_INDEX)
-        {
-            b2UnlinkJoint(world, joint);
-        }
-
-        // Transfer joint to disabled set
-        // b2CheckIndex(world.solverSetArray, joint.setIndex);
-        const jointSet = world.solverSetArray[joint.setIndex];
-        b2TransferJoint(world, disabledSet, jointSet, joint);
-    }
-
-    b2ValidateConnectivity(world);
-    b2ValidateSolverSets(world);
+  b2ValidateConnectivity(world);
+  b2ValidateSolverSets(world);
 }
 
 /**
@@ -2165,104 +2120,106 @@ export function b2Body_Disable(bodyId)
  * @returns {void}
  * @throws {Error} Throws an assertion error if joint connectivity validation fails
  */
-export function b2Body_Enable(bodyId)
-{
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2Body_Enable(bodyId) {
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
+  if (world === null) {
+    return;
+  }
+
+  const body = b2GetBodyFullId(world, bodyId);
+
+  if (body.setIndex !== b2SetType.b2_disabledSet) {
+    return;
+  }
+
+  const disabledSet = world.solverSetArray[b2SetType.b2_disabledSet];
+  const setId =
+    body.type === b2BodyType.b2_staticBody
+      ? b2SetType.b2_staticSet
+      : b2SetType.b2_awakeSet;
+  const targetSet = world.solverSetArray[setId];
+
+  b2TransferBody(world, targetSet, disabledSet, body);
+
+  const transform = b2GetBodyTransformQuick(world, body);
+
+  // Add shapes to broad-phase
+  const proxyType = body.type;
+  const forcePairCreation = true;
+  let shapeId = body.headShapeId;
+
+  while (shapeId !== B2_NULL_INDEX) {
+    const shape = world.shapeArray[shapeId];
+    shapeId = shape.nextShapeId;
+
+    b2CreateShapeProxy(
+      shape,
+      world.broadPhase,
+      proxyType,
+      transform,
+      forcePairCreation
+    );
+  }
+
+  if (setId !== b2SetType.b2_staticSet) {
+    b2CreateIslandForBody(world, setId, body);
+  }
+
+  // Transfer joints. If the other body is disabled, don't transfer.
+  // If the other body is sleeping, wake it.
+  const mergeIslands = false;
+  let jointKey = body.headJointKey;
+
+  while (jointKey !== B2_NULL_INDEX) {
+    const jointId = jointKey >> 1;
+    const edgeIndex = jointKey & 1;
+
+    const joint = world.jointArray[jointId];
+    console.assert(joint.setIndex === b2SetType.b2_disabledSet);
+    console.assert(joint.islandId === B2_NULL_INDEX);
+
+    jointKey = joint.edges[edgeIndex].nextKey;
+
+    const bodyA = world.bodyArray[joint.edges[0].bodyId];
+    const bodyB = world.bodyArray[joint.edges[1].bodyId];
+
+    if (
+      bodyA.setIndex === b2SetType.b2_disabledSet ||
+      bodyB.setIndex === b2SetType.b2_disabledSet
+    ) {
+      // one body is still disabled
+      continue;
     }
 
-    const body = b2GetBodyFullId(world, bodyId);
+    // Transfer joint first
+    let jointSetId;
 
-    if (body.setIndex !== b2SetType.b2_disabledSet)
-    {
-        return;
+    if (
+      bodyA.setIndex === b2SetType.b2_staticSet &&
+      bodyB.setIndex === b2SetType.b2_staticSet
+    ) {
+      jointSetId = b2SetType.b2_staticSet;
+    } else if (bodyA.setIndex === b2SetType.b2_staticSet) {
+      jointSetId = bodyB.setIndex;
+    } else {
+      jointSetId = bodyA.setIndex;
     }
 
-    const disabledSet = world.solverSetArray[b2SetType.b2_disabledSet];
-    const setId = body.type === b2BodyType.b2_staticBody ? b2SetType.b2_staticSet : b2SetType.b2_awakeSet;
-    const targetSet = world.solverSetArray[setId];
+    // b2CheckIndex(world.solverSetArray, jointSetId);
+    const jointSet = world.solverSetArray[jointSetId];
+    b2TransferJoint(world, jointSet, disabledSet, joint);
 
-    b2TransferBody(world, targetSet, disabledSet, body);
-
-    const transform = b2GetBodyTransformQuick(world, body);
-
-    // Add shapes to broad-phase
-    const proxyType = body.type;
-    const forcePairCreation = true;
-    let shapeId = body.headShapeId;
-
-    while (shapeId !== B2_NULL_INDEX)
-    {
-        const shape = world.shapeArray[shapeId];
-        shapeId = shape.nextShapeId;
-
-        b2CreateShapeProxy(shape, world.broadPhase, proxyType, transform, forcePairCreation);
+    // Now that the joint is in the correct set, I can link the joint in the island.
+    if (jointSetId !== b2SetType.b2_staticSet) {
+      b2LinkJoint(world, joint, mergeIslands);
     }
+  }
 
-    if (setId !== b2SetType.b2_staticSet)
-    {
-        b2CreateIslandForBody(world, setId, body);
-    }
+  // Now merge islands
+  b2MergeAwakeIslands(world);
 
-    // Transfer joints. If the other body is disabled, don't transfer.
-    // If the other body is sleeping, wake it.
-    const mergeIslands = false;
-    let jointKey = body.headJointKey;
-
-    while (jointKey !== B2_NULL_INDEX)
-    {
-        const jointId = jointKey >> 1;
-        const edgeIndex = jointKey & 1;
-
-        const joint = world.jointArray[jointId];
-        console.assert(joint.setIndex === b2SetType.b2_disabledSet);
-        console.assert(joint.islandId === B2_NULL_INDEX);
-
-        jointKey = joint.edges[edgeIndex].nextKey;
-
-        const bodyA = world.bodyArray[joint.edges[0].bodyId];
-        const bodyB = world.bodyArray[joint.edges[1].bodyId];
-
-        if (bodyA.setIndex === b2SetType.b2_disabledSet || bodyB.setIndex === b2SetType.b2_disabledSet)
-        {
-            // one body is still disabled
-            continue;
-        }
-
-        // Transfer joint first
-        let jointSetId;
-
-        if (bodyA.setIndex === b2SetType.b2_staticSet && bodyB.setIndex === b2SetType.b2_staticSet)
-        {
-            jointSetId = b2SetType.b2_staticSet;
-        }
-        else if (bodyA.setIndex === b2SetType.b2_staticSet)
-        {
-            jointSetId = bodyB.setIndex;
-        }
-        else
-        {
-            jointSetId = bodyA.setIndex;
-        }
-
-        // b2CheckIndex(world.solverSetArray, jointSetId);
-        const jointSet = world.solverSetArray[jointSetId];
-        b2TransferJoint(world, jointSet, disabledSet, joint);
-
-        // Now that the joint is in the correct set, I can link the joint in the island.
-        if (jointSetId !== b2SetType.b2_staticSet)
-        {
-            b2LinkJoint(world, joint, mergeIslands);
-        }
-    }
-
-    // Now merge islands
-    b2MergeAwakeIslands(world);
-
-    b2ValidateSolverSets(world);
+  b2ValidateSolverSets(world);
 }
 
 /**
@@ -2276,27 +2233,23 @@ export function b2Body_Enable(bodyId)
  * and any existing angular velocity is cleared. The body's mass data is updated
  * to reflect the change in rotational constraints.
  */
-export function b2Body_SetFixedRotation(bodyId, flag)
-{
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2Body_SetFixedRotation(bodyId, flag) {
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
+  if (world === null) {
+    return;
+  }
+  const body = b2GetBodyFullId(world, bodyId);
+
+  if (body.fixedRotation !== flag) {
+    body.fixedRotation = flag;
+    const state = b2GetBodyState(world, body);
+
+    if (state !== null) {
+      state.angularVelocity = 0.0;
     }
-    const body = b2GetBodyFullId(world, bodyId);
-
-    if (body.fixedRotation !== flag)
-    {
-        body.fixedRotation = flag;
-        const state = b2GetBodyState(world, body);
-
-        if (state !== null)
-        {
-            state.angularVelocity = 0.0;
-        }
-        b2UpdateBodyMassData(world, body);
-    }
+    b2UpdateBodyMassData(world, body);
+  }
 }
 
 /**
@@ -2307,12 +2260,11 @@ export function b2Body_SetFixedRotation(bodyId, flag)
  * Checks whether a body has fixed rotation enabled. When fixed rotation is enabled,
  * the body will not rotate in response to torques or collisions.
  */
-export function b2Body_IsFixedRotation(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_IsFixedRotation(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    return body.fixedRotation;
+  return body.fixedRotation;
 }
 
 /**
@@ -2326,17 +2278,15 @@ export function b2Body_IsFixedRotation(bodyId)
  * Bullet bodies are designed for fast moving objects that require more precise
  * collision detection.
  */
-export function b2Body_SetBullet(bodyId, flag)
-{
-    const world = b2GetWorldLocked(bodyId.world0);
+export function b2Body_SetBullet(bodyId, flag) {
+  const world = b2GetWorldLocked(bodyId.world0);
 
-    if (world === null)
-    {
-        return;
-    }
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
-    bodySim.isBullet = flag;
+  if (world === null) {
+    return;
+  }
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
+  bodySim.isBullet = flag;
 }
 
 /**
@@ -2349,13 +2299,12 @@ export function b2Body_SetBullet(bodyId, flag)
  * Bullet bodies undergo continuous collision detection for improved
  * accuracy with fast-moving objects.
  */
-export function b2Body_IsBullet(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    const bodySim = b2GetBodySim(world, body);
+export function b2Body_IsBullet(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  const bodySim = b2GetBodySim(world, body);
 
-    return bodySim.isBullet;
+  return bodySim.isBullet;
 }
 
 /**
@@ -2366,18 +2315,16 @@ export function b2Body_IsBullet(bodyId)
  * @param {boolean} enableHitEvents - Whether to enable or disable hit events
  * @returns {void}
  */
-export function b2Body_EnableHitEvents(bodyId, enableHitEvents)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    let shapeId = body.headShapeId;
+export function b2Body_EnableHitEvents(bodyId, enableHitEvents) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  let shapeId = body.headShapeId;
 
-    while (shapeId !== B2_NULL_INDEX)
-    {
-        const shape = world.shapeArray[shapeId];
-        shape.enableHitEvents = enableHitEvents;
-        shapeId = shape.nextShapeId;
-    }
+  while (shapeId !== B2_NULL_INDEX) {
+    const shape = world.shapeArray[shapeId];
+    shape.enableHitEvents = enableHitEvents;
+    shapeId = shape.nextShapeId;
+  }
 }
 
 /**
@@ -2389,12 +2336,11 @@ export function b2Body_EnableHitEvents(bodyId, enableHitEvents)
  * Returns the total count of shapes currently attached to the specified body
  * in the physics world.
  */
-export function b2Body_GetShapeCount(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_GetShapeCount(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    return body.shapeCount;
+  return body.shapeCount;
 }
 
 /**
@@ -2409,23 +2355,21 @@ export function b2Body_GetShapeCount(bodyId)
  * provided shapeArray and the total count is returned.
  * If shapeArray is already large enough we can avoid the overhead of growing the array.
  */
-export function b2Body_GetShapes(bodyId, shapeArray)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    let shapeId = body.headShapeId;
-    let shapeCount = 0;
+export function b2Body_GetShapes(bodyId, shapeArray) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  let shapeId = body.headShapeId;
+  let shapeCount = 0;
 
-    while (shapeId !== B2_NULL_INDEX)
-    {
-        const shape = world.shapeArray[shapeId];
-        const id = new b2ShapeId(shape.id + 1, bodyId.world0, shape.revision);
-        shapeArray[shapeCount] = id;
-        shapeCount += 1;
-        shapeId = shape.nextShapeId;
-    }
+  while (shapeId !== B2_NULL_INDEX) {
+    const shape = world.shapeArray[shapeId];
+    const id = new b2ShapeId(shape.id + 1, bodyId.world0, shape.revision);
+    shapeArray[shapeCount] = id;
+    shapeCount += 1;
+    shapeId = shape.nextShapeId;
+  }
 
-    return shapeCount;
+  return shapeCount;
 }
 
 /**
@@ -2436,12 +2380,11 @@ export function b2Body_GetShapes(bodyId, shapeArray)
  * @description
  * Returns the total count of joints that are connected to the specified body.
  */
-export function b2Body_GetJointCount(bodyId)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
+export function b2Body_GetJointCount(bodyId) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
 
-    return body.jointCount;
+  return body.jointCount;
 }
 
 /**
@@ -2456,114 +2399,101 @@ export function b2Body_GetJointCount(bodyId)
  * The joint IDs are stored in the provided jointArray. The function traverses the body's
  * joint list and copies each joint's ID information including the index, world ID and revision.
  */
-export function b2Body_GetJoints(bodyId, jointArray, capacity)
-{
-    const world = b2GetWorld(bodyId.world0);
-    const body = b2GetBodyFullId(world, bodyId);
-    let jointKey = body.headJointKey;
-    let jointCount = 0;
+export function b2Body_GetJoints(bodyId, jointArray, capacity) {
+  const world = b2GetWorld(bodyId.world0);
+  const body = b2GetBodyFullId(world, bodyId);
+  let jointKey = body.headJointKey;
+  let jointCount = 0;
 
-    while (jointKey !== B2_NULL_INDEX && jointCount < capacity)
-    {
-        const jointId = jointKey >> 1;
-        const edgeIndex = jointKey & 1;
-        const joint = b2GetJoint(world, jointId);
-        const id = new b2JointId();
-        id.index1 = jointId + 1;
-        id.world0 = bodyId.world0;
-        id.revision = joint.revision;
-        jointArray[jointCount] = id;
-        jointCount += 1;
-        jointKey = joint.edges[edgeIndex].nextKey;
-    }
+  while (jointKey !== B2_NULL_INDEX && jointCount < capacity) {
+    const jointId = jointKey >> 1;
+    const edgeIndex = jointKey & 1;
+    const joint = b2GetJoint(world, jointId);
+    const id = new b2JointId();
+    id.index1 = jointId + 1;
+    id.world0 = bodyId.world0;
+    id.revision = joint.revision;
+    jointArray[jointCount] = id;
+    jointCount += 1;
+    jointKey = joint.edges[edgeIndex].nextKey;
+  }
 
-    return jointCount;
+  return jointCount;
 }
 
-export function b2ShouldBodiesCollide(world, bodyA, bodyB)
-{
-    if (bodyA.type !== b2BodyType.b2_dynamicBody && bodyB.type !== b2BodyType.b2_dynamicBody)
-    {
-        return false;
-    }
-    let jointKey;
-    let otherBodyId;
+export function b2ShouldBodiesCollide(world, bodyA, bodyB) {
+  if (
+    bodyA.type !== b2BodyType.b2_dynamicBody &&
+    bodyB.type !== b2BodyType.b2_dynamicBody
+  ) {
+    return false;
+  }
+  let jointKey;
+  let otherBodyId;
 
-    if (bodyA.jointCount < bodyB.jointCount)
-    {
-        jointKey = bodyA.headJointKey;
-        otherBodyId = bodyB.id;
-    }
-    else
-    {
-        jointKey = bodyB.headJointKey;
-        otherBodyId = bodyA.id;
-    }
+  if (bodyA.jointCount < bodyB.jointCount) {
+    jointKey = bodyA.headJointKey;
+    otherBodyId = bodyB.id;
+  } else {
+    jointKey = bodyB.headJointKey;
+    otherBodyId = bodyA.id;
+  }
 
-    while (jointKey !== B2_NULL_INDEX)
-    {
-        const jointId = jointKey >> 1;
-        const edgeIndex = jointKey & 1;
-        const otherEdgeIndex = edgeIndex ^ 1;
-        const joint = b2GetJoint(world, jointId);
+  while (jointKey !== B2_NULL_INDEX) {
+    const jointId = jointKey >> 1;
+    const edgeIndex = jointKey & 1;
+    const otherEdgeIndex = edgeIndex ^ 1;
+    const joint = b2GetJoint(world, jointId);
 
-        if (joint.collideConnected === false && joint.edges[otherEdgeIndex].bodyId === otherBodyId)
-        {
-            return false;
-        }
-        jointKey = joint.edges[edgeIndex].nextKey;
+    if (
+      joint.collideConnected === false &&
+      joint.edges[otherEdgeIndex].bodyId === otherBodyId
+    ) {
+      return false;
     }
+    jointKey = joint.edges[edgeIndex].nextKey;
+  }
 
-    return true;
+  return true;
 }
 
 // PJB: recursively deep set obj 'number' properties to zero, similar to the C <struct name> = { 0 };
-export function resetProperties(obj)
-{
-    const resetProperty = (item) =>
-    {
-        if (typeof item === 'object' && item !== null)
-        {
-            Object.keys(item).forEach(key =>
-            {
-                switch (typeof item[key])
-                {
-                    case 'number':
-                        item[key] = 0;
+export function resetProperties(obj) {
+  const resetProperty = (item) => {
+    if (typeof item === "object" && item !== null) {
+      Object.keys(item).forEach((key) => {
+        switch (typeof item[key]) {
+          case "number":
+            item[key] = 0;
 
-                        break;
+            break;
 
-                    case 'boolean':
-                        item[key] = false;
+          case "boolean":
+            item[key] = false;
 
-                        break;
+            break;
 
-                    case 'string':
-                        item[key] = '';
+          case "string":
+            item[key] = "";
 
-                        break;
+            break;
 
-                    case 'object':
-                        if (Array.isArray(item[key]))
-                        {
-                            // item[key] = [];  PJB: don't do this here, it's handled before the call in the rare instances it's needed
-                        }
-                        else if (item[key] !== null)
-                        {
-                            resetProperty(item[key]);
-                        }
-                        else
-                        {
-                            item[key] = null;
-                        }
+          case "object":
+            if (Array.isArray(item[key])) {
+              // item[key] = [];  PJB: don't do this here, it's handled before the call in the rare instances it's needed
+            } else if (item[key] !== null) {
+              resetProperty(item[key]);
+            } else {
+              item[key] = null;
+            }
 
-                        break;
+            break;
 
-                    // For functions, symbols, etc., we leave them as is
-                }
-            });
+          // For functions, symbols, etc., we leave them as is
         }
-    };
+      });
+    }
+  };
 
-    resetProperty(obj);
+  resetProperty(obj);
 }
