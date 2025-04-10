@@ -4,7 +4,7 @@
  */
 import * as Phaser from "phaser";
 
-import { ASSETS, PHYSICS, ANIMATION } from "@constants";
+import { ASSETS, PHYSICS } from "@constants";
 import { gameState } from "@gameState";
 import {
   AddSpriteToWorld,
@@ -16,7 +16,6 @@ import {
   b2CreatePolygonShape,
   b2MakeBox,
   b2Vec2,
-  RemoveSpriteFromWorld,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
 

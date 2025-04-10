@@ -181,9 +181,8 @@ export default class Player extends Phaser.GameObjects.Sprite {
   /**
    * Resets the player to initial position and state.
    * This is called during both initial spawn and when respawning after death.
-   * @param resetGravity If true, resets gravity scale based on game state (default: true)
    */
-  reset(resetGravity = true) {
+  reset() {
     console.log("Starting player reset at position:", this.startPosition);
 
     // Set sprite position first

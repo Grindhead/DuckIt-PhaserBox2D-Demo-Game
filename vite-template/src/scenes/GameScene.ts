@@ -12,14 +12,12 @@ import { PHYSICS, WORLD, SCENES } from "@constants";
 import Coin from "@entities/Coin";
 import DeathSensor from "@entities/DeathSensor";
 import Player from "@entities/Player";
-import { gameState, GameStates } from "@gameState";
+import { gameState } from "@gameState";
 import {
   b2Body_GetLinearVelocity,
-  b2BodyId,
   b2CreateWorld,
   b2CreateWorldArray,
   b2DefaultWorldDef,
-  b2DestroyBody,
   b2Shape_GetUserData,
   b2Shape_IsSensor,
   b2Vec2,
@@ -28,7 +26,6 @@ import {
   b2World_Step,
   UpdateWorldSprites,
   b2WorldId,
-  b2Body_SetLinearVelocity,
   b2Body_SetGravityScale,
   b2Body_ApplyLinearImpulseToCenter,
 } from "@PhaserBox2D";
@@ -41,7 +38,6 @@ import { generateLevel } from "../lib/levelGenerator";
 
 type b2WorldIdInstance = InstanceType<typeof b2WorldId>;
 type MappedSprite = Phaser.GameObjects.Sprite;
-type b2BodyIdInstance = InstanceType<typeof b2BodyId>;
 
 interface ShapeUserData {
   type: string;

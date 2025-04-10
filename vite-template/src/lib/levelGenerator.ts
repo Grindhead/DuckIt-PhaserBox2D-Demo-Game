@@ -4,7 +4,7 @@
  */
 import * as Phaser from "phaser";
 
-import { WORLD, PHYSICS } from "@constants";
+import { WORLD } from "@constants";
 import Coin from "@entities/Coin"; // Moved import order
 import Platform from "@entities/Platform"; // Import the new Platform entity
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting and accessing its methods

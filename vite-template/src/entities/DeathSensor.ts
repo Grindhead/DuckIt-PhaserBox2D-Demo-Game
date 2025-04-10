@@ -4,7 +4,6 @@ import { PHYSICS, WORLD } from "@constants";
 import { gameState } from "@gameState";
 // Import runtime values/functions via alias
 import {
-  AddSpriteToWorld,
   STATIC,
   b2DefaultBodyDef,
   b2DestroyBody,
