@@ -135,6 +135,7 @@ export default class DeathSensor {
     width: number,
     height: number
   ) {
+    if (!PHYSICS.DEATH_SENSOR.VISIBLE) return;
     // Create a visual marker for debugging (optional - can be removed in production)
     this.marker = this.scene.add.rectangle(x, y, width, height, 0xff0000, 0.3);
     this.marker.setDepth(100); // Make sure it's visible above other elements

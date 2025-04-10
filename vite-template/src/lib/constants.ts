@@ -59,6 +59,9 @@ export const PHYSICS = {
     FRICTION: 0.0,
     /** Bounce coefficient (irrelevant) */
     RESTITUTION: 0.0,
+
+    /** Whether the sensor is visible */
+    VISIBLE: false,
   },
 } as const;
 
