@@ -422,7 +422,17 @@ export default class Player extends Phaser.GameObjects.Sprite {
   }
 
   update(controls: Phaser.Types.Input.Keyboard.CursorKeys) {
-    if (!this.bodyId || gameState.isGameOver) return;
+    if (!this.bodyId || !gameState.worldId) {
+      console.warn("Player update called without physics body or worldId");
+      return;
+    }
+
+    // Prevent any movement or updates if the player is dead
+    if (this.playerState.isDead) {
+      // Ensure velocity is zero when dead
+      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+      return;
+    }
 
     const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
     const bodyMass = b2Body_GetMass(this.bodyId);
