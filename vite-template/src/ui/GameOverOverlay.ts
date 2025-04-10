@@ -24,13 +24,20 @@ export default class GameOverOverlay {
           this.scene.cameras.main.centerX,
           this.scene.cameras.main.centerY,
           ASSETS.ATLAS,
-          ASSETS.UI.START
+          ASSETS.UI.GAME_OVER
         )
         .setScrollFactor(0)
         .setInteractive({ cursor: "pointer" })
         .setVisible(false);
 
       this.overlay.on("pointerdown", () => {
+        // Log click for debugging
+        console.log("Game over overlay clicked, restarting game");
+
+        // Hide the overlay immediately on click
+        this.hide();
+
+        // Call restart method on the scene
         this.scene.restart();
       });
     }

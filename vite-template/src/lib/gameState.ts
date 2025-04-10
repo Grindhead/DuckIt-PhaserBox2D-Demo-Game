@@ -57,6 +57,7 @@ class GameState {
   private currentState!: (typeof GameStates)[keyof typeof GameStates];
   public worldId: b2WorldIdInstance | null = null; // Use derived instance type
   private coins: number = 0; // Initialize coins to 0
+  private _isRestarting: boolean = false; // Flag to indicate if the game is in the process of restarting
 
   /**
    * Creates or returns the singleton instance of GameState
@@ -84,11 +85,58 @@ class GameState {
 
   /**
    * Resets the game state to initial values
+   * @param {boolean} [preserveWorld=true] - Whether to preserve the worldId (default: true)
    */
-  reset() {
+  reset(preserveWorld: boolean = true) {
+    // Save worldId reference if preserving world
+    const savedWorldId = preserveWorld ? this.worldId : null;
+
     this.currentState = GameStates.INITIALIZING;
-    this.worldId = null;
+    this.worldId = savedWorldId; // Either null or the preserved worldId
     this.coins = 0;
+
+    // If we preserved the world and have a valid ID, transition directly to READY
+    if (preserveWorld && this.worldId) {
+      this.transition(GameStates.READY);
+    }
+  }
+
+  /**
+   * Checks if the game is currently in the process of restarting
+   * @returns {boolean}
+   */
+  get isRestarting() {
+    return this._isRestarting;
+  }
+
+  /**
+   * Sets the restarting flag
+   * @param {boolean} value - Whether the game is restarting
+   */
+  setRestarting(value: boolean) {
+    this._isRestarting = value;
+  }
+
+  /**
+   * Resets only game variables without clearing the worldId
+   * Used when restarting a level rather than initializing a new world
+   */
+  resetLevel() {
+    // Set restarting flag
+    this._isRestarting = true;
+
+    // Transition to READY state, which resets coins through entry actions
+    if (this.currentState !== GameStates.READY) {
+      this.transition(GameStates.READY);
+    } else {
+      // If already in READY state, manually reset coins
+      this.coins = 0;
+    }
+
+    // Clear restarting flag after state transition is complete
+    setTimeout(() => {
+      this._isRestarting = false;
+    }, 50);
   }
 
   /**
@@ -255,11 +303,25 @@ class GameState {
     return false;
   }
 
+  resetCoins() {
+    this.coins = 0;
+  }
+
   /**
    * Gets the current coin count
-   * @returns {number} The number of coins collected
+   * @returns {number} The current coin count
    */
   getCoins() {
+    return this.coins;
+  }
+
+  /**
+   * Sets the coin count to a specific value
+   * @param {number} value - The value to set coins to
+   * @returns {number} The new coin count
+   */
+  setCoins(value: number) {
+    this.coins = value;
     return this.coins;
   }
 }
@@ -272,5 +334,7 @@ export const gameState = GameState.getInstance();
 /**
  * Convenience function to reset the game state
  * @function
+ * @param {boolean} [preserveWorld=true] - Whether to preserve the worldId
  */
-export const resetGameState = () => gameState.reset();
+export const resetGameState = (preserveWorld: boolean = true) =>
+  gameState.reset(preserveWorld);

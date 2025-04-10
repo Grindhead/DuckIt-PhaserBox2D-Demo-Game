@@ -35,12 +35,22 @@ export default class GameStartScreen {
 
     if (this.overlay) {
       this.overlay.on("pointerdown", () => {
-        if (gameState.isGameOver) {
-          this.scene.restart();
-        } else {
-          this.hide();
-          this.scene.startGame();
-        }
+        console.log(
+          "Start button clicked, game state:",
+          gameState.isGameOver
+            ? "GAME_OVER"
+            : gameState.isReady
+            ? "READY"
+            : gameState.isPlaying
+            ? "PLAYING"
+            : "OTHER"
+        );
+
+        // Hide the overlay first
+        this.hide();
+
+        // Then start the game (works for both initial start and after restart)
+        this.scene.startGame();
       });
     }
   }

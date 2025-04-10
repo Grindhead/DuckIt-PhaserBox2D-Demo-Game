@@ -30,7 +30,7 @@ export const PHYSICS = {
     /** Horizontal movement speed in pixels/second */
     SPEED: 160,
     /** Vertical jump force (positive for upward force) */
-    JUMP_FORCE: 30,
+    JUMP_FORCE: 40,
     /** Mass density for physics calculations */
     DENSITY: 1.0,
     /** Surface friction coefficient */
@@ -52,11 +52,11 @@ export const PHYSICS = {
   /** Crate physics properties */
   CRATE: {
     /** Big crate density (2x small crate for 2:1 mass ratio) */
-    BIG_DENSITY: 1.0,
+    BIG_DENSITY: 1.2,
     /** Small crate density */
-    SMALL_DENSITY: 0.5,
+    SMALL_DENSITY: 0.6,
     /** Surface friction coefficient */
-    FRICTION: 0.3,
+    FRICTION: 0.4,
     /** Bounce coefficient (low to prevent bouncing) */
     RESTITUTION: 0.0,
   },
@@ -252,6 +252,10 @@ export const ASSETS = {
   UI: {
     /** Start screen overlay sprite key */
     START: "ui/start.png",
+
+    /** Game over screen overlay sprite key */
+    GAME_OVER: "ui/game-over.png",
+
     /** Mobile direction control button sprite key */
     DIRECTION_BUTTON: "ui/direction-button.png",
   },
