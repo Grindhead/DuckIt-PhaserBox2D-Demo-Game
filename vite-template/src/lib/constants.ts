@@ -162,6 +162,24 @@ export const ASSETS = {
     },
   },
 
+  /** Crate assets */
+  CRATE: {
+    /** Big crate sprite key */
+    BIG: {
+      FRAME: "crate/crate-big.png",
+      DENSITY: 2.0,
+      FRICTION: 0.8,
+      RESTITUTION: 0.0,
+    },
+    /** Small crate sprite key */
+    SMALL: {
+      FRAME: "crate/crate-small.png",
+      DENSITY: 1.0,
+      FRICTION: 0.8,
+      RESTITUTION: 0.0,
+    },
+  },
+
   /** Collectible coin assets */
   COIN: {
     /** Idle animation configuration */
