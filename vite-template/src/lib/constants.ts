@@ -226,6 +226,10 @@ export const ASSETS = {
   UI: {
     /** Start screen overlay sprite key */
     START: "ui/start.png",
+
+    /** Game over overlay sprite key */
+    GAME_OVER: "ui/game-over.png",
+
     /** Mobile direction control button sprite key */
     DIRECTION_BUTTON: "ui/direction-button.png",
   },

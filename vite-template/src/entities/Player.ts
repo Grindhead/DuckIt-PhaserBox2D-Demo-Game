@@ -299,14 +299,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
         "Player registered in bodyIdToSpriteMap with index:",
         this.bodyId.index1
       );
-    } else if (this.bodyId) {
-      console.warn(
-        "Player added to a scene that is not GameScene. Cannot register in bodyIdToSpriteMap."
-      );
-    } else {
-      console.warn(
-        "Failed to register player in bodyIdToSpriteMap. BodyId invalid."
-      );
     }
 
     // Explicitly wake up the body to ensure it's active for immediate collision detection
@@ -423,6 +415,14 @@ export default class Player extends Phaser.GameObjects.Sprite {
       console.log("Player death state set:", {
         position: { x: this.x, y: this.y },
         hasPhysics: !!this.bodyId,
+      });
+
+      // Call the GameScene's killPlayer method to show game over overlay
+      // Use a short delay to allow death animation to play first
+      this.scene.time.delayedCall(500, () => {
+        if (this.scene instanceof GameScene) {
+          (this.scene as GameScene).killPlayer();
+        }
       });
     }
   }

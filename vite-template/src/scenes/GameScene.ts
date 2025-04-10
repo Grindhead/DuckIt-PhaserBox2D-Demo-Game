@@ -56,7 +56,6 @@ export default class GameScene extends Phaser.Scene {
   startScreen!: GameStartScreen;
   gameOverOverlay!: GameOverOverlay;
   mobileControls!: MobileControls;
-  playerStartPosition: { x: number; y: number } | null = null;
   coins!: Phaser.GameObjects.Group;
 
   bodyIdToSpriteMap = new Map<number, MappedSprite>();
@@ -79,7 +78,6 @@ export default class GameScene extends Phaser.Scene {
     this.coins = this.add.group();
 
     const playerPos = generateLevel(this, this.coins);
-    this.playerStartPosition = playerPos;
 
     this.player = new Player(this, playerPos.x, playerPos.y);
 
@@ -217,73 +215,8 @@ export default class GameScene extends Phaser.Scene {
         // Kill the player which stops movement and plays death animation
         this.player.kill();
 
-        // Wait a short time before respawning to allow death animation to play
-        this.time.delayedCall(300, () => {
-          if (this.player) {
-            // First, update the startPosition to the original spawn point
-            if (this.playerStartPosition) {
-              this.player.startPosition.x = this.playerStartPosition.x;
-              this.player.startPosition.y = this.playerStartPosition.y;
-            }
-
-            // Destroy the existing physics body
-            this.player.destroyPhysics();
-
-            // Create a new physics body
-            this.player.initPhysics();
-
-            // Make sure the player is registered in the bodyIdToSpriteMap
-            if (this.player.bodyId) {
-              this.bodyIdToSpriteMap.set(
-                this.player.bodyId.index1,
-                this.player
-              );
-
-              // Temporarily disable gravity completely during repositioning
-              b2Body_SetGravityScale(this.player.bodyId, 0);
-
-              // Reset player position and state
-              this.player.reset(false); // Don't reset gravity from inside reset
-
-              // After a longer delay to ensure body position is stabilized, gradually introduce physics
-              this.time.delayedCall(50, () => {
-                if (this.player && this.player.bodyId) {
-                  // First step: Apply mild gravity to start controlled descent
-                  b2Body_SetGravityScale(this.player.bodyId, 0.2);
-
-                  // Second step: After a short delay, increase gravity and ensure the player is above any platform
-                  this.time.delayedCall(50, () => {
-                    if (this.player && this.player.bodyId) {
-                      // Apply full gravity
-                      b2Body_SetGravityScale(this.player.bodyId, 1.0);
-
-                      // Apply a gentle downward impulse - reduced from previous value to prevent tunneling
-                      const landingImpulse = new b2Vec2(0, -0.3);
-                      b2Body_ApplyLinearImpulseToCenter(
-                        this.player.bodyId,
-                        landingImpulse,
-                        true
-                      );
-
-                      console.log(
-                        "Applied full gravity and landing impulse after respawn"
-                      );
-                    }
-                  });
-                }
-              });
-            }
-
-            // Update camera position
-            this.cameras.main.centerOn(this.player.x, this.player.y);
-
-            console.log("Player respawned after death", {
-              position: { x: this.player.x, y: this.player.y },
-              bodyId: this.player.bodyId ? "valid" : "null",
-              gravityScale: 0, // Initial zero gravity during repositioning
-            });
-          }
-        });
+        // The killPlayer method will now be called from the Player.kill() method
+        // so we don't need to handle respawn logic here as it should go through the game over flow
       }
     }
 
@@ -436,7 +369,7 @@ export default class GameScene extends Phaser.Scene {
         console.log("Enabled gravity for player body");
       }
 
-      const success = gameState.startGame();
+      gameState.startGame();
       this.startScreen.hide();
       this.gameOverOverlay.hide();
     }
@@ -448,7 +381,7 @@ export default class GameScene extends Phaser.Scene {
    */
   restart() {
     console.log("Restarting game logic (persistent world)...");
-    // gameState.restartGame(); // Resets coins count, sets state to READY
+    gameState.restartGame(); // Reset game state to READY
 
     // Reset any collected coins
     this.coins.children.each((coinChild) => {
@@ -458,6 +391,14 @@ export default class GameScene extends Phaser.Scene {
       }
       return true; // Continue iteration
     });
+
+    // Reset player
+    if (this.player) {
+      this.player.reset();
+
+      // Update camera position
+      this.cameras.main.centerOn(this.player.x, this.player.y);
+    }
 
     // Update UI
     this.gameOverOverlay.hide();

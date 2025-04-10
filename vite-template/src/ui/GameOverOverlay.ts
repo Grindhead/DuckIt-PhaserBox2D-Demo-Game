@@ -24,7 +24,7 @@ export default class GameOverOverlay {
           this.scene.cameras.main.centerX,
           this.scene.cameras.main.centerY,
           ASSETS.ATLAS,
-          ASSETS.UI.START
+          ASSETS.UI.GAME_OVER
         )
         .setScrollFactor(0)
         .setInteractive({ cursor: "pointer" })
