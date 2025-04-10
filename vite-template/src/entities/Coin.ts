@@ -93,8 +93,18 @@ export default class Coin extends Phaser.GameObjects.Sprite {
     if (this.isCollected) return;
     this.isCollected = true;
 
-    this.setVisible(false);
-    this.setActive(false); // Also set inactive
+    // Play the collect animation
+    this.play(ASSETS.COIN.COLLECT.KEY);
+
+    // Hide the coin *after* the animation completes
+    this.on(
+      Phaser.Animations.Events.ANIMATION_COMPLETE,
+      () => {
+        this.setVisible(false);
+        this.setActive(false); // Also set inactive
+      },
+      this
+    );
   }
 
   /**
