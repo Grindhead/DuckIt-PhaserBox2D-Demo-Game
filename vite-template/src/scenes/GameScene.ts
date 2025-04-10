@@ -34,7 +34,7 @@ import GameOverOverlay from "@ui/GameOverOverlay";
 import GameStartScreen from "@ui/GameStartScreen";
 import MobileControls from "@ui/MobileControls";
 
-import { generateLevel } from "../lib/levelGenerator";
+import { generateLevel } from "../lib/levelGenerator/levelGenerator";
 
 type b2WorldIdInstance = InstanceType<typeof b2WorldId>;
 type MappedSprite = Phaser.GameObjects.Sprite;

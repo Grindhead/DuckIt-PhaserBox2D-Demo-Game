@@ -9,14 +9,18 @@ flowchart TD
     User --> Input[Input Handling (Keyboard/Touch)]
     Input --> GameScene[Game Scene]
     GameScene --> Player[Player Logic]
-    GameScene --> LevelGen[Level Generation]
-    GameScene --> Entities[Entity Management (Crates, Coins, Enemies, Finish)]
+    GameScene --> LevelGenOrchestrator[Level Generation Orchestrator (levelGenerator.ts)]
+    LevelGenOrchestrator --> PlatformGen[Platform Generator (platformGenerator.ts)]
+    LevelGenOrchestrator --> CoinGen[Coin Generator (coinGenerator.ts)]
+    LevelGenOrchestrator --> GapGen[Gap Generator (gapGenerator.ts)]
+    PlatformGen --> Entities[Entity Management (Platforms)]
+    CoinGen --> Entities[Entity Management (Coins)]
+    GameScene --> Entities[Entity Management (Crates, Enemies, Finish)]
     GameScene --> Physics[Physics Engine (Box2D via PhaserBox2D.js)]
     GameScene --> Renderer[Phaser Renderer]
 
     Player --> Physics
     Entities --> Physics
-    LevelGen --> Entities
     Physics --> GameScene
     Renderer --> Display[Screen]
 
@@ -32,10 +36,10 @@ flowchart TD
 - **Scenes:** Follows the `Boot` -> `Preloader` -> `Game` flow.
   - `Boot`: Basic setup (scaling, background).
   - `Preloader`: Asset loading (texture atlas).
-  - `Game`: Contains all gameplay logic, physics world setup, entity creation, level generation, and UI.
+  - `Game`: Contains core gameplay logic, physics world setup, entity management, UI, and orchestrates level generation.
 - **Physics:** Integrated via `PhaserBox2D.js`. Handles collisions, movement constraints (player, crates, enemies), and interactions (coin collection, enemy contact, finish activation).
-- **Entity Management:** The `Game` scene manages all game objects (player, platforms, crates, coins, enemies, finish).
-- **Level Generation:** A procedural algorithm within the `Game` scene creates the level layout, placing platforms, crates, enemies, coins, and the finish entity according to PRD rules.
+- **Entity Management:** The `Game` scene manages all game objects (player, platforms, crates, coins, enemies, finish). Entities are created either directly or via the level generation modules.
+- **Level Generation:** A modular approach orchestrated by `levelGenerator.ts`, which uses `platformGenerator.ts`, `coinGenerator.ts`, and `gapGenerator.ts` to create the level layout (platforms, coins) according to PRD rules. Logic for placing crates, enemies, and the finish entity will be added later.
 - **Rendering:** Handled by Phaser's rendering engine.
 - **Input:** Managed by Phaser's input system, mapped to player actions.
 - **Camera:** Phaser's camera follows the player with subtle easing.
@@ -44,36 +48,40 @@ flowchart TD
 
 - **Phaser + Box2D:** Chosen combination for 2D game development with robust physics.
 - **Vite:** Selected for fast development builds and optimized production builds.
+- **TypeScript:** Transitioning to TypeScript for improved type safety and maintainability.
 - **Texture Atlas:** Using a single atlas optimizes asset loading and rendering performance.
 - **Procedural Generation:** Provides replayability without needing pre-designed levels.
+- **Modular Level Generation:** Separating level generation logic into focused modules (`platformGenerator.ts`, `coinGenerator.ts`, `gapGenerator.ts`) enhances organization.
 - **`PhaserBox2D.js`:** Specific requirement for integrating Box2D.
 
 ## 3. Design Patterns in Use
 
 - **Scene Management:** Phaser's built-in scene manager organizes game flow.
-- **State Pattern:** Player character uses states (`Idle`, `Run`, `Jump`, `Fall`, `Dead`) managed through animation changes and physics updates.
-  The finish entity also uses states (`Idle`, `Activated`, `Active`).
-- **Entity Component System (Implicit):** While not strictly ECS, Phaser's GameObjects (Sprites, Images) with added physics bodies and custom logic resemble an entity-based approach.
-- **Observer Pattern:** Animation events (`Phaser.Animations.Events`) are used to trigger state changes or actions upon animation completion.
-- **Factory Pattern (Implicit):** Functions will likely be used within the `Game` scene to create instances of different game entities (e.g., `createPlatform`, `createEnemy`).
+- **State Pattern:** Player character uses states (`Idle`, `Run`, `Jump`, `Fall`, `Dead`). The finish entity also uses states.
+- **Entity Component System (Implicit):** Phaser's GameObjects with physics bodies and custom logic.
+- **Observer Pattern:** Used for animation events.
+- **Module Pattern:** Level generation logic is broken down into distinct, reusable modules.
+- **Factory Pattern (Implicit):** Functions within modules (`generatePlatform`, `generateCoins`) create entity instances.
 
 ## 4. Component Relationships
 
 - The `Game` scene is the central coordinator.
 - The `PhaserBox2D` world interacts with all physics-enabled entities.
-- Player input directly affects the player entity's physics body and state.
-- Collision/Sensor contacts detected by Box2D trigger game logic (coin collection, death, finish activation) within the `Game` scene's update loop or collision handlers.
-- The level generation logic dictates the initial placement and configuration of platforms, entities, and puzzles.
+- Player input affects the player entity.
+- Box2D collision/sensor contacts trigger game logic.
+- The `levelGenerator.ts` orchestrates calls to the `platformGenerator`, `coinGenerator`, and `gapGenerator` modules.
+- These generator modules create platform and coin entities and return data needed for further generation steps.
 
 ## 5. Critical Implementation Paths
 
-1.  **Project Setup:** Initialize Vite, install Phaser, integrate `PhaserBox2D.js`.
-2.  **Scene Flow:** Implement `Boot`, `Preloader` (asset loading), and basic `Game` scene structure.
-3.  **Physics World:** Configure the Box2D world within the `Game` scene.
-4.  **Player Implementation:** Create the player sprite, define animations, implement physics-based movement (run, jump), handle state transitions, and integrate controls.
-5.  **Platform Implementation:** Create static platform bodies using tiling.
-6.  **Level Generation:** Develop the procedural algorithm to place platforms ensuring playability (respecting jump height and crate usage).
-7.  **Core Entities:** Implement crates (pushable, 2:1 mass ratio, puzzle mechanics), enemies (patrolling at 80% player speed, physics), coins (sensors, collection), and the finish entity (sensor, state changes).
-8.  **Interaction Logic:** Implement collision handling for player-enemy, player-coin, player-finish interactions, and the death sensor.
-9.  **UI & Camera:** Add the coin counter, start/reset overlay, and camera follow logic (with easing).
-10. **Responsiveness:** Ensure the game scales and controls adapt correctly.
+1.  Project Setup (Done)
+2.  Scene Flow (Done)
+3.  Physics World Setup (Partial - Box2D config done, listeners pending)
+4.  Player Implementation (Partial)
+5.  Platform Implementation (Done - via `platformGenerator.ts`)
+6.  Level Generation Orchestration (Done - `levelGenerator.ts` refactored)
+7.  Core Entities (Partial - Coins done via `coinGenerator.ts`, others pending)
+8.  Interaction Logic (Pending - Collision listeners)
+9.  UI & Camera (Partial)
+10. Responsiveness (Pending)
+11. TypeScript Transition (Ongoing)

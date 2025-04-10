@@ -22,7 +22,6 @@ import {
   b2Body_SetAngularVelocity,
   b2Body_SetTransform,
   b2Body_SetAwake,
-  b2ShapeDef,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
 

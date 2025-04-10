@@ -15,10 +15,13 @@
 - `Coin.ts` entity created with physics sensor body and collection logic.
 - `gameState.ts` updated with coin counter.
 - Basic level structure (platforms, coins) is generated.
+- UI elements are created, but initially rendered under the player.
+- UI layering fixed with `setDepth`.
+- Level generation logic refactored into separate modules (`platformGenerator.ts`, `coinGenerator.ts`, `gapGenerator.ts`).
 
 ## 2. What's Left to Build / Current Task
 
-- **Current Task:** Verify current implementation (physics, platforms, coins) and implement Box2D collision handling for coin collection.
+- **Current Task:** Verify refactored level generation and implement Box2D collision handling for coin collection.
 - **Subsequent Tasks:**
   - Update Coin Counter UI display.
   - Continue TypeScript Transition (convert remaining JS, add types).
@@ -33,7 +36,7 @@
 ## 3. Current Status
 
 - **Phase:** Implementation & Refactoring (TypeScript Transition, Core Gameplay Features).
-- **Description:** The project has a partially implemented codebase, now mostly in TypeScript. Core platforming and coin generation are implemented. The next focus is verifying the current state and implementing the core interaction logic (coin collection via Box2D collisions).
+- **Description:** The project has a partially implemented codebase, now mostly in TypeScript. Core platforming and coin generation are implemented and level generation logic has been modularized. The next focus is verifying the refactored generation and implementing the core interaction logic (coin collection via Box2D collisions).
 
 ## 4. Known Issues / Blockers
 
@@ -49,6 +52,8 @@
 - Utilizing bundled Phaser types and provided custom Box2D types.
 - Refactored level generation into a separate module.
 - Decided to implement Box2D collision handling using contact listeners.
+- Decided to use explicit `setDepth` on UI elements to ensure they render above game objects.
+- Further refactored level generation into smaller, specific modules (`platformGenerator.ts`, `coinGenerator.ts`, `gapGenerator.ts`).
 
 ## 6. Comprehensive and Modular To-Do List (Updated Status)
 
@@ -74,12 +79,13 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
 
 4. Procedural Level Generation
 
-   - [Partial] Generate tiling platforms (multiple platforms with gaps).
+   - [Done] Generate tiling platforms (multiple platforms with gaps) via `platformGenerator.ts`.
    - [ ] Introduce crates (respecting 2:1 mass ratio) in puzzle segments.
    - [ ] Place enemies (patrolling at 80% player speed) on suitable platforms.
-   - [Partial] Distribute coins on platforms.
+   - [Done] Distribute coins on platforms via `coinGenerator.ts`.
    - [ ] Place the finish entity, ensuring level completability.
    - [ ] Refine algorithm for solvability and variety.
+   - [Done] Orchestrate generation via `levelGenerator.ts` using `gapGenerator.ts` and other modules.
 
 5. Player Character Implementation
 
@@ -100,6 +106,7 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
    - [Partial] Display coin counter (UI element exists, value update pending).
    - [Partial] Implement "start.png" overlay (element exists, full logic pending).
    - [Partial] Create on-screen direction buttons (element exists, logic needs testing).
+   - [Done] Ensure UI elements render above the player using `setDepth`.
 
 8. Camera & Responsiveness
 
