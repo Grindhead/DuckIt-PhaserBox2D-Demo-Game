@@ -22,13 +22,14 @@ import {
   b2Body_SetAngularVelocity,
   b2Body_SetTransform,
   b2Body_SetAwake,
+  b2ShapeDef,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
 
 /**
  * The size type of a crate: big or small
  */
-type CrateSize = "big" | "small";
+type CrateSize = "BIG" | "SMALL";
 
 export default class Crate extends Phaser.GameObjects.Sprite {
   scene: Phaser.Scene;
@@ -53,9 +54,9 @@ export default class Crate extends Phaser.GameObjects.Sprite {
     platformId: number | null = null
   ) {
     // Select the correct frame data based on size
-    const frameData = size === "big" ? ASSETS.CRATE.BIG : ASSETS.CRATE.SMALL;
+    const frameData: string = ASSETS.CRATE[size].FRAME;
 
-    super(scene, x, y, ASSETS.ATLAS, frameData.FRAME); // Use frameData.FRAME
+    super(scene, x, y, ASSETS.ATLAS, frameData); // Use frameData.FRAME
     this.scene = scene;
     this.size = size;
     this.originalPosition = { x, y };
@@ -90,26 +91,17 @@ export default class Crate extends Phaser.GameObjects.Sprite {
       return;
     }
 
+    // Create default shape definition (type is inferred)
+    const shapeDef = b2DefaultShapeDef();
+
+    // Set specific properties on the shapeDef object
+    shapeDef.density = ASSETS.CRATE[this.size].DENSITY;
+    shapeDef.friction = ASSETS.CRATE[this.size].FRICTION;
+    shapeDef.restitution = ASSETS.CRATE[this.size].RESTITUTION;
+    shapeDef.userData = { type: "crate", crateInstance: this, size: this.size };
+    // Invalid properties like isSensor are not set
+
     // Define the shape
-    const shapeDef = {
-      ...b2DefaultShapeDef(),
-      isSensor: false,
-      enableContactEvents: true,
-      // Select density based on size (2:1 ratio as per PRD)
-      density:
-        this.size === "big"
-          ? ASSETS.CRATE.BIG.DENSITY
-          : ASSETS.CRATE.SMALL.DENSITY,
-      friction:
-        this.size === "big" // Add friction constant
-          ? ASSETS.CRATE.BIG.FRICTION
-          : ASSETS.CRATE.SMALL.FRICTION,
-      restitution:
-        this.size === "big" // Add restitution constant and comma
-          ? ASSETS.CRATE.BIG.RESTITUTION
-          : ASSETS.CRATE.SMALL.RESTITUTION,
-      userData: { type: "crate", crateInstance: this, size: this.size },
-    };
 
     // Create box geometry with proper scaling for Box2D (in meters)
     const scaleX = this.scaleX;
