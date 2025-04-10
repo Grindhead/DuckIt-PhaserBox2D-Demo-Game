@@ -172,7 +172,7 @@ export const ASSETS = {
       FRICTION: 0.2,
       RESTITUTION: 0.0,
       WIDTH: 72,
-      HEIGHT: 40,
+      HEIGHT: 72,
     },
     /** Small crate sprite key */
     SMALL: {
