@@ -59,10 +59,9 @@ flowchart TD
 ## 3. Design Patterns in Use
 
 - **Scene Management:** Phaser's built-in scene manager organizes game flow.
-- **State Pattern:** Player character uses states (`Idle`, `Run`, `Jump`, `Fall`, `Dead`). The finish entity also uses states. State transitions are handled in the Player's `update` method based on `isGrounded` and velocity checks.
-- **State Pattern:** Player character uses states (`Idle`, `Run`, `Jump`, `Fall`, `Dead`). The finish entity also uses states. State transitions (including Jump -> Fall -> Land logic with simplified airborne checks) are handled in the Player's `update` method based on `isGrounded` and velocity checks.
+- **State Pattern:** Player character uses states (`Idle`, `Run`, `Jump`, `Fall`, `Dead`). The finish entity also uses states. State transitions are handled in the Player's `update` method based on `isGrounded`, velocity checks, and animation events (for Jump->Fall transition).
 - **Entity Component System (Implicit):** Phaser's GameObjects with physics bodies and custom logic.
-- **Observer Pattern:** Used for animation events.
+- **Observer Pattern:** Used for animation events (e.g., `ANIMATION_COMPLETE` for Player Jump->Fall transition).
 - **Module Pattern:** Level generation logic is broken down into distinct, reusable modules.
 - **Factory Pattern (Implicit):** Functions within modules (`generatePlatform`, `generateCoins`, `generateCratesForPlatform`) create entity instances.
 

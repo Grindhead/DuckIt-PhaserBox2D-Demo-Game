@@ -300,10 +300,16 @@ export default class GameScene extends Phaser.Scene {
         // Determine if player is above the surface
         const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
         let isBottomContact = false;
-        let normalY = 0; // Added for logging
 
         // --- Check for missing normal but low velocity --- Start
-        if (!event.normal && isBeginningContact && Math.abs(velocity.y) < 0.2) {
+        // For crates, we'll be more lenient with the velocity threshold
+        const velocityThreshold = otherUserData?.type === "crate" ? 0.5 : 0.2;
+
+        if (
+          !event.normal &&
+          isBeginningContact &&
+          Math.abs(velocity.y) < velocityThreshold
+        ) {
           console.log(
             "Grounding player due to low velocity despite missing contact normal."
           );
@@ -313,20 +319,36 @@ export default class GameScene extends Phaser.Scene {
 
         // Existing check for when normal IS defined
         else if (event.normal) {
-          normalY = event.normal.y; // Store for logging
           // Check if the player feet are contacting platform (y normal > 0)
-          isBottomContact = normalY > 0.1;
+          // For crates, be more lenient with the normal threshold
+          const normalThreshold = otherUserData?.type === "crate" ? 0.05 : 0.1;
+          isBottomContact = event.normal.y > normalThreshold;
+
+          console.log(
+            `Contact normal.y: ${event.normal.y}, isBottomContact: ${isBottomContact}`
+          );
         }
 
         // If this is a new contact and player is contacting platform from bottom/feet
         if (isBeginningContact) {
-          // The condition below now works correctly even if normal was initially undefined
-          if (isBottomContact || Math.abs(velocity.y) < 0.2) {
+          // For crates, also check small downward velocity as an additional condition
+          if (
+            isBottomContact ||
+            Math.abs(velocity.y) < velocityThreshold ||
+            (otherUserData?.type === "crate" && velocity.y < 0.1)
+          ) {
             this.player.setGrounded(true);
 
-            // Apply a small additional downward impulse ONLY for platforms to stabilize
-            if (this.player.bodyId && otherUserData?.type === "platform") {
-              const stabilizeImpulse = new b2Vec2(0, -0.1);
+            // Apply a small additional downward impulse for platforms to stabilize
+            // But use a gentler impulse for crates to prevent sinking/clipping
+            if (this.player.bodyId) {
+              let impulseStrength = -0.1; // Default for platforms
+
+              if (otherUserData?.type === "crate") {
+                impulseStrength = -0.05; // Gentler for crates
+              }
+
+              const stabilizeImpulse = new b2Vec2(0, impulseStrength);
               b2Body_ApplyLinearImpulseToCenter(
                 this.player.bodyId,
                 stabilizeImpulse,
@@ -335,7 +357,7 @@ export default class GameScene extends Phaser.Scene {
             }
 
             console.log(
-              "Player grounded from bottom contact or no vertical movement on platform/crate"
+              `Player grounded on ${otherUserData?.type} from bottom contact or low vertical movement`
             );
           }
         } else {

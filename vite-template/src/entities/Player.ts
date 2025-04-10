@@ -324,28 +324,33 @@ export default class Player extends Phaser.GameObjects.Sprite {
     // Set the internal state
     this.playerState.isGrounded = grounded;
 
-    // Remove animation logic from here - let the update loop handle it.
-    /*
+    // Immediately handle animation transitions when grounding state changes
     if (grounded && this.bodyId) {
       const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
-      const isMoving =
-        Math.abs(currentVelocity.x) >
-        PHYSICS.PLAYER.MOVE_THRESHOLD / PHYSICS.SCALE;
+      const currentAnimKey = this.anims.currentAnim?.key;
 
-      // Set appropriate animation when landing
-      if (isMoving) {
-        this.play(ASSETS.PLAYER.RUN.KEY);
-      } else {
-        this.play(ASSETS.PLAYER.IDLE.KEY);
-      }
+      // If we were in FALL animation, explicitly stop it and switch to idle/run
+      if (currentAnimKey === ASSETS.PLAYER.FALL.KEY) {
+        this.anims.stop();
 
-      // When we land, apply a small downward force to ensure stable contact
-      if (this.bodyId) {
-        const stabilizeImpulse = new b2Vec2(0, -0.05);
-        b2Body_ApplyLinearImpulseToCenter(this.bodyId, stabilizeImpulse, true);
+        if (
+          Math.abs(currentVelocity.x) >
+          PHYSICS.PLAYER.MOVE_THRESHOLD / PHYSICS.SCALE
+        ) {
+          this.play(ASSETS.PLAYER.RUN.KEY);
+        } else {
+          this.play(ASSETS.PLAYER.IDLE.KEY);
+        }
+
+        console.log(
+          "Animation transition in setGrounded: FALL → " +
+            (Math.abs(currentVelocity.x) >
+            PHYSICS.PLAYER.MOVE_THRESHOLD / PHYSICS.SCALE
+              ? "RUN"
+              : "IDLE")
+        );
       }
     }
-    */
 
     // Log for debugging
     console.log(`Player.setGrounded: ${grounded}`);
@@ -498,6 +503,11 @@ export default class Player extends Phaser.GameObjects.Sprite {
       // If we were FALLING, transition to IDLE or RUN now
       if (currentAnimKey === ASSETS.PLAYER.FALL.KEY) {
         console.log("Landed from Fall, checking Idle/Run");
+
+        // Force animation to complete - this can help with animation transitions
+        // that might be getting stuck
+        this.anims.stop();
+
         if (
           Math.abs(currentVelocity.x) >
           PHYSICS.PLAYER.MOVE_THRESHOLD / PHYSICS.SCALE
@@ -539,6 +549,12 @@ export default class Player extends Phaser.GameObjects.Sprite {
       ) {
         this.play(ASSETS.PLAYER.FALL.KEY);
         console.log("Airborne state initiated FALL");
+      }
+
+      // If we're in JUMP animation and moving downward, switch to FALL
+      if (currentAnimKey === ASSETS.PLAYER.JUMP.KEY && currentVelocity.y < 0) {
+        this.play(ASSETS.PLAYER.FALL.KEY);
+        console.log("Jump peaked, switching to FALL");
       }
     }
 
