@@ -8,18 +8,16 @@
 import * as Phaser from "phaser";
 
 import { ASSETS, PHYSICS, ANIMATION } from "@constants";
-import { gameState, GameStates } from "@gameState";
+import { gameState } from "@gameState";
 // Runtime values only
 import {
   AddSpriteToWorld,
   DYNAMIC,
   b2DefaultBodyDef,
   b2Vec2,
-  b2Rot,
   b2Body_GetLinearVelocity,
   b2Body_SetLinearVelocity,
   b2Body_ApplyLinearImpulseToCenter,
-  b2Body_SetTransform,
   b2Body_GetMass,
   b2DestroyBody,
   b2CreateBody,
@@ -32,12 +30,6 @@ import {
 } from "@PhaserBox2D";
 // Add import for GameScene
 import GameScene from "@scenes/GameScene";
-
-// Define a simple interface for b2Vec2 instances
-interface IB2Vec2 {
-  x: number;
-  y: number;
-}
 
 // Player state interface
 interface PlayerState {
@@ -432,15 +424,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
     const bodyMass = b2Body_GetMass(this.bodyId);
-
-    // Log velocity for debugging (every ~1 second)
-    if (this.scene.time.now % 1000 < 20) {
-      console.log("Player velocity:", {
-        x: currentVelocity.x * PHYSICS.SCALE,
-        y: currentVelocity.y * PHYSICS.SCALE,
-        isGrounded: this.playerState.isGrounded,
-      });
-    }
 
     let targetVelX = 0;
 
