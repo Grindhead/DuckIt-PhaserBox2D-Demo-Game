@@ -397,6 +397,9 @@ export default class Player extends Phaser.GameObjects.Sprite {
       this.anims.stop();
       this.play(ASSETS.PLAYER.DEAD.KEY);
 
+      b2Body_SetAwake(this.bodyId, false);
+      b2Body_SetGravityScale(this.bodyId, 0);
+
       // If the physics body exists, disable movement by setting velocity to zero
       if (this.bodyId) {
         b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
