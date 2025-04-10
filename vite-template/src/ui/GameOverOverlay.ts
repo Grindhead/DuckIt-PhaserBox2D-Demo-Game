@@ -15,26 +15,33 @@ export default class GameOverOverlay {
 
   constructor(scene: GameScene) {
     this.scene = scene;
+    this.createOverlay();
+  }
+
+  createOverlay() {
+    if (this.overlay) return;
+
+    this.overlay = this.scene.add
+      .image(
+        this.scene.cameras.main.centerX,
+        this.scene.cameras.main.centerY,
+        ASSETS.ATLAS,
+        ASSETS.UI.GAME_OVER
+      )
+      .setScrollFactor(0)
+      .setInteractive({ cursor: "pointer" })
+      .setVisible(false);
+
+    this.overlay.on("pointerdown", () => {
+      this.scene.restart();
+    });
   }
 
   show() {
     if (!this.overlay) {
-      this.overlay = this.scene.add
-        .image(
-          this.scene.cameras.main.centerX,
-          this.scene.cameras.main.centerY,
-          ASSETS.ATLAS,
-          ASSETS.UI.GAME_OVER
-        )
-        .setScrollFactor(0)
-        .setInteractive({ cursor: "pointer" })
-        .setVisible(false);
-
-      this.overlay.on("pointerdown", () => {
-        this.scene.restart();
-      });
+      this.createOverlay();
     }
-    this.overlay.setVisible(true);
+    this.overlay?.setVisible(true);
   }
 
   hide() {

@@ -124,10 +124,19 @@ export default class GameScene extends Phaser.Scene {
     this.coinCounter = new CoinCounter(this);
     this.startScreen = new GameStartScreen(this);
     this.gameOverOverlay = new GameOverOverlay(this);
+
+    // Set depth for the underlying Phaser GameObjects
+    this.coinCounter.text?.setDepth(100); // Access the 'text' property
+    this.startScreen.overlay?.setDepth(100); // Access the 'overlay' property
+    this.gameOverOverlay.overlay?.setDepth(100); // Access the 'overlay' property
   }
 
   setupInput() {
     this.mobileControls = new MobileControls(this);
+    // Set depth for mobile control buttons
+    this.mobileControls.leftButton?.setDepth(100);
+    this.mobileControls.rightButton?.setDepth(100);
+    this.mobileControls.jumpButton?.setDepth(100);
   }
 
   update(_time: number, delta: number) {
