@@ -38,7 +38,7 @@
   - [Done] Test Crate generation and interaction.
   - [Done] Test Animation Transitions (Jump -> Fall -> Land).
   - Continue TypeScript Transition (convert remaining JS, add types).
-  - Implement Enemies (physics, AI, interactions).
+  - [Done] Implement Enemies (physics, AI, interactions).
   - Implement Finish entity.
   - Refine level generation algorithm (add enemies, ensure solvability, potentially refine crate placement).
   - Implement full Box2D collision handling (player-enemy, player-finish, player-death sensor).
@@ -95,7 +95,7 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
 
    - [Done] Generate tiling platforms (multiple platforms with gaps) via `platformGenerator.ts`.
    - [Done] Introduce crates (respecting 2:1 mass ratio) in puzzle segments.
-   - [ ] Place enemies (patrolling at 80% player speed) on suitable platforms.
+   - [Done] Place enemies (patrolling at 80% player speed) on suitable platforms.
    - [Done] Distribute coins on platforms via `coinGenerator.ts`.
    - [ ] Place the finish entity, ensuring level completability.
    - [ ] Refine algorithm for solvability and variety.
@@ -112,7 +112,7 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
    - [Done] Ensure crates are pushable, cannot fall off their platform, and act as groundable surfaces.
    - [Done] Implement coin collection (entity logic done, collision handled).
    - [Done] Handle player death from falling off-screen (sensor exists, collision handled).
-   - [ ] Handle player death from enemies (enemy entity/collision pending).
+   - [Done] Handle player death from enemies (enemy entity/collision pending).
    - [ ] Activate finish entity on contact (entity/collision pending).
 
 7. UI & Controls

@@ -4,12 +4,14 @@
  */
 import * as Phaser from "phaser";
 
-import { WORLD, TEST_CRATES } from "@constants";
+import { WORLD } from "@constants";
+import Enemy from "@entities/Enemy"; // Import Enemy type
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
 
 // Import generator modules
 import { generateCoins, CoinConfig } from "./coinGenerator";
 import { generateCratesForPlatform } from "./crateGenerator";
+import { generateEnemyForPlatform } from "./enemyGenerator";
 import { generateGap, GapConfig } from "./gapGenerator";
 import {
   generatePlatform,
@@ -23,6 +25,14 @@ import {
 export interface PlayerSpawnPosition {
   x: number;
   y: number;
+}
+
+/**
+ * Data structure returned by generateLevel
+ */
+export interface GeneratedLevelData {
+  playerSpawnPosition: PlayerSpawnPosition;
+  enemies: Enemy[]; // Use imported Enemy type
 }
 
 /**
@@ -49,7 +59,7 @@ interface LevelGenerationConfig {
 export function generateLevel(
   scene: GameScene,
   coinsGroup: Phaser.GameObjects.Group
-): PlayerSpawnPosition {
+): GeneratedLevelData {
   // --- Configuration --- //
   const config: LevelGenerationConfig = {
     scene: scene,
@@ -62,6 +72,8 @@ export function generateLevel(
     maxGapWidthTiles: 5,
     edgePadding: 100,
   };
+
+  const generatedEnemies: Enemy[] = []; // Array to store generated enemies
 
   let currentX = config.edgePadding;
 
@@ -136,16 +148,46 @@ export function generateLevel(
 
     platformIndex++; // Increment platform counter
 
-    // --- Generate Crates (Conditionally on the Second Platform) --- //
-    if (TEST_CRATES && platformIndex === 1) {
-      // Generate crates only if TEST_CRATES is true AND it's the second platform (first loop iteration)
+    // --- Generate Crates (Probabilistic) --- //
+    if (platformIndex === 1) {
+      // Force spawn both crates on the second platform (index 1)
       generateCratesForPlatform({
         scene: config.scene,
         platformPhysicsMinX: platformData.physicsMinX,
         platformPhysicsMaxX: platformData.physicsMaxX,
         platformY: config.platformY,
-        cratePlacementProbability: 1, // Ensure crates always spawn for testing
+        forceSpawnBoth: true, // Force spawn!
       });
+    } else if (platformIndex > 1) {
+      // Use probabilistic generation for subsequent platforms
+      generateCratesForPlatform({
+        scene: config.scene,
+        platformPhysicsMinX: platformData.physicsMinX,
+        platformPhysicsMaxX: platformData.physicsMaxX,
+        platformY: config.platformY,
+        // Use default probability from crateGenerator.ts
+      });
+    }
+
+    // --- Generate Enemies (Probabilistic) --- //
+    console.log(
+      `[LevelGenerator] Checking enemy spawn for platformIndex: ${platformIndex}`
+    ); // Log index check
+    // Skip first and second platforms for enemies
+    if (platformIndex > 1) {
+      console.log(
+        `[LevelGenerator] Attempting to generate enemy for platform ${platformIndex}`
+      ); // Log attempt
+      const enemy = generateEnemyForPlatform(
+        config.scene,
+        platformData.physicsMinX,
+        platformData.physicsMaxX,
+        config.platformY,
+        platformData.totalTiles - 2 // Pass middle tile count
+      );
+      if (enemy) {
+        generatedEnemies.push(enemy);
+      }
     }
 
     // Update currentX after this platform
@@ -155,9 +197,12 @@ export function generateLevel(
     currentX += generateGap(gapConfig);
   }
 
-  // Return the player spawn position
+  // Return the player spawn position and generated enemies
   return {
-    x: playerStartX,
-    y: playerStartY,
+    playerSpawnPosition: {
+      x: playerStartX,
+      y: playerStartY,
+    },
+    enemies: generatedEnemies,
   };
 }

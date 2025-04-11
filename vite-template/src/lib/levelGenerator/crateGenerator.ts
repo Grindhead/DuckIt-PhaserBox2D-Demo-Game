@@ -13,13 +13,14 @@ interface CrateGenerationConfig {
   platformPhysicsMinX: number;
   platformPhysicsMaxX: number;
   platformY: number; // Pixel Y position of the platform surface
-  cratePlacementProbability?: number; // Probability (0-1) of placing a crate (will be ignored if 1)
+  cratePlacementProbability?: number; // Probability (0-1) of placing a crate
+  forceSpawnBoth?: boolean; // Flag to force spawning both crates
 }
 
 /**
  * Generates crates for a given platform based on configuration.
- * If cratePlacementProbability is 1, generates BOTH a small and a big crate.
- * Otherwise, has a chance (based on cratePlacementProbability) to generate ONE random crate.
+ * If `forceSpawnBoth` is true, generates BOTH a small and a big crate.
+ * Otherwise, has a chance (based on `cratePlacementProbability`) to generate ONE random crate.
  *
  * @param config Configuration object for crate generation.
  */
@@ -30,6 +31,7 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
     platformPhysicsMaxX,
     platformY,
     cratePlacementProbability = 0.25, // Default 25% chance for single crate
+    forceSpawnBoth = false, // Default to false
   } = config;
 
   const platformPixelWidth =
@@ -37,8 +39,8 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
   const platformPixelCenterX =
     platformPhysicsMinX * PHYSICS.SCALE + platformPixelWidth / 2;
 
-  // Special case: If probability is 1, always generate both crates
-  if (cratePlacementProbability === 1) {
+  // Special case: If forceSpawnBoth is true, always generate both crates
+  if (forceSpawnBoth) {
     const smallCrateWidth = ASSETS.CRATE.SMALL.WIDTH;
     const bigCrateWidth = ASSETS.CRATE.BIG.WIDTH;
     const totalCrateWidth = smallCrateWidth + bigCrateWidth;

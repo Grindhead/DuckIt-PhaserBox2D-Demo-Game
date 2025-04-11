@@ -10,7 +10,9 @@ import * as Phaser from "phaser";
 
 import { PHYSICS, WORLD, SCENES } from "@constants";
 import Coin from "@entities/Coin";
+import Crate from "@entities/Crate";
 import DeathSensor from "@entities/DeathSensor";
+import Enemy from "@entities/Enemy";
 import Player from "@entities/Player";
 import { gameState } from "@gameState";
 import {
@@ -34,10 +36,13 @@ import GameOverOverlay from "@ui/GameOverOverlay";
 import GameStartScreen from "@ui/GameStartScreen";
 import MobileControls from "@ui/MobileControls";
 
-import { generateLevel } from "../lib/levelGenerator/levelGenerator";
+import {
+  generateLevel,
+  GeneratedLevelData,
+} from "../lib/levelGenerator/levelGenerator";
 
 type b2WorldIdInstance = InstanceType<typeof b2WorldId>;
-type MappedSprite = Phaser.GameObjects.Sprite;
+type MappedSprite = Phaser.GameObjects.Sprite | Crate | Enemy;
 
 interface ShapeUserData {
   type: string;
@@ -53,6 +58,7 @@ export default class GameScene extends Phaser.Scene {
   gameOverOverlay!: GameOverOverlay;
   mobileControls!: MobileControls;
   coins!: Phaser.GameObjects.Group;
+  enemies: Enemy[] = [];
 
   bodyIdToSpriteMap = new Map<number, MappedSprite>();
 
@@ -72,10 +78,16 @@ export default class GameScene extends Phaser.Scene {
     this.bodyIdToSpriteMap.clear();
 
     this.coins = this.add.group();
+    this.enemies = [];
 
-    const playerPos = generateLevel(this, this.coins);
+    const levelData: GeneratedLevelData = generateLevel(this, this.coins);
+    this.enemies = levelData.enemies;
 
-    this.player = new Player(this, playerPos.x, playerPos.y);
+    this.player = new Player(
+      this,
+      levelData.playerSpawnPosition.x,
+      levelData.playerSpawnPosition.y
+    );
 
     // Initial setup of player after creation
     this.setupPlayerState();
@@ -88,7 +100,10 @@ export default class GameScene extends Phaser.Scene {
 
     this.cameras.main.setBounds(0, 0, WORLD.WIDTH, WORLD.HEIGHT);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-    this.cameras.main.centerOn(playerPos.x, playerPos.y);
+    this.cameras.main.centerOn(
+      levelData.playerSpawnPosition.x,
+      levelData.playerSpawnPosition.y
+    );
 
     this.createUI();
     this.setupInput();
@@ -166,6 +181,11 @@ export default class GameScene extends Phaser.Scene {
         );
       }
 
+      // Update enemies
+      this.enemies.forEach((enemy) => {
+        enemy.update();
+      });
+
       this.mobileControls.getState();
       this.coinCounter.updateCount();
     }
@@ -220,8 +240,8 @@ export default class GameScene extends Phaser.Scene {
         // Kill the player which stops movement and plays death animation
         this.player.kill();
 
-        // The killPlayer method will now be called from the Player.kill() method
-        // so we don't need to handle respawn logic here as it should go through the game over flow
+        // Call killPlayer to handle game over state change
+        this.killPlayer();
       }
     }
 
@@ -278,6 +298,16 @@ export default class GameScene extends Phaser.Scene {
       } else if (userDataB?.type === "player") {
         playerUserData = userDataB;
         otherUserData = userDataA;
+      }
+
+      // Check if player is contacting an enemy
+      if (playerUserData && otherUserData?.type === "enemy") {
+        if (isBeginningContact) {
+          console.log("Player contacted enemy!");
+          this.killPlayer();
+          // No need to process grounding for enemy contact
+          return; // Exit early
+        }
       }
 
       // Check if player is contacting a groundable surface
@@ -425,7 +455,10 @@ export default class GameScene extends Phaser.Scene {
     if (!gameState.isPlaying || gameState.isGameOver) return;
 
     console.log("Executing killPlayer...");
-    this.player?.kill();
+    // Ensure player exists before killing
+    if (this.player && !this.player.playerState.isDead) {
+      this.player.kill();
+    }
     gameState.endGame();
     this.gameOverOverlay.show();
   }
@@ -450,26 +483,42 @@ export default class GameScene extends Phaser.Scene {
    */
   restart() {
     console.log("Restarting game logic (persistent world)...");
-    gameState.restartGame(); // Reset game state to READY
 
-    // Reset any collected coins
-    this.coins.children.each((coinChild) => {
-      const coin = coinChild as Coin;
-      if (coin.isCollected) {
-        coin.reset(); // Makes coin visible and resets physics body if needed
+    // --- Destroy old game elements --- //
+    // Destroy existing enemies before regenerating level
+    this.enemies.forEach((enemy) => enemy.destroy());
+    this.enemies = [];
+
+    // Destroy existing coins (might be simpler than resetting state)
+    this.coins.clear(true, true); // Destroy children and remove from group
+
+    // Clear the sprite map to remove stale references (except player)
+    this.bodyIdToSpriteMap.forEach((sprite, bodyIndex) => {
+      if (sprite !== this.player) {
+        this.bodyIdToSpriteMap.delete(bodyIndex);
       }
-      return true; // Continue iteration
     });
 
-    // Reset player
+    // --- Regenerate Level Elements --- //
+    // Note: We are NOT destroying/recreating the Box2D world itself
+    const levelData = generateLevel(this, this.coins); // Regenerate platforms, coins, enemies
+    this.enemies = levelData.enemies; // Store new enemies
+
+    // --- Reset Player --- //
     if (this.player) {
+      // Reset player state and position using the new spawn point
+      this.player.startPosition.set(
+        levelData.playerSpawnPosition.x,
+        levelData.playerSpawnPosition.y
+      );
       this.player.reset();
 
       // Update camera position
       this.cameras.main.centerOn(this.player.x, this.player.y);
     }
 
-    // Update UI
+    // --- Reset Game State & UI --- //
+    gameState.restartGame(); // Reset game state to READY
     this.gameOverOverlay.hide();
     this.startScreen.show(); // Show start screen to initiate playing again
     this.coinCounter.updateCount(); // Reflects the reset coin count (0)

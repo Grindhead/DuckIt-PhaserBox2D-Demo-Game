@@ -7,7 +7,6 @@
  * @module constants
  */
 
-export const TEST_CRATES: boolean = true;
 /**
  * Physics configuration for Box2D integration
  * All forces and velocities should use these scales
@@ -236,6 +235,22 @@ export const ASSETS = {
       /** Total number of frames */
       FRAME_COUNT: 18,
     },
+  },
+
+  /** Enemy assets */
+  ENEMY: {
+    /** Patrolling enemy sprite key */
+    FRAME: "enemy/enemy.png",
+    /** Width in pixels */
+    WIDTH: 48, // Assuming standard size, adjust if needed
+    /** Height in pixels */
+    HEIGHT: 48, // Assuming standard size, adjust if needed
+    /** Physics properties */
+    DENSITY: 1.0,
+    FRICTION: 0.5,
+    RESTITUTION: 0.0,
+    /** Speed relative to player */
+    SPEED_FACTOR: 0.8,
   },
 
   /** Platform segment assets */
