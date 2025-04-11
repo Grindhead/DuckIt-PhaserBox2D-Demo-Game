@@ -54,20 +54,23 @@ The primary focus is on testing the newly implemented Crate generation and inter
 ## 3. Next Steps
 
 1.  **Test Animation Transitions:** Run the game to verify:
-    - Player correctly transitions JUMP -> FALL -> LAND (Idle/Run) on platforms.
-    - Player correctly transitions JUMP -> FALL -> LAND (Idle/Run) on small crates.
-    - Player correctly transitions JUMP -> FALL -> LAND (Idle/Run) on large crates.
-    - Running animation still works correctly on platforms.
+    - [Done] Player correctly transitions JUMP -> FALL -> LAND (Idle/Run) on platforms.
+    - [Done] Player correctly transitions JUMP -> FALL -> LAND (Idle/Run) on small crates.
+    - [Done] Player correctly transitions JUMP -> FALL -> LAND (Idle/Run) on large crates.
+    - [Done] Running animation still works correctly on platforms.
 2.  **Test Crate Physics:** Re-verify:
-    - Crates are pushable.
-    - Crates stop at platform edges.
+    - [Done] Crates are pushable.
+    - [Done] Crates stop at platform edges.
 3.  **Test Refactored Level Generation:** Verify:
-    - Player physics are active after starting the game.
-    - Multiple platforms with gaps are generated correctly using the new modules.
-    - Coins are visible on the platforms.
-    - UI elements (Counter, Start/Game Over, Controls) render _above_ the player.
-4.  **Implement Box2D Collision Handling:** Set up a contact listener in `GameScene.ts` (or a dedicated physics manager) to handle collisions between the player and coins (triggering `coin.collect()`).
-5.  **Update Coin Counter UI:** Connect the `gameState.coins` value to the `CoinCounter` UI element so it updates visually.
+    - [Done] Player physics are active after starting the game.
+    - [Done] Multiple platforms with gaps are generated correctly using the new modules.
+    - [Done] Coins are visible on the platforms.
+    - [Done] UI elements (Counter, Start/Game Over, Controls) render _above_ the player.
+4.  **Implement Box2D Collision Handling:**
+    - [Done] Set up a contact listener in `GameScene.ts` (or a dedicated physics manager) to handle collisions between the player and coins (triggering `coin.collect()`).
+    - [Done] Handle player-deathSensor contact.
+5.  **Update Coin Counter UI:**
+    - [Done] Connect the `gameState.coins` value to the `CoinCounter` UI element so it updates visually.
 6.  **Continue TypeScript Transition:** Incrementally convert remaining JS files and add types.
 7.  **Implement Other Entities:** Add Enemies as per PRD.
 

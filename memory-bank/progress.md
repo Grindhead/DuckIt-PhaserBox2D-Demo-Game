@@ -30,12 +30,13 @@
 
 ## 2. What's Left to Build / Current Task
 
-- **Current Task:** Test Crate generation and interaction (pushing, boundary constraints, player grounding).
+- **Current Task:** Test refactored level generation (platforms, coins, gaps).
 - **Subsequent Tasks:**
-  - Verify refactored level generation (platforms, coins, gaps).
-  - Implement Box2D collision handling for coin collection.
-  - Update Coin Counter UI display.
-  - Test crate pushing physics, boundary constraints, and player grounding on crates.
+  - [Done] Implement Box2D collision handling for coin collection.
+  - [Done] Update Coin Counter UI display.
+  - [Done] Test crate pushing physics, boundary constraints, and player grounding on crates.
+  - [Done] Test Crate generation and interaction.
+  - [Done] Test Animation Transitions (Jump -> Fall -> Land).
   - Continue TypeScript Transition (convert remaining JS, add types).
   - Implement Enemies (physics, AI, interactions).
   - Implement Finish entity.
@@ -88,12 +89,12 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
 3. Core Physics World
 
    - [Done] Configure Box2D parameters (gravity).
-   - [ ] Establish collision rules/contact listener for platforms, crates, enemies, coins, finish entity, and the "death sensor".
+   - [Done] Establish collision rules/contact listener for platforms, crates, coins, finish entity, and the "death sensor".
 
 4. Procedural Level Generation
 
    - [Done] Generate tiling platforms (multiple platforms with gaps) via `platformGenerator.ts`.
-   - [Partial] Introduce crates (respecting 2:1 mass ratio) in puzzle segments.
+   - [Done] Introduce crates (respecting 2:1 mass ratio) in puzzle segments.
    - [ ] Place enemies (patrolling at 80% player speed) on suitable platforms.
    - [Done] Distribute coins on platforms via `coinGenerator.ts`.
    - [ ] Place the finish entity, ensuring level completability.
@@ -108,15 +109,15 @@ _This list reflects the original plan. Items marked [Partial] or [Done] reflect 
 
 6. Puzzle & Interaction Mechanics
 
-   - [Partial] Ensure crates are pushable, cannot fall off their platform, and act as groundable surfaces.
-   - [Partial] Implement coin collection (entity logic done, collision pending).
-   - [Partial] Handle player death from falling off-screen (sensor exists, collision pending).
+   - [Done] Ensure crates are pushable, cannot fall off their platform, and act as groundable surfaces.
+   - [Done] Implement coin collection (entity logic done, collision handled).
+   - [Done] Handle player death from falling off-screen (sensor exists, collision handled).
    - [ ] Handle player death from enemies (enemy entity/collision pending).
    - [ ] Activate finish entity on contact (entity/collision pending).
 
 7. UI & Controls
 
-   - [Partial] Display coin counter (UI element exists, value update pending).
+   - [Done] Display coin counter (UI element exists, value updates correctly).
    - [Partial] Implement "start.png" overlay (element exists, full logic pending).
    - [Partial] Create on-screen direction buttons (element exists, logic needs testing).
    - [Done] Ensure UI elements render above the player using `setDepth`.
