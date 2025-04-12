@@ -900,16 +900,77 @@ export default class GameScene extends Phaser.Scene {
   restart() {
     console.log("Restarting game logic (persistent world)...");
 
+    // --- First reset the game state to ensure proper sequence --- //
+    console.log("Resetting game state...");
+    gameState.restartGame(); // Reset game state to READY
+    console.log("Game state reset complete. Now resetting entities...");
+
     // --- Reset existing entities instead of destroying and recreating them --- //
 
     // Reset all existing coins instead of destroying them
+    console.log(`Resetting ${this.coins.getChildren().length} coins...`);
+    let resetCoinsCount = 0;
+
     this.coins.getChildren().forEach((coin: any) => {
       if (coin instanceof Coin) {
+        // Check if this coin was collected
+        const wasCollected = coin.isCollected;
         coin.reset();
+        if (wasCollected) {
+          resetCoinsCount++;
+        }
+      }
+    });
+    console.log(`Reset ${resetCoinsCount} previously collected coins`);
+
+    // Verify all coins are now properly visible and awake
+    this.time.delayedCall(100, () => {
+      let invisibleCoins = 0;
+      let sleepingCoins = 0;
+
+      this.coins.getChildren().forEach((coin: any) => {
+        if (coin instanceof Coin) {
+          // Check visibility
+          if (!coin.visible || coin.isCollected) {
+            console.log(
+              `Found invisible coin at (${coin.x}, ${coin.y}), forcing visibility`
+            );
+            coin.setVisible(true);
+            coin.setActive(true);
+            coin.isCollected = false;
+            invisibleCoins++;
+          }
+
+          // Check if the coin is awake
+          if (coin.bodyId && !coin.isAwake()) {
+            console.log(
+              `Found sleeping coin at (${coin.x}, ${coin.y}), waking it up`
+            );
+            b2Body_SetAwake(coin.bodyId, true);
+            sleepingCoins++;
+          }
+
+          // Ensure it's in the bodyIdToSpriteMap
+          if (coin.bodyId && !this.bodyIdToSpriteMap.has(coin.bodyId.index1)) {
+            console.log(
+              `Adding coin back to bodyIdToSpriteMap at (${coin.x}, ${coin.y})`
+            );
+            this.bodyIdToSpriteMap.set(coin.bodyId.index1, coin);
+          }
+        }
+      });
+
+      if (invisibleCoins > 0 || sleepingCoins > 0) {
+        console.log(
+          `Fixed ${invisibleCoins} invisible coins and ${sleepingCoins} sleeping coins`
+        );
+      } else {
+        console.log("All coins verified visible and awake");
       }
     });
 
     // Reset all existing enemies instead of destroying them
+    console.log(`Resetting ${this.enemies.length} enemies...`);
     this.enemies.forEach((enemy) => {
       if (typeof enemy.reset === "function") {
         enemy.reset();
@@ -932,8 +993,8 @@ export default class GameScene extends Phaser.Scene {
       this.cameras.main.centerOn(this.player.x, this.player.y);
     }
 
-    // --- Reset Game State & UI --- //
-    gameState.restartGame(); // Reset game state to READY
+    // --- Update UI --- //
+    console.log("Updating UI...");
     this.gameOverOverlay.hide();
     this.startScreen.show(); // Show start screen to initiate playing again
     this.coinCounter.updateCount(); // Update coin counter display to show 0

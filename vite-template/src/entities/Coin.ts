@@ -206,27 +206,45 @@ export default class Coin extends Phaser.GameObjects.Sprite {
 
   collect() {
     if (this.isCollected) return;
+
+    console.log(`Collecting coin at (${this.x}, ${this.y})`);
     this.isCollected = true;
 
-    // Disable the physics body immediately to prevent further collisions and debug drawing
+    // Instead of disabling the physics body, just put it to sleep
     if (this.bodyId) {
-      b2Body_Disable(this.bodyId);
+      // Put the body to sleep instead of disabling it
+      b2Body_SetAwake(this.bodyId, false);
 
-      // Also remove this coin from the bodyIdToSpriteMap to prevent debug drawing
-      if (this.scene instanceof GameScene) {
-        (this.scene as GameScene).bodyIdToSpriteMap.delete(this.bodyId.index1);
-      }
+      // Important: Do NOT remove from bodyIdToSpriteMap anymore
+      // Just log that we're keeping it in the map for reset
+      console.log(
+        `Coin at (${this.x}, ${this.y}) put to sleep but kept in bodyIdToSpriteMap`
+      );
     }
 
     // Play the collect animation
+    this.anims.stop(); // Stop any current animation first
     this.play(ASSETS.COIN.COLLECT.KEY);
 
+    // Remove any existing listeners to avoid duplication
+    this.off(Phaser.Animations.Events.ANIMATION_COMPLETE);
+
     // Hide the coin *after* the animation completes
-    this.on(
+    this.once(
       Phaser.Animations.Events.ANIMATION_COMPLETE,
       () => {
-        this.setVisible(false);
-        this.setActive(false); // Also set inactive
+        // Double-check we're still in collected state before hiding
+        if (this.isCollected) {
+          this.setVisible(false);
+          this.setActive(false); // Also set inactive
+          console.log(
+            `Coin at (${this.x}, ${this.y}) hidden after collection animation`
+          );
+        } else {
+          console.log(
+            `Coin at (${this.x}, ${this.y}) was reset during collection animation, not hiding`
+          );
+        }
       },
       this
     );
@@ -236,24 +254,49 @@ export default class Coin extends Phaser.GameObjects.Sprite {
    * Resets the coin to its initial state (not collected, visible).
    */
   reset() {
-    this.isCollected = false;
+    // Clear any pending animation completion callbacks
+    this.off(Phaser.Animations.Events.ANIMATION_COMPLETE);
+
+    // Stop any current animation immediately to prevent state conflicts
+    this.anims.stop();
+
+    // Force sprite to display the first frame of the idle animation
+    this.setFrame(ASSETS.COIN.FRAME);
+
+    // Explicitly set all visual properties
+    this.setAlpha(1);
     this.setVisible(true);
     this.setActive(true);
+    this.isCollected = false;
 
-    // Re-enable the physics body if it was disabled
+    // Wake up the physics body if it exists
     if (this.bodyId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      b2Body_Enable(this.bodyId);
+      // Wake up the body instead of re-enabling it
+      b2Body_SetAwake(this.bodyId, true);
+      console.log(`Waking up coin physics body at (${this.x}, ${this.y})`);
 
-      // Re-add this coin to the bodyIdToSpriteMap for proper rendering
+      // Make sure it's in the bodyIdToSpriteMap
       if (this.scene instanceof GameScene) {
         (this.scene as GameScene).bodyIdToSpriteMap.set(
           this.bodyId.index1,
           this
         );
       }
+    } else {
+      // If the bodyId is null, we need to recreate the physics body
+      console.log(
+        "Reinitializing physics for coin at position:",
+        this.x,
+        this.y
+      );
+      this.initPhysics();
     }
 
+    // Now that all properties are reset, start the idle animation
     this.play(ASSETS.COIN.IDLE.KEY);
+
+    console.log(
+      `Coin at (${this.x}, ${this.y}) fully reset. Visible: ${this.visible}, Active: ${this.active}`
+    );
   }
 }

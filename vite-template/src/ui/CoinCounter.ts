@@ -37,6 +37,7 @@ export default class CoinCounter {
   updateCount() {
     if (this.text) {
       const currentCoins = gameState.getCoins();
+      console.log("Updating coin counter display to:", currentCoins);
       this.text.setText(`Coins: ${currentCoins}`);
     }
   }

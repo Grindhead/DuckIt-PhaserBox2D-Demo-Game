@@ -239,7 +239,14 @@ class GameState {
   restartGame() {
     console.log("restarting game");
     if (this.isGameOver) {
-      return this.transition(GameStates.READY);
+      const success = this.transition(GameStates.READY);
+      console.log(
+        "Transition to READY state success:",
+        success,
+        "Coins reset to:",
+        this.coins
+      );
+      return success;
     }
     return false;
   }
