@@ -527,6 +527,13 @@ export default class GameScene extends Phaser.Scene {
             b2Body_SetAwake(crate.bodyId, true);
           }
         });
+
+        // Also wake up all enemies for consistent behavior in debug mode
+        this.enemies.forEach((enemy) => {
+          if (enemy.bodyId) {
+            b2Body_SetAwake(enemy.bodyId, true);
+          }
+        });
       }
 
       console.log("Debug drawing:", this.debugEnabled ? "enabled" : "disabled");
@@ -569,11 +576,21 @@ export default class GameScene extends Phaser.Scene {
     let sleepingEnemiesCount = 0;
 
     this.enemies.forEach((enemy: Enemy) => {
-      const isVisible = enemy.updateSleepState();
-      if (isVisible) {
-        activeEnemiesCount++;
+      // Skip sleep state updates if in debug mode
+      if (!this.debugEnabled) {
+        const isVisible = enemy.updateSleepState();
+        if (isVisible) {
+          activeEnemiesCount++;
+        } else {
+          sleepingEnemiesCount++;
+        }
       } else {
-        sleepingEnemiesCount++;
+        // In debug mode, all enemies are considered active
+        activeEnemiesCount++;
+        // Force enemies to be awake in debug mode
+        if (enemy.bodyId) {
+          b2Body_SetAwake(enemy.bodyId, true);
+        }
       }
     });
 
@@ -1054,108 +1071,119 @@ export default class GameScene extends Phaser.Scene {
     gameState.restartGame(); // Reset game state to READY
     console.log("Game state reset complete. Now resetting entities...");
 
-    // --- Reset existing entities instead of destroying and recreating them --- //
-
-    // Reset all existing coins instead of destroying them
-    console.log(`Resetting ${this.coins.getChildren().length} coins...`);
-    let resetCoinsCount = 0;
-
-    this.coins.getChildren().forEach((coin: any) => {
-      if (coin instanceof Coin) {
-        // Check if this coin was collected
-        const wasCollected = coin.isCollected;
-        coin.reset();
-        if (wasCollected) {
-          resetCoinsCount++;
-        }
-      }
-    });
-    console.log(`Reset ${resetCoinsCount} previously collected coins`);
-
-    // Verify all coins are now properly visible and awake
-    this.time.delayedCall(100, () => {
-      let invisibleCoins = 0;
-      let sleepingCoins = 0;
-
-      this.coins.getChildren().forEach((coin: any) => {
-        if (coin instanceof Coin) {
-          // Check visibility
-          if (!coin.visible || coin.isCollected) {
-            console.log(
-              `Found invisible coin at (${coin.x}, ${coin.y}), forcing visibility`
-            );
-            coin.setVisible(true);
-            coin.setActive(true);
-            coin.isCollected = false;
-            invisibleCoins++;
-          }
-
-          // Check if the coin is awake
-          if (coin.bodyId && !coin.isAwake()) {
-            console.log(
-              `Found sleeping coin at (${coin.x}, ${coin.y}), waking it up`
-            );
-            b2Body_SetAwake(coin.bodyId, true);
-            sleepingCoins++;
-          }
-
-          // Ensure it's in the bodyIdToSpriteMap
-          if (coin.bodyId && !this.bodyIdToSpriteMap.has(coin.bodyId.index1)) {
-            console.log(
-              `Adding coin back to bodyIdToSpriteMap at (${coin.x}, ${coin.y})`
-            );
-            this.bodyIdToSpriteMap.set(coin.bodyId.index1, coin);
-          }
-        }
-      });
-
-      if (invisibleCoins > 0 || sleepingCoins > 0) {
-        console.log(
-          `Fixed ${invisibleCoins} invisible coins and ${sleepingCoins} sleeping coins`
-        );
-      } else {
-        console.log("All coins verified visible and awake");
-      }
-    });
-
-    // Reset all existing crates
-    console.log(`Resetting ${this.crates.length} crates...`);
-    this.crates.forEach((crate) => {
-      if (typeof crate.reset === "function") {
-        crate.reset();
-      }
-    });
-
-    // Reset all existing enemies instead of destroying them
-    console.log(`Resetting ${this.enemies.length} enemies...`);
-    this.enemies.forEach((enemy) => {
-      if (typeof enemy.reset === "function") {
-        enemy.reset();
-      }
-    });
-
-    // Regenerate level data to get player spawn position only
-    const levelData = generateLevel(this, this.coins, true);
-
-    // --- Reset Player --- //
-    if (this.player) {
-      // Reset player state and position using the new spawn point
-      this.player.startPosition.set(
-        levelData.playerSpawnPosition.x,
-        levelData.playerSpawnPosition.y
-      );
-      this.player.reset();
-
-      // Update camera position
-      this.cameras.main.centerOn(this.player.x, this.player.y);
-    }
-
-    // --- Update UI --- //
+    // --- Update UI first to avoid potential physics issues --- //
     console.log("Updating UI...");
     this.gameOverOverlay.hide();
     this.startScreen.show(); // Show start screen to initiate playing again
     this.coinCounter.updateCount(); // Update coin counter display to show 0
 
-    console.log("Game logic restart complete.");
+    // Add a short delay to ensure UI updates are processed before physics changes
+    this.time.delayedCall(0, () => {
+      // --- Reset the player first as it's most important --- //
+      if (this.player) {
+        // Regenerate level data to get player spawn position only
+        const levelData = generateLevel(this, this.coins, true);
+
+        // Reset player state and position using the new spawn point
+        this.player.startPosition.set(
+          levelData.playerSpawnPosition.x,
+          levelData.playerSpawnPosition.y
+        );
+
+        // Reset player (which resets physics)
+        this.player.reset();
+
+        // Update camera position
+        this.cameras.main.centerOn(this.player.x, this.player.y);
+      }
+
+      // Add a small delay before resetting other entities to avoid physics conflicts
+      this.time.delayedCall(50, () => {
+        // --- Reset existing entities instead of destroying and recreating them --- //
+
+        // Reset all existing coins instead of destroying them
+        console.log(`Resetting ${this.coins.getChildren().length} coins...`);
+        let resetCoinsCount = 0;
+
+        this.coins.getChildren().forEach((coin: any) => {
+          if (coin instanceof Coin) {
+            // Check if this coin was collected
+            const wasCollected = coin.isCollected;
+            coin.reset();
+            if (wasCollected) {
+              resetCoinsCount++;
+            }
+          }
+        });
+        console.log(`Reset ${resetCoinsCount} previously collected coins`);
+
+        // Reset all existing crates
+        console.log(`Resetting ${this.crates.length} crates...`);
+        this.crates.forEach((crate) => {
+          if (typeof crate.reset === "function") {
+            crate.reset();
+          }
+        });
+
+        // Reset all existing enemies instead of destroying them
+        console.log(`Resetting ${this.enemies.length} enemies...`);
+        this.enemies.forEach((enemy) => {
+          if (typeof enemy.reset === "function") {
+            enemy.reset();
+          }
+        });
+
+        // Verify all coins are now properly visible and awake
+        this.time.delayedCall(100, () => {
+          let invisibleCoins = 0;
+          let sleepingCoins = 0;
+
+          this.coins.getChildren().forEach((coin: any) => {
+            if (coin instanceof Coin) {
+              // Check visibility
+              if (!coin.visible || coin.isCollected) {
+                console.log(
+                  `Found invisible coin at (${coin.x}, ${coin.y}), forcing visibility`
+                );
+                coin.setVisible(true);
+                coin.setActive(true);
+                coin.isCollected = false;
+                invisibleCoins++;
+              }
+
+              // Check if the coin is awake
+              if (coin.bodyId && !coin.isAwake()) {
+                console.log(
+                  `Found sleeping coin at (${coin.x}, ${coin.y}), waking it up`
+                );
+                b2Body_SetAwake(coin.bodyId, true);
+                sleepingCoins++;
+              }
+
+              // Ensure it's in the bodyIdToSpriteMap
+              if (
+                coin.bodyId &&
+                !this.bodyIdToSpriteMap.has(coin.bodyId.index1)
+              ) {
+                console.log(
+                  `Adding coin back to bodyIdToSpriteMap at (${coin.x}, ${coin.y})`
+                );
+                this.bodyIdToSpriteMap.set(coin.bodyId.index1, coin);
+              }
+            }
+          });
+
+          if (invisibleCoins > 0 || sleepingCoins > 0) {
+            console.log(
+              `Fixed ${invisibleCoins} invisible coins and ${sleepingCoins} sleeping coins`
+            );
+          } else {
+            console.log("All coins verified visible and awake");
+          }
+        });
+
+        console.log("Game logic restart complete.");
+      });
+    });
   }
 }

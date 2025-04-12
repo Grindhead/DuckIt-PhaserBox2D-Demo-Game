@@ -92,9 +92,28 @@ export default class Player extends Phaser.GameObjects.Sprite {
     console.log("Player created at position:", { x: this.x, y: this.y });
   }
 
+  /**
+   * Destroys the player's physics body
+   */
   destroyPhysics() {
     if (this.bodyId) {
-      b2DestroyBody(this.bodyId);
+      // Remove from bodyIdToSpriteMap
+      if (this.scene instanceof GameScene) {
+        try {
+          (this.scene as GameScene).bodyIdToSpriteMap.delete(
+            this.bodyId.index1
+          );
+        } catch (e) {
+          console.warn("Failed to remove player from bodyIdToSpriteMap:", e);
+        }
+      }
+
+      // Destroy the Box2D body
+      try {
+        b2DestroyBody(this.bodyId);
+      } catch (e) {
+        console.warn("Failed to destroy player body:", e);
+      }
       this.bodyId = null;
     }
   }
@@ -106,34 +125,60 @@ export default class Player extends Phaser.GameObjects.Sprite {
   reset() {
     console.log("Starting player reset at position:", this.startPosition);
 
-    // Set sprite position first
-    this.x = this.startPosition.x;
-    this.y = this.startPosition.y - 50; // Increased from 30 to 50 for more clearance
-
-    // Completely recreate physics body to ensure all properties are properly reset
-    this.destroyPhysics();
-    this.initPhysics();
-
-    // Reset internal state
+    // First, ensure we're not dead before resetting
     this.playerState = {
       isDead: false,
       isGrounded: false, // Start as not grounded, let physics determine this in the next update
       hasLoggedPhysicsWarning: false,
     };
 
-    // Reset animation
-    this.anims.stop();
-    this.play(ASSETS.PLAYER.IDLE.KEY);
+    // Set sprite position first
+    this.x = this.startPosition.x;
+    this.y = this.startPosition.y - 50; // Increased from 30 to 50 for more clearance
 
-    // Set the player to be visible again
+    // Make the player visible again
     this.setVisible(true);
     this.setActive(true);
     this.alpha = 1;
 
-    console.log("Player reset complete:", {
-      position: { x: this.x, y: this.y },
-      isPlaying: gameState.isPlaying,
-      bodyId: this.bodyId ? "valid" : "null",
+    // Reset animation
+    this.anims.stop();
+    this.play(ASSETS.PLAYER.IDLE.KEY);
+
+    // Remove from bodyIdToSpriteMap before destroying physics
+    if (this.bodyId && this.scene instanceof GameScene) {
+      try {
+        (this.scene as GameScene).bodyIdToSpriteMap.delete(this.bodyId.index1);
+      } catch (e) {
+        console.warn("Failed to remove player from bodyIdToSpriteMap:", e);
+      }
+    }
+
+    // Safely destroy existing physics body
+    if (this.bodyId) {
+      try {
+        b2DestroyBody(this.bodyId);
+      } catch (e) {
+        console.warn("Failed to destroy player body:", e);
+      }
+      this.bodyId = null;
+    }
+
+    // Wait a frame before creating a new physics body
+    this.scene.time.delayedCall(0, () => {
+      // Create a new physics body
+      this.initPhysics();
+
+      // Verify the physics setup after a short delay
+      this.scene.time.delayedCall(100, () => {
+        this.verifyPhysicsSetup();
+      });
+
+      console.log("Player reset complete:", {
+        position: { x: this.x, y: this.y },
+        isPlaying: gameState.isPlaying,
+        bodyId: this.bodyId ? "valid" : "null",
+      });
     });
   }
 

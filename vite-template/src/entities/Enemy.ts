@@ -9,8 +9,6 @@ import * as Phaser from "phaser";
 // Internal Modules
 import { ASSETS, PHYSICS } from "@constants";
 import { gameState } from "@gameState";
-import GameScene from "@scenes/GameScene";
-
 import {
   AddSpriteToWorld,
   b2BodyId,
@@ -29,7 +27,9 @@ import {
   b2Body_EnableSleep,
   b2Body_SetAwake,
   b2Body_IsAwake,
+  b2Body_SetTransform,
 } from "@PhaserBox2D";
+import GameScene from "@scenes/GameScene";
 
 import { createPhysicsBody } from "../lib/physics/PhysicsBodyFactory";
 
@@ -45,8 +45,10 @@ const CATEGORY_PLAYER = 0x0008;
 export default class Enemy extends Phaser.GameObjects.Sprite {
   scene: GameScene; // Use specific scene type
   bodyId: InstanceType<typeof b2BodyId> | null = null;
-  platformMinX: number;
-  platformMaxX: number;
+  platformMinX: number; // In physics world units (meters)
+  platformMaxX: number; // In physics world units (meters)
+  platformMinXPixels: number; // In screen pixels
+  platformMaxXPixels: number; // In screen pixels
   speed: number;
   direction: number = 1; // 1 for right, -1 for left
   halfWidthMeters: number;
@@ -54,10 +56,10 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
   /**
    * Creates a new enemy entity
    * @param scene The game scene
-   * @param x The initial x position
-   * @param y The initial y position
-   * @param platformMinX The minimum x-coordinate of the platform the enemy is on
-   * @param platformMaxX The maximum x-coordinate of the platform the enemy is on
+   * @param x The initial x position (pixels)
+   * @param y The initial y position (pixels)
+   * @param platformMinX The minimum x-coordinate of the platform in physics world units (meters)
+   * @param platformMaxX The maximum x-coordinate of the platform in physics world units (meters)
    */
   constructor(
     scene: GameScene,
@@ -68,8 +70,12 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
   ) {
     super(scene, x, y, ASSETS.ATLAS, ASSETS.ENEMY.FRAME);
     this.scene = scene;
-    this.platformMinX = platformMinX;
-    this.platformMaxX = platformMaxX;
+    // Store boundaries in both unit systems
+    this.platformMinX = platformMinX; // Physics world units (meters)
+    this.platformMaxX = platformMaxX; // Physics world units (meters)
+    this.platformMinXPixels = platformMinX * PHYSICS.SCALE; // Pixels
+    this.platformMaxXPixels = platformMaxX * PHYSICS.SCALE; // Pixels
+
     this.speed = PHYSICS.PLAYER.SPEED * ASSETS.ENEMY.SPEED_FACTOR;
     this.halfWidthMeters = ASSETS.ENEMY.WIDTH / 2 / PHYSICS.SCALE;
 
@@ -200,20 +206,49 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
     const velocity = b2Body_GetLinearVelocity(this.bodyId);
     const currentXPixels = position.x * PHYSICS.SCALE;
 
+    // First, check if enemy is outside platform bounds and correct if needed
+    // Check if enemy is outside bounds (can happen when waking from sleep)
+    let needsCorrection = false;
+
+    if (currentXPixels - ASSETS.ENEMY.WIDTH / 2 < this.platformMinXPixels) {
+      // If enemy is beyond left edge, force direction to right
+      this.direction = 1;
+      this.flipX = false;
+      needsCorrection = true;
+      console.log("Enemy corrected: beyond left bound");
+    } else if (
+      currentXPixels + ASSETS.ENEMY.WIDTH / 2 >
+      this.platformMaxXPixels
+    ) {
+      // If enemy is beyond right edge, force direction to left
+      this.direction = -1;
+      this.flipX = true;
+      needsCorrection = true;
+      console.log("Enemy corrected: beyond right bound");
+    }
+
+    // Normal boundary check for direction change
     if (
       (this.direction === 1 &&
-        currentXPixels + ASSETS.ENEMY.WIDTH / 2 >= this.platformMaxX) ||
+        currentXPixels + ASSETS.ENEMY.WIDTH / 2 >= this.platformMaxXPixels) ||
       (this.direction === -1 &&
-        currentXPixels - ASSETS.ENEMY.WIDTH / 2 <= this.platformMinX)
+        currentXPixels - ASSETS.ENEMY.WIDTH / 2 <= this.platformMinXPixels)
     ) {
       this.direction *= -1;
       this.flipX = this.direction === -1;
+      needsCorrection = true;
+      console.log("Enemy direction reversed at platform boundary");
+    }
+
+    // Apply velocity correction if needed
+    if (needsCorrection || Math.abs(velocity.x) < 0.01) {
       const newVelocityX = (this.speed / PHYSICS.SCALE) * this.direction;
       b2Body_SetLinearVelocity(
         this.bodyId,
         new b2Vec2(newVelocityX, velocity.y)
       );
     } else {
+      // Regular velocity maintenance
       const expectedVelocityX = (this.speed / PHYSICS.SCALE) * this.direction;
       if (Math.abs(velocity.x - expectedVelocityX) > 0.1 / PHYSICS.SCALE) {
         b2Body_SetLinearVelocity(
@@ -246,6 +281,28 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
 
     // Reset physics body if needed
     if (this.bodyId) {
+      // Get current position
+      const position = b2Body_GetPosition(this.bodyId);
+      const currentXPixels = position.x * PHYSICS.SCALE;
+
+      // Ensure position is within platform bounds
+      if (
+        currentXPixels < this.platformMinXPixels ||
+        currentXPixels > this.platformMaxXPixels
+      ) {
+        // Place the enemy in the middle of the platform
+        const centerX = (this.platformMinXPixels + this.platformMaxXPixels) / 2;
+        const centerXMeters = centerX / PHYSICS.SCALE;
+
+        // Update physics body position
+        b2Body_SetTransform(
+          this.bodyId,
+          new b2Vec2(centerXMeters, position.y),
+          0
+        );
+        console.log("Enemy reset: repositioned to platform center");
+      }
+
       // Reset velocity to initial state
       b2Body_SetLinearVelocity(
         this.bodyId,
