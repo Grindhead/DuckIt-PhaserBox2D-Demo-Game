@@ -90,6 +90,7 @@ export default class GameScene extends Phaser.Scene {
   coins!: Phaser.GameObjects.Group;
   enemies: Enemy[] = [];
   platforms: Platform[] = []; // Array to store all Platform instances
+  crates: Crate[] = []; // Array to store all Crate instances
 
   bodyIdToSpriteMap = new Map<number, MappedSprite>();
 
@@ -125,12 +126,14 @@ export default class GameScene extends Phaser.Scene {
     this.bodyIdToSpriteMap.clear();
     this.platforms = [];
     this.enemies = [];
+    this.crates = [];
     this.coins = this.add.group();
 
     // Generate level with physics bodies from the preloaded physics data
     const levelData: GeneratedLevelData = generateLevel(this, this.coins);
     this.enemies = levelData.enemies;
     this.platforms = levelData.platforms;
+    this.crates = levelData.crates;
 
     // Create player with physics body from the preloaded data
     this.player = new Player(
@@ -316,12 +319,8 @@ export default class GameScene extends Phaser.Scene {
     let activeCratesCount = 0;
     let sleepingCratesCount = 0;
 
-    // Find all crates in the sprite map
-    const crates = Array.from(this.bodyIdToSpriteMap.values()).filter(
-      (sprite) => sprite instanceof Crate
-    ) as Crate[];
-
-    crates.forEach((crate: Crate) => {
+    // Use the crates array directly instead of filtering from bodyIdToSpriteMap
+    this.crates.forEach((crate: Crate) => {
       const isVisible = crate.updateSleepState();
       if (isVisible) {
         activeCratesCount++;
@@ -448,7 +447,7 @@ export default class GameScene extends Phaser.Scene {
       });
 
       // 4. Draw all crates - GREEN
-      crates.forEach((crate) => {
+      this.crates.forEach((crate) => {
         this.debugGraphics.lineStyle(4, 0x00ff00, 1);
         this.debugGraphics.strokeRect(
           crate.x - crate.width / 2,
@@ -506,7 +505,7 @@ export default class GameScene extends Phaser.Scene {
         `  Coins: ${
           this.coins.getChildren().length
         } (${activeCoinsCount} active, ${sleepingCoinsCount} sleeping)`,
-        `  Crates: ${crates.length} (${activeCratesCount} active, ${sleepingCratesCount} sleeping)`,
+        `  Crates: ${this.crates.length} (${activeCratesCount} active, ${sleepingCratesCount} sleeping)`,
         `Camera: (${Math.floor(this.cameras.main.scrollX)}, ${Math.floor(
           this.cameras.main.scrollY
         )})`,
@@ -966,6 +965,14 @@ export default class GameScene extends Phaser.Scene {
         );
       } else {
         console.log("All coins verified visible and awake");
+      }
+    });
+
+    // Reset all existing crates
+    console.log(`Resetting ${this.crates.length} crates...`);
+    this.crates.forEach((crate) => {
+      if (typeof crate.reset === "function") {
+        crate.reset();
       }
     });
 

@@ -81,6 +81,11 @@ export default class Crate extends Phaser.GameObjects.Sprite {
     // Add to scene
     this.scene.add.existing(this);
 
+    // Add to the scene's crates array if it's a GameScene
+    if (this.scene instanceof GameScene) {
+      (this.scene as GameScene).crates.push(this);
+    }
+
     // Initialize physics
     this.initPhysics();
   }
@@ -294,6 +299,12 @@ export default class Crate extends Phaser.GameObjects.Sprite {
     // Clean up when removing the crate
     if (this.bodyId && this.scene instanceof GameScene) {
       (this.scene as GameScene).bodyIdToSpriteMap.delete(this.bodyId.index1);
+
+      // Remove from crates array
+      const index = (this.scene as GameScene).crates.indexOf(this);
+      if (index !== -1) {
+        (this.scene as GameScene).crates.splice(index, 1);
+      }
     }
     super.destroy();
   }

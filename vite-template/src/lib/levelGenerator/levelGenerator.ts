@@ -6,6 +6,7 @@ import * as Phaser from "phaser";
 
 import { WORLD, PHYSICS, ASSETS } from "@constants";
 import Coin from "@entities/Coin"; // Import Coin class
+import Crate from "@entities/Crate"; // Import Crate class
 import Enemy from "@entities/Enemy"; // Import Enemy type
 import Platform from "@entities/Platform"; // Import Platform class
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
@@ -52,9 +53,10 @@ interface PlatformSegment {
  * Data structure returned by generateLevel
  */
 export interface GeneratedLevelData {
+  platforms: Platform[];
   playerSpawnPosition: PlayerSpawnPosition;
-  enemies: Enemy[]; // Use imported Enemy type
-  platforms: Platform[]; // Store all platform instances
+  enemies: Enemy[];
+  crates: Crate[];
 }
 
 /**
@@ -131,6 +133,9 @@ export function generateLevel(
   let playerStartX: number;
   let playerStartY: number;
 
+  // Track all generated crates
+  const generatedCrates: Crate[] = [];
+
   // If skipEntityCreation is true, we'll only calculate positions without creating entities
   if (skipEntityCreation) {
     // Create a mock platform data without creating actual entities
@@ -151,12 +156,13 @@ export function generateLevel(
 
     // Early return with only player position if skipEntityCreation is true
     return {
+      platforms: [],
       playerSpawnPosition: {
         x: playerStartX,
         y: playerStartY,
       },
       enemies: [],
-      platforms: [],
+      crates: [],
     };
   }
 
@@ -260,13 +266,16 @@ export function generateLevel(
         // --- Generate Crates FIRST (Before coins) --- //
         if (platformIndex === 1 && segmentIndex === 0) {
           // Force spawn both crates on the second platform
-          generateCratesForPlatform({
+          const createdCrates = generateCratesForPlatform({
             scene: config.scene,
             platformPhysicsMinX: segment.physicsMinX,
             platformPhysicsMaxX: segment.physicsMaxX,
             platformY: config.platformY,
             forceSpawnBoth: true, // Force spawn!
           });
+
+          // Add created crates to the generatedCrates array
+          generatedCrates.push(...createdCrates);
 
           // Calculate crate positions to avoid coin placement
           // For forced spawn we know exact positions - small and big crate side-by-side
@@ -324,13 +333,16 @@ export function generateLevel(
             });
 
             // Generate the crate
-            generateCratesForPlatform({
+            const createdCrates = generateCratesForPlatform({
               scene: config.scene,
               platformPhysicsMinX: segment.physicsMinX,
               platformPhysicsMaxX: segment.physicsMaxX,
               platformY: config.platformY,
               // Use default probability from crateGenerator.ts
             });
+
+            // Add created crates to the generatedCrates array
+            generatedCrates.push(...createdCrates);
           }
         }
 
@@ -378,14 +390,15 @@ export function generateLevel(
     }
   });
 
-  // Return the player spawn position and generated enemies
+  // Update the return statement with the correct property
   return {
+    platforms: generatedPlatforms,
     playerSpawnPosition: {
-      x: playerStartX,
-      y: playerStartY,
+      x: platformsData[0][0].startX + 100, // Some padding from left edge
+      y: config.platformY - 150, // Position above the platform
     },
     enemies: generatedEnemies,
-    platforms: generatedPlatforms,
+    crates: generatedCrates,
   };
 }
 

@@ -23,8 +23,11 @@ interface CrateGenerationConfig {
  * Otherwise, has a chance (based on `cratePlacementProbability`) to generate ONE random crate.
  *
  * @param config Configuration object for crate generation.
+ * @returns Array of created Crate instances
  */
-export function generateCratesForPlatform(config: CrateGenerationConfig): void {
+export function generateCratesForPlatform(
+  config: CrateGenerationConfig
+): Crate[] {
   const {
     scene,
     platformPhysicsMinX,
@@ -34,6 +37,7 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
     forceSpawnBoth = false, // Default to false
   } = config;
 
+  const createdCrates: Crate[] = [];
   const platformPixelWidth =
     (platformPhysicsMaxX - platformPhysicsMinX) * PHYSICS.SCALE;
   const platformPixelCenterX =
@@ -52,7 +56,7 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
       console.warn(
         `Platform too narrow for both crates. Skipping crate generation.`
       );
-      return;
+      return createdCrates;
     }
 
     // Calculate positions for side-by-side placement around the center
@@ -76,7 +80,7 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
     const bigCrateY = platformY - bigCratePhysicsBottom;
 
     // Create SMALL crate instance
-    new Crate(
+    const smallCrate = new Crate(
       scene,
       smallCrateX,
       smallCrateY,
@@ -84,9 +88,10 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
       platformPhysicsMinX,
       platformPhysicsMaxX
     );
+    createdCrates.push(smallCrate);
 
     // Create BIG crate instance
-    new Crate(
+    const bigCrate = new Crate(
       scene,
       bigCrateX,
       bigCrateY,
@@ -94,6 +99,7 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
       platformPhysicsMinX,
       platformPhysicsMaxX
     );
+    createdCrates.push(bigCrate);
 
     console.log(
       `Generated BOTH crates on platform [${(
@@ -103,7 +109,7 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
   } else {
     // Original logic: Chance to generate ONE random crate
     if (Phaser.Math.FloatBetween(0, 1) > cratePlacementProbability) {
-      return; // No crate this time
+      return createdCrates; // No crate this time
     }
 
     // Choose crate size (equal chance for now)
@@ -116,7 +122,7 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
       console.warn(
         `Platform too narrow for ${size} crate. Skipping crate generation.`
       );
-      return;
+      return createdCrates;
     }
 
     // Calculate spawn position (slightly offset from platform center horizontally)
@@ -130,7 +136,7 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
     const spawnY = platformY - physicsBottom;
 
     // Create the single crate instance
-    new Crate(
+    const crate = new Crate(
       scene,
       spawnX,
       spawnY,
@@ -138,6 +144,7 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
       platformPhysicsMinX,
       platformPhysicsMaxX
     );
+    createdCrates.push(crate);
 
     console.log(
       `Generated ${size} crate at (${spawnX.toFixed(2)}, ${spawnY.toFixed(
@@ -147,4 +154,6 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
       ).toFixed(2)}]`
     );
   }
+
+  return createdCrates;
 }
