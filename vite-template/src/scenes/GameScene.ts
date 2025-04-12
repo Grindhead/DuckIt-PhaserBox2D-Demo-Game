@@ -314,52 +314,13 @@ export default class GameScene extends Phaser.Scene {
       // DRAW ALL PHYSICS ENTITIES WITH VIVID COLORS
 
       // --- DRAW PLATFORMS FIRST (SO THEY APPEAR BEHIND OTHER OBJECTS) ---
-      // Find all platforms in the world - draw with BRIGHT CYAN color
-      // Draw all platform tiles from the physics world
-      const platformTiles = this.children.list.filter((child: any) => {
-        // Find objects with platform user data
-        if (
-          child.body &&
-          child.body.userData &&
-          child.body.userData.type === "platform"
-        ) {
-          return true;
-        }
-        // Check if the sprite has a bodyId (direct Box2D body)
-        if (child.bodyId) {
-          const shapes: any[] = [];
-          b2Body_GetShapes(child.bodyId, shapes);
-          if (shapes.length > 0) {
-            const userData = b2Shape_GetUserData(shapes[0]) as ShapeUserData;
-            return userData?.type === "platform";
-          }
-        }
-        return false;
-      });
 
-      // SPECIAL HANDLING: Direct lookup for platforms in the scene by texture name
-      const platformsByTexture = this.children.list.filter((child: any) => {
-        if (child.texture && child.texture.key === ASSETS.ATLAS) {
-          // Check if this is a platform by texture frame name
-          const frame = child.frame?.name || "";
-          return frame.includes("platforms/platform");
-        }
-        return false;
-      });
-
-      // Combine all platform detection methods for accurate counting
-      const allPlatforms = [
-        ...new Set([...platformTiles, ...platformsByTexture]),
-      ];
-
-      // Draw each platform - use different colors for active vs sleeping platforms
-      platformTiles.forEach((platform: any) => {
-        // Check if this platform is a Platform instance and if it's awake
-        const isPlatformInstance = platform instanceof Platform;
-        const isAwake =
-          isPlatformInstance && platform.bodyId
-            ? b2Body_IsAwake(platform.bodyId)
-            : true;
+      // Instead of drawing individual platform tiles, draw the actual platform physics bodies
+      this.platforms.forEach((platform: Platform) => {
+        // Check if this platform is awake
+        const isAwake = platform.bodyId
+          ? b2Body_IsAwake(platform.bodyId)
+          : true;
 
         // Use bright cyan for active platforms, darker blue for sleeping platforms
         if (isAwake) {
@@ -370,43 +331,52 @@ export default class GameScene extends Phaser.Scene {
           this.debugGraphics.fillStyle(0x0066aa, 0.2); // Darker transparent blue for sleeping
         }
 
+        // Draw the platform's actual physics body bounds
         this.debugGraphics.strokeRect(
-          platform.x - platform.width / 2,
-          platform.y - platform.height / 2,
+          platform.centerX - platform.width / 2,
+          platform.centerY - platform.height / 2,
           platform.width,
-          platform.height
+          platform.height * 1.2 // Account for the collision height scaling
         );
 
         this.debugGraphics.fillRect(
-          platform.x - platform.width / 2,
-          platform.y - platform.height / 2,
+          platform.centerX - platform.width / 2,
+          platform.centerY - platform.height / 2,
           platform.width,
-          platform.height
+          platform.height * 1.2
         );
+
+        // Draw the platform name to verify it's a combined platform
+        if (platform.isCombinedPlatform) {
+          this.debugGraphics.lineStyle(2, 0xffff00, 1);
+          // Draw a label
+          const debugLabel = this.add.text(
+            platform.centerX,
+            platform.centerY - platform.height,
+            "Combined Platform",
+            {
+              fontFamily: "Arial",
+              fontSize: "10px",
+              color: "#ffff00",
+            }
+          );
+          debugLabel.setDepth(2000);
+          debugLabel.setOrigin(0.5, 0.5);
+          // Destroy the label after the frame is rendered
+          this.time.delayedCall(100, () => debugLabel.destroy());
+        }
       });
 
-      // SPECIAL HANDLING: Direct lookup for platforms in the scene by texture name
+      // Still highlight the actual platform sprites, but with lower opacity
+      // so we can see both the visual placement and the physics body
       this.children.list.forEach((child: any) => {
         if (child.texture && child.texture.key === ASSETS.ATLAS) {
           // Check if this is a platform by texture frame name
           const frame = child.frame?.name || "";
           if (frame.includes("platforms/platform")) {
-            // Check if this is part of a Platform instance and if it's awake
-            let isAwake = true;
-            if (child.parentContainer instanceof Platform) {
-              isAwake = child.parentContainer.bodyId
-                ? b2Body_IsAwake(child.parentContainer.bodyId)
-                : true;
-            }
-
-            // Use color based on awake status
-            if (isAwake) {
-              this.debugGraphics.lineStyle(4, 0x00ddff, 1);
-              this.debugGraphics.fillStyle(0x00ddff, 0.3);
-            } else {
-              this.debugGraphics.lineStyle(2, 0x005588, 0.7);
-              this.debugGraphics.fillStyle(0x005588, 0.2);
-            }
+            // Use a more subtle color for the visual sprites
+            this.debugGraphics.lineStyle(1, 0x00ddff, 0.3);
+            this.debugGraphics.fillStyle(0x00ddff, 0.1);
 
             this.debugGraphics.strokeRect(
               child.x - child.width / 2,
@@ -414,27 +384,7 @@ export default class GameScene extends Phaser.Scene {
               child.width,
               child.height
             );
-            this.debugGraphics.fillRect(
-              child.x - child.width / 2,
-              child.y - child.height / 2,
-              child.width,
-              child.height
-            );
           }
-        }
-      });
-
-      // ONE MORE WAY TO FIND PLATFORMS - Draw any object with "platform" in the name
-      this.children.list.forEach((child: any) => {
-        if (child.name && child.name.toLowerCase().includes("platform")) {
-          // Extra-thick yellow outline for platform by name
-          this.debugGraphics.lineStyle(5, 0xffff00, 1);
-          this.debugGraphics.strokeRect(
-            child.x - child.width / 2,
-            child.y - child.height / 2,
-            child.width,
-            child.height
-          );
         }
       });
 
@@ -487,82 +437,26 @@ export default class GameScene extends Phaser.Scene {
         );
       });
 
-      // 4. Iterate through all sprite map entries
-      this.bodyIdToSpriteMap.forEach((sprite) => {
-        if (sprite instanceof Crate) {
-          // 5. Draw crates - GREEN
-          this.debugGraphics.lineStyle(4, 0x00ff00, 1);
-          this.debugGraphics.strokeRect(
-            sprite.x - sprite.width / 2,
-            sprite.y - sprite.height / 2,
-            sprite.width,
-            sprite.height
-          );
-          // Add slight fill to make more visible
-          this.debugGraphics.fillStyle(0x00ff00, 0.3);
-          this.debugGraphics.fillRect(
-            sprite.x - sprite.width / 2,
-            sprite.y - sprite.height / 2,
-            sprite.width,
-            sprite.height
-          );
-        } else if (!(sprite instanceof Enemy) && sprite !== this.player) {
-          // 6. All other physics bodies (including platforms) - BLUE
-          const bodyId = (sprite as any).bodyId;
-          if (bodyId) {
-            // Check if it's a platform by looking at UserData
-            const shapes: any[] = [];
-            b2Body_GetShapes(bodyId, shapes);
-
-            if (shapes.length > 0) {
-              const userData = b2Shape_GetUserData(shapes[0]) as ShapeUserData;
-
-              // Draw PLATFORMS - CYAN
-              if (userData?.type === "platform") {
-                // Check if this platform is awake
-                let isAwake = true;
-                if (sprite instanceof Platform) {
-                  isAwake = sprite.bodyId
-                    ? b2Body_IsAwake(sprite.bodyId)
-                    : true;
-                }
-
-                if (isAwake) {
-                  this.debugGraphics.lineStyle(4, 0x00ffff, 1);
-                  this.debugGraphics.fillStyle(0x00ffff, 0.3);
-                } else {
-                  this.debugGraphics.lineStyle(2, 0x0066aa, 0.7);
-                  this.debugGraphics.fillStyle(0x0066aa, 0.2);
-                }
-
-                this.debugGraphics.strokeRect(
-                  sprite.x - sprite.width / 2,
-                  sprite.y - sprite.height / 2,
-                  sprite.width,
-                  sprite.height
-                );
-                this.debugGraphics.fillRect(
-                  sprite.x - sprite.width / 2,
-                  sprite.y - sprite.height / 2,
-                  sprite.width,
-                  sprite.height
-                );
-              } else {
-                // Unknown physics objects - ORANGE
-                this.debugGraphics.lineStyle(4, 0xffa500, 1);
-                this.debugGraphics.strokeRect(
-                  sprite.x - sprite.width / 2,
-                  sprite.y - sprite.height / 2,
-                  sprite.width,
-                  sprite.height
-                );
-              }
-            }
-          }
-        }
+      // 4. Draw all crates - GREEN
+      crates.forEach((crate) => {
+        this.debugGraphics.lineStyle(4, 0x00ff00, 1);
+        this.debugGraphics.strokeRect(
+          crate.x - crate.width / 2,
+          crate.y - crate.height / 2,
+          crate.width,
+          crate.height
+        );
+        // Add slight fill to make more visible
+        this.debugGraphics.fillStyle(0x00ff00, 0.3);
+        this.debugGraphics.fillRect(
+          crate.x - crate.width / 2,
+          crate.y - crate.height / 2,
+          crate.width,
+          crate.height
+        );
       });
 
-      // 7. Draw death sensor - RED LINE
+      // 5. Draw death sensor - RED LINE
       if (this.deathSensor) {
         this.debugGraphics.lineStyle(6, 0xff0000, 0.8);
         this.debugGraphics.lineBetween(
@@ -606,7 +500,7 @@ export default class GameScene extends Phaser.Scene {
         `Camera: (${Math.floor(this.cameras.main.scrollX)}, ${Math.floor(
           this.cameras.main.scrollY
         )})`,
-        `Platforms: ${allPlatforms.length} total (${activePlatformCount} active, ${sleepingPlatformCount} sleeping)`,
+        `Platforms: ${this.platforms.length} total (${activePlatformCount} active, ${sleepingPlatformCount} sleeping)`,
       ].join("\n");
 
       if (this.debugText) {

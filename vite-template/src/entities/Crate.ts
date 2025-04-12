@@ -216,6 +216,26 @@ export default class Crate extends Phaser.GameObjects.Sprite {
     const pos = b2Body_GetPosition(this.bodyId);
     const vel = b2Body_GetLinearVelocity(this.bodyId);
 
+    // Additional stability check - always dampen velocity if very small
+    if (Math.abs(vel.x) < 0.1 && Math.abs(vel.y) < 0.1) {
+      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+    }
+
+    // Apply stronger damping if debug mode is active
+    // This helps stabilize crates during debug visualization
+    if (
+      this.scene instanceof GameScene &&
+      (this.scene as GameScene).debugEnabled
+    ) {
+      // Stop horizontal movement completely when in debug mode
+      if (Math.abs(vel.x) < 0.5) {
+        b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, vel.y));
+      } else {
+        // Apply stronger damping to slow it down more quickly
+        b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(vel.x * 0.8, vel.y));
+      }
+    }
+
     const crateLeftEdge = pos.x - this.halfWidthMeters;
     const crateRightEdge = pos.x + this.halfWidthMeters;
 
