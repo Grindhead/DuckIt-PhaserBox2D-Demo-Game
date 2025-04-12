@@ -106,6 +106,44 @@ export async function loadPhysicsData(): Promise<Map<string, PhysicsBodyData>> {
 
     console.log(`Found ${bodyElements.length} body elements in physics.xml`);
 
+    // Check specifically for crate bodies
+    const crateSmallBody = xmlDoc.querySelector('body[name="crate-small"]');
+    const crateBigBody = xmlDoc.querySelector('body[name="crate-big"]');
+
+    if (!crateSmallBody) {
+      console.error('MISSING "crate-small" body in physics.xml!');
+    } else {
+      // Verify the polygon fixture exists
+      const smallCratePolygon = crateSmallBody.querySelector(
+        'fixture[type="POLYGON"] polygon'
+      );
+      if (!smallCratePolygon) {
+        console.error(
+          'MISSING polygon fixture for "crate-small" body in physics.xml!'
+        );
+      } else {
+        const vertices = smallCratePolygon.querySelectorAll("vertex");
+        console.log(`"crate-small" has ${vertices.length} vertices`);
+      }
+    }
+
+    if (!crateBigBody) {
+      console.error('MISSING "crate-big" body in physics.xml!');
+    } else {
+      // Verify the polygon fixture exists
+      const bigCratePolygon = crateBigBody.querySelector(
+        'fixture[type="POLYGON"] polygon'
+      );
+      if (!bigCratePolygon) {
+        console.error(
+          'MISSING polygon fixture for "crate-big" body in physics.xml!'
+        );
+      } else {
+        const vertices = bigCratePolygon.querySelectorAll("vertex");
+        console.log(`"crate-big" has ${vertices.length} vertices`);
+      }
+    }
+
     bodyElements.forEach((bodyElement: Element) => {
       const name = bodyElement.getAttribute("name") || "";
       const dynamic = bodyElement.getAttribute("dynamic") === "true";
@@ -179,6 +217,16 @@ export async function loadPhysicsData(): Promise<Map<string, PhysicsBodyData>> {
               const y = parseFloat(vertexElement.getAttribute("y") || "0");
               vertices.push({ x, y });
             });
+
+            // Debug log to verify polygon data for crates
+            if (name.includes("crate")) {
+              console.log(
+                `Loaded polygon for ${name} with ${vertices.length} vertices:`
+              );
+              vertices.forEach((v, i) =>
+                console.log(`  Vertex ${i}: (${v.x}, ${v.y})`)
+              );
+            }
 
             shapes.push({
               type: "POLYGON",

@@ -109,19 +109,39 @@ export function createPhysicsBody(
 
   // Check if physics data is available
   if (!physicsData || physicsData.size === 0) {
-    console.warn(
-      `Physics data not initialized or empty for ${entityType}. Entity should fall back to default physics.`
+    console.error(
+      `CRITICAL: Physics data not initialized or empty for ${entityType}. Run initPhysicsData() first.`
     );
     return null;
   }
 
+  // Add more detailed logging for crate entities
+  if (entityType.includes("crate")) {
+    console.log(`Creating ${entityType} physics body at (${x}, ${y})...`);
+    console.log(
+      `Available physics bodies: ${Array.from(physicsData.keys()).join(", ")}`
+    );
+  }
+
   const bodyData = physicsData.get(entityType);
   if (!bodyData) {
-    console.warn(`No physics data found for entity type: ${entityType}`);
+    console.error(`No physics data found for entity type: "${entityType}"`);
     return null;
   }
 
   try {
+    // Log the shapes for crate entities
+    if (entityType.includes("crate")) {
+      console.log(
+        `Found body data for ${entityType} with ${bodyData.shapes.length} shapes`
+      );
+      bodyData.shapes.forEach((shape, i) => {
+        console.log(
+          `  Shape ${i}: type=${shape.type}, isSensor=${shape.fixture.isSensor}`
+        );
+      });
+    }
+
     // Determine if the body should be dynamic
     const dynamic = isDynamic !== undefined ? isDynamic : bodyData.dynamic;
 
@@ -243,9 +263,55 @@ function createPolygonShape(
     .map((v) => [v.x / PHYSICS.SCALE, -v.y / PHYSICS.SCALE])
     .flat();
 
+  // Debug logging for crate polygon shapes
+  if (
+    shapeDef.userData?.entityType &&
+    shapeDef.userData.entityType.includes("crate")
+  ) {
+    console.log(`Creating polygon shape for ${shapeDef.userData.entityType}:`);
+    console.log(`  Vertices: ${vertices.join(", ")}`);
+  }
+
   // Create the polygon
   const polygon = { vertices };
 
   // Create the shape
   b2CreatePolygonShape(bodyId, shapeDef, polygon);
+}
+
+/**
+ * Verify that all critical physics bodies are properly loaded
+ * Returns false if any required bodies are missing
+ */
+export function verifyPhysicsData(): boolean {
+  if (!physicsData || physicsData.size === 0) {
+    console.error("Physics data is not initialized");
+    return false;
+  }
+
+  // These are the required body types for the game to function properly
+  const requiredBodies = [
+    "duck",
+    "coin",
+    "crate-small",
+    "crate-big",
+    "enemy",
+    "finish",
+  ];
+
+  const missingBodies = requiredBodies.filter(
+    (bodyName) => !physicsData?.has(bodyName)
+  );
+
+  if (missingBodies.length > 0) {
+    console.error(
+      `Missing required physics bodies: ${missingBodies.join(", ")}`
+    );
+    console.log(
+      `Available bodies: ${Array.from(physicsData.keys()).join(", ")}`
+    );
+    return false;
+  }
+
+  return true;
 }

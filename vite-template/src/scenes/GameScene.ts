@@ -53,7 +53,10 @@ import {
   generateLevel,
   GeneratedLevelData,
 } from "../lib/levelGenerator/levelGenerator";
-import { initPhysicsData } from "../lib/physics/PhysicsBodyFactory";
+import {
+  initPhysicsData,
+  verifyPhysicsData,
+} from "../lib/physics/PhysicsBodyFactory";
 
 type b2WorldIdInstance = InstanceType<typeof b2WorldId>;
 type MappedSprite = Phaser.GameObjects.Sprite | Crate | Enemy;
@@ -65,18 +68,54 @@ interface ShapeUserData {
 
 // Define an interface for our debug draw implementation
 interface CustomDebugDraw {
-  DrawPolygon: (xf: any, vertices: any, vertexCount: any, color: any) => void;
+  DrawPolygon: (
+    xf: any,
+    vertices: any,
+    vertexCount: number,
+    color: number,
+    context?: any
+  ) => void;
   DrawSolidPolygon: (
     xf: any,
     vertices: any,
-    vertexCount: any,
-    color: any
+    vertexCount: number,
+    radius: number,
+    color: number,
+    context?: any
   ) => void;
-  DrawCircle: (center: any, radius: any, color: any) => void;
-  DrawSolidCircle: (center: any, radius: any, axis: any, color: any) => void;
-  DrawSegment: (p1: any, p2: any, color: any) => void;
-  DrawTransform: (xf: any) => void;
+  DrawCircle: (
+    center: any,
+    radius: number,
+    color: number,
+    context?: any
+  ) => void;
+  DrawSolidCircle: (
+    xf: any,
+    radius: number,
+    axis?: any,
+    color?: number,
+    context?: any
+  ) => void;
+  DrawSegment: (p1: any, p2: any, color: number, context?: any) => void;
+  DrawTransform: (xf: any, context?: any) => void;
+  DrawPoint: (
+    x: number,
+    y: number,
+    radius: number,
+    color: number,
+    context?: any
+  ) => void;
+  DrawString: (pos: any, text: string, context?: any) => void;
   flags: number;
+  drawShapes: boolean;
+  drawJoints: boolean;
+  drawAABBs: boolean;
+  drawMass: boolean;
+  drawContacts: boolean;
+  drawContactNormals?: boolean;
+  drawContactImpulses?: boolean;
+  drawFrictionImpulses?: boolean;
+  context: any;
 }
 
 export default class GameScene extends Phaser.Scene {
@@ -112,6 +151,44 @@ export default class GameScene extends Phaser.Scene {
     this.setupDebugDraw();
     this.createUI();
     this.setupInput();
+
+    // Ensure physics data is loaded first
+    let physicsLoaded = false;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (!physicsLoaded && retryCount < maxRetries) {
+      try {
+        await initPhysicsData();
+        console.log("Physics data initialized successfully");
+
+        // Verify that all required physics bodies are loaded
+        if (!verifyPhysicsData()) {
+          console.error(
+            "Critical physics bodies are missing - game objects may not function correctly"
+          );
+          retryCount++;
+          console.log(`Retry attempt ${retryCount} of ${maxRetries}...`);
+        } else {
+          physicsLoaded = true;
+        }
+      } catch (error) {
+        console.error("Failed to initialize physics data:", error);
+        retryCount++;
+        console.log(`Retry attempt ${retryCount} of ${maxRetries}...`);
+      }
+
+      // Add a small delay before retrying
+      if (!physicsLoaded && retryCount < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+    }
+
+    if (!physicsLoaded) {
+      console.warn(
+        "Could not load physics data after multiple attempts. Using fallback physics."
+      );
+    }
 
     // Initialize game world
     b2CreateWorldArray();
@@ -254,6 +331,181 @@ export default class GameScene extends Phaser.Scene {
     debugText.visible = false;
 
     this.debugText = debugText;
+
+    // Create Box2D debug draw object
+    this.debugDraw = {
+      DrawPolygon: (
+        xf: any,
+        vertices: any,
+        vertexCount: number,
+        color: number,
+        context?: any
+      ) => {
+        // Draw outlines of physics bodies with thicker lines
+        this.debugGraphics.lineStyle(4, color, 1);
+
+        // Calculate transformed vertices for the shape
+        const transformedVertices = [];
+
+        for (let i = 0; i < vertexCount; i++) {
+          const v = vertices[i];
+          // Calculate world position with the proper transformation matrix
+          const worldX =
+            (xf.p.x + (v.x * xf.q.c - v.y * xf.q.s)) * PHYSICS.SCALE;
+          const worldY =
+            (-xf.p.y + (-v.y * xf.q.c - v.x * xf.q.s)) * PHYSICS.SCALE;
+          transformedVertices.push({ x: worldX, y: worldY });
+        }
+
+        // Draw the polygon
+        this.debugGraphics.beginPath();
+        for (let i = 0; i < transformedVertices.length; i++) {
+          const point = transformedVertices[i];
+          if (i === 0) {
+            this.debugGraphics.moveTo(point.x, point.y);
+          } else {
+            this.debugGraphics.lineTo(point.x, point.y);
+          }
+        }
+        this.debugGraphics.closePath();
+        this.debugGraphics.strokePath();
+      },
+      DrawSolidPolygon: (
+        xf: any,
+        vertices: any,
+        vertexCount: number,
+        radius: number,
+        color: number,
+        context?: any
+      ) => {
+        // Extract RGB components from color (which is a number)
+        const r = (color >> 16) & 0xff;
+        const g = (color >> 8) & 0xff;
+        const b = color & 0xff;
+
+        // Enhanced visibility for physics bodies (thicker lines, more opacity)
+        this.debugGraphics.lineStyle(4, color, 1);
+        this.debugGraphics.fillStyle(color, 0.5); // More opaque fill
+
+        // Calculate transformed vertices for the shape
+        const transformedVertices = [];
+
+        for (let i = 0; i < vertexCount; i++) {
+          const v = vertices[i];
+          // Calculate world position with the proper transformation matrix
+          const worldX =
+            (xf.p.x + (v.x * xf.q.c - v.y * xf.q.s)) * PHYSICS.SCALE;
+          const worldY =
+            (-xf.p.y + (-v.y * xf.q.c - v.x * xf.q.s)) * PHYSICS.SCALE;
+          transformedVertices.push({ x: worldX, y: worldY });
+        }
+
+        // Draw the polygon
+        this.debugGraphics.beginPath();
+        for (let i = 0; i < transformedVertices.length; i++) {
+          const point = transformedVertices[i];
+          if (i === 0) {
+            this.debugGraphics.moveTo(point.x, point.y);
+          } else {
+            this.debugGraphics.lineTo(point.x, point.y);
+          }
+        }
+        this.debugGraphics.closePath();
+        this.debugGraphics.fillPath();
+        this.debugGraphics.strokePath();
+      },
+      DrawCircle: (
+        center: any,
+        radius: number,
+        color: number,
+        context?: any
+      ) => {
+        this.debugGraphics.lineStyle(4, color, 1);
+        const worldX = center.x * PHYSICS.SCALE;
+        const worldY = -center.y * PHYSICS.SCALE;
+        this.debugGraphics.strokeCircle(worldX, worldY, radius * PHYSICS.SCALE);
+      },
+      DrawSolidCircle: (
+        xf: any,
+        radius: number,
+        axis?: any,
+        color?: number,
+        context?: any
+      ) => {
+        // Use default color if not provided
+        const actualColor = color ?? 0xff00ff;
+
+        this.debugGraphics.lineStyle(4, actualColor, 1);
+        this.debugGraphics.fillStyle(actualColor, 0.5); // More opaque fill
+
+        // Apply the proper transformation
+        const worldX = xf.p.x * PHYSICS.SCALE;
+        const worldY = -xf.p.y * PHYSICS.SCALE;
+
+        this.debugGraphics.fillCircle(worldX, worldY, radius * PHYSICS.SCALE);
+        this.debugGraphics.strokeCircle(worldX, worldY, radius * PHYSICS.SCALE);
+      },
+      DrawSegment: (p1: any, p2: any, color: number, context?: any) => {
+        this.debugGraphics.lineStyle(2, color, 1);
+        this.debugGraphics.beginPath();
+        this.debugGraphics.moveTo(p1.x * PHYSICS.SCALE, -p1.y * PHYSICS.SCALE);
+        this.debugGraphics.lineTo(p2.x * PHYSICS.SCALE, -p2.y * PHYSICS.SCALE);
+        this.debugGraphics.strokePath();
+      },
+      DrawTransform: (xf: any, context?: any) => {
+        // Draw a small cross to indicate transforms
+        const center = xf.p;
+        const worldX = center.x * PHYSICS.SCALE;
+        const worldY = -center.y * PHYSICS.SCALE;
+
+        this.debugGraphics.lineStyle(2, 0xff0000, 1);
+        this.debugGraphics.beginPath();
+        this.debugGraphics.moveTo(worldX - 5, worldY);
+        this.debugGraphics.lineTo(worldX + 5, worldY);
+        this.debugGraphics.moveTo(worldX, worldY - 5);
+        this.debugGraphics.lineTo(worldX, worldY + 5);
+        this.debugGraphics.strokePath();
+      },
+      DrawPoint: (
+        x: number,
+        y: number,
+        radius: number,
+        color: number,
+        context?: any
+      ) => {
+        this.debugGraphics.fillStyle(color, 1);
+        this.debugGraphics.fillCircle(
+          x * PHYSICS.SCALE,
+          -y * PHYSICS.SCALE,
+          radius
+        );
+      },
+      DrawString: (pos: any, text: string, context?: any) => {
+        const tempText = this.add.text(
+          pos.x * PHYSICS.SCALE,
+          -pos.y * PHYSICS.SCALE,
+          text,
+          { fontSize: "11px", color: "#ffffff", backgroundColor: "#000000" }
+        );
+        tempText.setOrigin(0.5);
+        tempText.setDepth(2000);
+
+        // Remove text after a short delay
+        this.time.delayedCall(100, () => {
+          tempText.destroy();
+        });
+      },
+      flags: 0,
+      drawShapes: true,
+      drawJoints: true,
+      drawAABBs: true,
+      drawMass: true,
+      drawContacts: false,
+      drawContactNormals: false,
+      drawContactImpulses: false,
+      drawFrictionImpulses: false,
+      context: null,
+    } as CustomDebugDraw;
   }
 
   update(_time: number, delta: number) {
@@ -267,6 +519,16 @@ export default class GameScene extends Phaser.Scene {
       if (this.debugText) {
         this.debugText.visible = this.debugEnabled;
       }
+
+      // When debug mode is enabled, force all crates to wake up
+      if (this.debugEnabled) {
+        this.crates.forEach((crate) => {
+          if (crate.bodyId) {
+            b2Body_SetAwake(crate.bodyId, true);
+          }
+        });
+      }
+
       console.log("Debug drawing:", this.debugEnabled ? "enabled" : "disabled");
     }
 
@@ -333,139 +595,43 @@ export default class GameScene extends Phaser.Scene {
     UpdateWorldSprites(worldId);
 
     // Draw debug graphics if enabled
-    if (this.debugEnabled) {
+    if (this.debugEnabled && this.debugDraw) {
       // Clear previous debug drawing
       this.debugGraphics.clear();
 
-      // DRAW ALL PHYSICS ENTITIES WITH VIVID COLORS
-
-      // --- DRAW PLATFORMS FIRST (SO THEY APPEAR BEHIND OTHER OBJECTS) ---
-
-      // Instead of drawing individual platform tiles, draw the actual platform physics bodies
-      this.platforms.forEach((platform: Platform) => {
-        // Skip if the platform has no bodyId
-        if (!platform.bodyId) return;
-
-        // Check if this platform is awake
-        const isAwake = b2Body_IsAwake(platform.bodyId);
-
-        // Use bright cyan for active platforms, darker blue for sleeping platforms
-        if (isAwake) {
-          this.debugGraphics.lineStyle(6, 0x00ffff, 1); // Thick cyan outline for active
-          this.debugGraphics.fillStyle(0x00ffff, 0.4); // Bright cyan fill for active
-        } else {
-          this.debugGraphics.lineStyle(3, 0x0066aa, 0.7); // Thinner darker blue for sleeping
-          this.debugGraphics.fillStyle(0x0066aa, 0.2); // Darker transparent blue for sleeping
-        }
-
-        // Draw the platform's actual physics body bounds
-        this.debugGraphics.strokeRect(
-          platform.centerX - platform.width / 2,
-          platform.centerY - platform.height / 2,
-          platform.width,
-          platform.height * 1.2 // Account for the collision height scaling
-        );
-
-        this.debugGraphics.fillRect(
-          platform.centerX - platform.width / 2,
-          platform.centerY - platform.height / 2,
-          platform.width,
-          platform.height * 1.2
-        );
-
-        // Draw the platform name to verify it's a combined platform
-        if (platform.isCombinedPlatform) {
-          this.debugGraphics.lineStyle(2, 0xffff00, 1);
-          // Draw a label
-          const debugLabel = this.add.text(
-            platform.centerX,
-            platform.centerY - platform.height,
-            "Combined Platform",
-            {
-              fontFamily: "Arial",
-              fontSize: "10px",
-              color: "#ffff00",
-            }
-          );
-          debugLabel.setDepth(2000);
-          debugLabel.setOrigin(0.5, 0.5);
-          // Destroy the label after the frame is rendered
-          this.time.delayedCall(100, () => debugLabel.destroy());
-        }
-      });
-
-      // DO NOT draw individual platform tile sprites in debug view
-      // We only want to show the actual physics bodies
-
-      // 1. Draw player physics body - MAGENTA
-      if (this.player) {
-        this.debugGraphics.lineStyle(4, 0xff00ff, 1);
-        const playerWidth = this.player.width * 0.6;
-        const playerHeight = this.player.height * 0.8;
-        this.debugGraphics.strokeRect(
-          this.player.x - playerWidth / 2,
-          this.player.y - playerHeight / 2,
-          playerWidth,
-          playerHeight
-        );
-        // Draw center point
-        this.debugGraphics.fillStyle(0xff0000, 1);
-        this.debugGraphics.fillCircle(this.player.x, this.player.y, 5);
+      // Verify worldId is valid before drawing
+      if (!worldId) {
+        console.error("Cannot draw debug graphics: worldId is null");
+        return;
       }
 
-      // 2. Draw all coins - YELLOW/GOLD
-      if (this.coins) {
-        this.coins.getChildren().forEach((coin: any) => {
-          // Only draw coins that are active AND not collected
-          if (coin.active && !coin.isCollected) {
-            this.debugGraphics.lineStyle(3, 0xffff00, 1);
-            this.debugGraphics.strokeCircle(coin.x, coin.y, coin.width / 2);
-            // Fill with semi-transparent gold
-            this.debugGraphics.fillStyle(0xffd700, 0.3);
-            this.debugGraphics.fillCircle(coin.x, coin.y, coin.width / 2);
+      // First, ensure all crates are awake for debugging
+      this.crates.forEach((crate, index) => {
+        if (crate.bodyId) {
+          // Force awake state for visibility in debug mode
+          b2Body_SetAwake(crate.bodyId, true);
+
+          // Safely log shape info - the previous code was causing errors
+          try {
+            console.log(
+              `Crate ${index} (${crate.size}): bodyId=${crate.bodyId.index1}`
+            );
+          } catch (error) {
+            console.error(`Error logging crate ${index} debug info:`, error);
           }
-        });
-      }
-
-      // 3. Draw all enemies - RED
-      this.enemies.forEach((enemy) => {
-        this.debugGraphics.lineStyle(4, 0xff0000, 1);
-        this.debugGraphics.strokeRect(
-          enemy.x - enemy.width / 2,
-          enemy.y - enemy.height / 2,
-          enemy.width,
-          enemy.height
-        );
-        // Add enemy marker
-        this.debugGraphics.fillStyle(0xff0000, 0.5);
-        this.debugGraphics.fillRect(
-          enemy.x - enemy.width / 2,
-          enemy.y - enemy.height / 2,
-          enemy.width,
-          enemy.height
-        );
+        } else {
+          console.log(`Crate ${index} (${crate.size}): No bodyId!`);
+        }
       });
 
-      // 4. Draw all crates - GREEN
-      this.crates.forEach((crate) => {
-        this.debugGraphics.lineStyle(4, 0x00ff00, 1);
-        this.debugGraphics.strokeRect(
-          crate.x - crate.width / 2,
-          crate.y - crate.height / 2,
-          crate.width,
-          crate.height
-        );
-        // Add slight fill to make more visible
-        this.debugGraphics.fillStyle(0x00ff00, 0.3);
-        this.debugGraphics.fillRect(
-          crate.x - crate.width / 2,
-          crate.y - crate.height / 2,
-          crate.width,
-          crate.height
-        );
-      });
+      // Use Box2D's built-in debug drawing functionality
+      b2World_Draw(worldId, this.debugDraw);
 
-      // 5. Draw death sensor - RED LINE
+      // Draw world bounds - WHITE DASHED
+      this.debugGraphics.lineStyle(2, 0xffffff, 0.5);
+      this.debugGraphics.strokeRect(0, 0, WORLD.WIDTH, WORLD.HEIGHT);
+
+      // Draw death sensor - RED LINE
       if (this.deathSensor) {
         this.debugGraphics.lineStyle(6, 0xff0000, 0.8);
         this.debugGraphics.lineBetween(
@@ -475,22 +641,6 @@ export default class GameScene extends Phaser.Scene {
           WORLD.DEATH_SENSOR_Y
         );
       }
-
-      // --- DIRECT WORLD BOUNDS OUTLINE ---
-      // Draw world bounds - WHITE DASHED
-      this.debugGraphics.lineStyle(2, 0xffffff, 0.5);
-      this.debugGraphics.strokeRect(0, 0, WORLD.WIDTH, WORLD.HEIGHT);
-
-      // Draw visible green "ground level" line at the bottom of the current visible area
-      const visibleBottom =
-        this.cameras.main.scrollY + this.cameras.main.height;
-      this.debugGraphics.lineStyle(3, 0x00ff00, 0.7);
-      this.debugGraphics.lineBetween(
-        this.cameras.main.scrollX,
-        visibleBottom,
-        this.cameras.main.scrollX + this.cameras.main.width,
-        visibleBottom
-      );
 
       // Display debug information with more details
       const debugInfo = [

@@ -107,9 +107,19 @@ export default class Crate extends Phaser.GameObjects.Sprite {
     const entityType = this.size === "BIG" ? "crate-big" : "crate-small";
     this.bodyId = createPhysicsBody(entityType, this.x, this.y, true);
 
+    // If createPhysicsBody failed, try using the fallback method
     if (!this.bodyId) {
-      console.error(`Failed to create ${this.size} crate physics body!`);
-      return;
+      console.warn(
+        `PhysicsBodyFactory failed for ${this.size} crate, trying fallback method...`
+      );
+      this.bodyId = this.createFallbackPhysicsBody();
+
+      if (!this.bodyId) {
+        console.error(
+          `Both primary and fallback physics creation failed for ${this.size} crate!`
+        );
+        return;
+      }
     }
 
     // Store the half-width for boundary checks
@@ -130,7 +140,7 @@ export default class Crate extends Phaser.GameObjects.Sprite {
     }
 
     console.log(
-      `${this.size} crate physics body created using physics.xml data`
+      `${this.size} crate physics body created: bodyId=${this.bodyId.index1} at position (${this.x}, ${this.y})`
     );
   }
 
@@ -182,10 +192,17 @@ export default class Crate extends Phaser.GameObjects.Sprite {
 
     const isVisible = this.isVisibleToCamera();
 
-    // Set awake or asleep based on visibility
-    b2Body_SetAwake(this.bodyId, isVisible);
+    // Check if debug mode is active in GameScene
+    const isDebugActive =
+      this.scene instanceof GameScene && (this.scene as GameScene).debugEnabled;
 
-    return isVisible;
+    // Only sleep if not visible AND debug mode is not active
+    const shouldBeAwake = isVisible || isDebugActive;
+
+    // Set awake or asleep based on visibility and debug state
+    b2Body_SetAwake(this.bodyId, shouldBeAwake);
+
+    return shouldBeAwake;
   }
 
   /**
@@ -307,5 +324,88 @@ export default class Crate extends Phaser.GameObjects.Sprite {
       }
     }
     super.destroy();
+  }
+
+  /**
+   * Creates a fallback physics body for the crate when loading from XML fails
+   */
+  createFallbackPhysicsBody() {
+    if (!gameState.worldId) {
+      console.error(
+        "Game world not initialized. Cannot create fallback crate body."
+      );
+      return null;
+    }
+
+    try {
+      console.log(
+        `Creating fallback physics body for ${this.size} crate at (${this.x}, ${this.y})`
+      );
+
+      // Create basic body definition
+      const bodyDef = {
+        ...b2DefaultBodyDef(),
+        type: DYNAMIC,
+        position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE),
+        fixedRotation: true,
+        enableContactListener: true,
+        allowSleep: true,
+      };
+
+      // Create the body
+      const bodyId = b2CreateBody(gameState.worldId, bodyDef);
+      if (!bodyId) {
+        console.error(`Failed to create fallback body for ${this.size} crate`);
+        return null;
+      }
+
+      // Create shape definition
+      const shapeDef = {
+        ...b2DefaultShapeDef(),
+        density: 2,
+        friction: 0.2,
+        restitution: 0,
+        isSensor: false,
+        userData: {
+          type: "crate",
+          entityType: this.size === "BIG" ? "crate-big" : "crate-small",
+        },
+        filter: {
+          categoryBits: CATEGORY_CRATE,
+          maskBits: CATEGORY_DEFAULT | CATEGORY_PLAYER | CATEGORY_ENEMY,
+          groupIndex: 0,
+        },
+      };
+
+      // Use the dimensions from your physics.xml file
+      let width, height;
+      if (this.size === "BIG") {
+        // Use the known dimensions for big crate: (-35 to 21, -25 to 23)
+        width = 56 / PHYSICS.SCALE; // 21 - (-35)
+        height = 48 / PHYSICS.SCALE; // 23 - (-25)
+      } else {
+        // Use the known dimensions for small crate: (-25 to 16, -16 to 15)
+        width = 41 / PHYSICS.SCALE; // 16 - (-25)
+        height = 31 / PHYSICS.SCALE; // 15 - (-16)
+      }
+
+      // Create the box polygon - halve the dimensions as b2MakeBox expects half-width and half-height
+      const box = b2MakeBox(width / 2, height / 2);
+
+      // Create the shape
+      const shapeId = b2CreatePolygonShape(bodyId, shapeDef, box);
+
+      console.log(
+        `Created FALLBACK physics body for ${this.size} crate: bodyId=${bodyId.index1}, with dimensions ${width}x${height}`
+      );
+
+      return bodyId;
+    } catch (error) {
+      console.error(
+        `Error creating fallback physics body for ${this.size} crate:`,
+        error
+      );
+      return null;
+    }
   }
 }
