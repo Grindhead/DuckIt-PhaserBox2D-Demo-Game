@@ -938,29 +938,24 @@ export default class GameScene extends Phaser.Scene {
   restart() {
     console.log("Restarting game logic (persistent world)...");
 
-    // --- Destroy old game elements --- //
-    // Destroy existing enemies before regenerating level
-    this.enemies.forEach((enemy) => enemy.destroy());
-    this.enemies = [];
+    // --- Reset existing entities instead of destroying and recreating them --- //
 
-    // Clear existing platforms
-    this.platforms = [];
-
-    // Destroy existing coins (might be simpler than resetting state)
-    this.coins.clear(true, true); // Destroy children and remove from group
-
-    // Clear the sprite map to remove stale references (except player)
-    this.bodyIdToSpriteMap.forEach((sprite, bodyIndex) => {
-      if (sprite !== this.player) {
-        this.bodyIdToSpriteMap.delete(bodyIndex);
+    // Reset all existing coins instead of destroying them
+    this.coins.getChildren().forEach((coin: any) => {
+      if (coin instanceof Coin) {
+        coin.reset();
       }
     });
 
-    // --- Regenerate Level Elements --- //
-    // Note: We are NOT destroying/recreating the Box2D world itself
-    const levelData = generateLevel(this, this.coins); // Regenerate platforms, coins, enemies
-    this.enemies = levelData.enemies; // Store new enemies
-    this.platforms = levelData.platforms; // Store new platforms
+    // Reset all existing enemies instead of destroying them
+    this.enemies.forEach((enemy) => {
+      if (typeof enemy.reset === "function") {
+        enemy.reset();
+      }
+    });
+
+    // Regenerate level data to get player spawn position only
+    const levelData = generateLevel(this, this.coins, true);
 
     // --- Reset Player --- //
     if (this.player) {

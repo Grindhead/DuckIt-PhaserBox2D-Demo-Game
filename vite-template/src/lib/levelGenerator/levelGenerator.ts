@@ -38,6 +38,19 @@ export interface GeneratedLevelData {
 }
 
 /**
+ * Modified version of GeneratedPlatform for when skipEntityCreation is true
+ */
+interface MockPlatformData {
+  platform: null;
+  platformStartX: number;
+  platformCenterX: number;
+  platformPixelWidth: number;
+  totalTiles: number;
+  physicsMinX: number;
+  physicsMaxX: number;
+}
+
+/**
  * Configuration for the overall level generation process.
  */
 interface LevelGenerationConfig {
@@ -56,11 +69,13 @@ interface LevelGenerationConfig {
  * Generates the level by orchestrating platform, coin, and gap generation.
  * @param scene The GameScene instance to add elements to.
  * @param coinsGroup The Phaser Group to add created Coin instances to.
+ * @param skipEntityCreation If true, only calculate positions without creating entities
  * @returns Player spawn position calculated based on the first platform.
  */
 export function generateLevel(
   scene: GameScene,
-  coinsGroup: Phaser.GameObjects.Group
+  coinsGroup: Phaser.GameObjects.Group,
+  skipEntityCreation: boolean = false
 ): GeneratedLevelData {
   // --- Configuration --- //
   const config: LevelGenerationConfig = {
@@ -90,26 +105,62 @@ export function generateLevel(
     currentX: currentX,
   };
 
-  const firstPlatformData: GeneratedPlatform = generatePlatform(platformConfig);
-  generatedPlatforms.push(firstPlatformData.platform); // Track the first platform
+  let playerStartX: number;
+  let playerStartY: number;
+  let platformWidth: number;
 
-  // Calculate player start position above the first platform
-  const playerStartX = firstPlatformData.platformCenterX;
-  const playerStartY = config.platformY - 100; // 100px above the platform
+  // If skipEntityCreation is true, we'll only calculate positions without creating entities
+  if (skipEntityCreation) {
+    // Create a mock platform data without creating actual entities
+    const averageTiles = 5;
+    const mockData: MockPlatformData = {
+      platform: null,
+      platformStartX: currentX,
+      platformCenterX: currentX + (averageTiles * config.tileWidth) / 2,
+      platformPixelWidth: averageTiles * config.tileWidth,
+      totalTiles: averageTiles,
+      physicsMinX: currentX,
+      physicsMaxX: currentX + averageTiles * config.tileWidth,
+    };
 
-  // --- Coins for First Platform --- //
-  const firstCoinConfig: CoinConfig = {
-    scene: config.scene,
-    coinsGroup: config.coinsGroup,
-    platformStartX: firstPlatformData.platformStartX,
-    platformY: config.platformY,
-    totalTiles: firstPlatformData.totalTiles,
-    tileWidth: config.tileWidth,
-  };
-  generateCoins(firstCoinConfig);
+    // Calculate player start position above the mock platform
+    playerStartX = mockData.platformCenterX;
+    playerStartY = config.platformY - 100; // 100px above the platform
+    platformWidth = mockData.platformPixelWidth;
+
+    // Early return with only player position if skipEntityCreation is true
+    return {
+      playerSpawnPosition: {
+        x: playerStartX,
+        y: playerStartY,
+      },
+      enemies: [],
+      platforms: [],
+    };
+  } else {
+    // Actually generate the platform and entities
+    const firstPlatformData = generatePlatform(platformConfig);
+    generatedPlatforms.push(firstPlatformData.platform); // Track the first platform
+
+    // Calculate player start position above the first platform
+    playerStartX = firstPlatformData.platformCenterX;
+    playerStartY = config.platformY - 100; // 100px above the platform
+    platformWidth = firstPlatformData.platformPixelWidth;
+
+    // --- Coins for First Platform --- //
+    const firstCoinConfig: CoinConfig = {
+      scene: config.scene,
+      coinsGroup: config.coinsGroup,
+      platformStartX: firstPlatformData.platformStartX,
+      platformY: config.platformY,
+      totalTiles: firstPlatformData.totalTiles,
+      tileWidth: config.tileWidth,
+    };
+    generateCoins(firstCoinConfig);
+  }
 
   // Update currentX after the first platform
-  currentX += firstPlatformData.platformPixelWidth;
+  currentX += platformWidth;
 
   // --- First Gap --- //
   const gapConfig: GapConfig = {

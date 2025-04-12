@@ -9,9 +9,6 @@ import * as Phaser from "phaser";
 // Internal Modules
 import { ASSETS, PHYSICS } from "@constants";
 import { gameState } from "@gameState";
-import GameScene from "@scenes/GameScene";
-
-// Box2D Runtime values
 import {
   AddSpriteToWorld,
   b2BodyId,
@@ -31,6 +28,7 @@ import {
   b2Body_SetAwake,
   b2Body_IsAwake,
 } from "@PhaserBox2D";
+import GameScene from "@scenes/GameScene";
 
 /**
  * Enemy class representing the patrolling character
@@ -257,5 +255,30 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
       this.bodyId = null;
     }
     super.destroy(fromScene);
+  }
+
+  /**
+   * Resets the enemy to its initial state.
+   */
+  reset() {
+    // Restore initial direction
+    this.direction = 1;
+    this.flipX = false;
+
+    // Reset physics body if needed
+    if (this.bodyId) {
+      // Reset velocity to initial state
+      b2Body_SetLinearVelocity(
+        this.bodyId,
+        new b2Vec2((this.speed / PHYSICS.SCALE) * this.direction, 0)
+      );
+
+      // Make sure body is awake
+      b2Body_SetAwake(this.bodyId, true);
+    }
+
+    // Make sure sprite is visible
+    this.setVisible(true);
+    this.setActive(true);
   }
 }
