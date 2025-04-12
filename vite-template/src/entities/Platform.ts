@@ -384,6 +384,7 @@ export default class Platform {
       ASSETS.ATLAS,
       ASSETS.PLATFORM.LEFT
     );
+    leftSprite.setData("physics", false); // Mark as a visual-only sprite
     this.platformSprites.push(leftSprite);
 
     // Add middle sprites
@@ -395,6 +396,7 @@ export default class Platform {
         ASSETS.ATLAS,
         ASSETS.PLATFORM.MIDDLE
       );
+      middleSprite.setData("physics", false); // Mark as a visual-only sprite
       this.platformSprites.push(middleSprite);
       currentTileX += tileWidth;
     }
@@ -406,6 +408,7 @@ export default class Platform {
       ASSETS.ATLAS,
       ASSETS.PLATFORM.RIGHT
     );
+    rightSprite.setData("physics", false); // Mark as a visual-only sprite
     this.platformSprites.push(rightSprite);
   }
 

@@ -317,10 +317,11 @@ export default class GameScene extends Phaser.Scene {
 
       // Instead of drawing individual platform tiles, draw the actual platform physics bodies
       this.platforms.forEach((platform: Platform) => {
+        // Skip if the platform has no bodyId
+        if (!platform.bodyId) return;
+
         // Check if this platform is awake
-        const isAwake = platform.bodyId
-          ? b2Body_IsAwake(platform.bodyId)
-          : true;
+        const isAwake = b2Body_IsAwake(platform.bodyId);
 
         // Use bright cyan for active platforms, darker blue for sleeping platforms
         if (isAwake) {
@@ -367,26 +368,8 @@ export default class GameScene extends Phaser.Scene {
         }
       });
 
-      // Still highlight the actual platform sprites, but with lower opacity
-      // so we can see both the visual placement and the physics body
-      this.children.list.forEach((child: any) => {
-        if (child.texture && child.texture.key === ASSETS.ATLAS) {
-          // Check if this is a platform by texture frame name
-          const frame = child.frame?.name || "";
-          if (frame.includes("platforms/platform")) {
-            // Use a more subtle color for the visual sprites
-            this.debugGraphics.lineStyle(1, 0x00ddff, 0.3);
-            this.debugGraphics.fillStyle(0x00ddff, 0.1);
-
-            this.debugGraphics.strokeRect(
-              child.x - child.width / 2,
-              child.y - child.height / 2,
-              child.width,
-              child.height
-            );
-          }
-        }
-      });
+      // DO NOT draw individual platform tile sprites in debug view
+      // We only want to show the actual physics bodies
 
       // 1. Draw player physics body - MAGENTA
       if (this.player) {
