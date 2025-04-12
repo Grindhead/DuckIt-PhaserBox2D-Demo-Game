@@ -622,25 +622,6 @@ export default class GameScene extends Phaser.Scene {
         return;
       }
 
-      // First, ensure all crates are awake for debugging
-      this.crates.forEach((crate, index) => {
-        if (crate.bodyId) {
-          // Force awake state for visibility in debug mode
-          b2Body_SetAwake(crate.bodyId, true);
-
-          // Safely log shape info - the previous code was causing errors
-          try {
-            console.log(
-              `Crate ${index} (${crate.size}): bodyId=${crate.bodyId.index1}`
-            );
-          } catch (error) {
-            console.error(`Error logging crate ${index} debug info:`, error);
-          }
-        } else {
-          console.log(`Crate ${index} (${crate.size}): No bodyId!`);
-        }
-      });
-
       // Use Box2D's built-in debug drawing functionality
       b2World_Draw(worldId, this.debugDraw);
 
