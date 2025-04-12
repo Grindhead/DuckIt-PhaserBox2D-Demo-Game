@@ -6,6 +6,8 @@
  * and runs the game loop (physics updates, player updates).
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import * as Phaser from "phaser";
 
 import { PHYSICS, WORLD, SCENES } from "@constants";
@@ -30,6 +32,8 @@ import {
   b2WorldId,
   b2Body_SetGravityScale,
   b2Body_ApplyLinearImpulseToCenter,
+  b2World_Draw,
+  b2Body_GetShapes,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -49,6 +53,22 @@ interface ShapeUserData {
   [key: string]: unknown;
 }
 
+// Define an interface for our debug draw implementation
+interface CustomDebugDraw {
+  DrawPolygon: (xf: any, vertices: any, vertexCount: any, color: any) => void;
+  DrawSolidPolygon: (
+    xf: any,
+    vertices: any,
+    vertexCount: any,
+    color: any
+  ) => void;
+  DrawCircle: (center: any, radius: any, color: any) => void;
+  DrawSolidCircle: (center: any, radius: any, axis: any, color: any) => void;
+  DrawSegment: (p1: any, p2: any, color: any) => void;
+  DrawTransform: (xf: any) => void;
+  flags: number;
+}
+
 export default class GameScene extends Phaser.Scene {
   player!: Player;
   deathSensor!: DeathSensor;
@@ -61,6 +81,13 @@ export default class GameScene extends Phaser.Scene {
   enemies: Enemy[] = [];
 
   bodyIdToSpriteMap = new Map<number, MappedSprite>();
+
+  // Debug draw related properties
+  debugDraw: CustomDebugDraw | null = null;
+  debugGraphics!: Phaser.GameObjects.Graphics;
+  debugEnabled: boolean = false;
+  debugKey!: Phaser.Input.Keyboard.Key;
+  debugText!: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: SCENES.GAME });
@@ -96,6 +123,11 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.input.keyboard) {
       this.controls = this.input.keyboard.createCursorKeys();
+
+      // Add debug toggle key
+      this.debugKey = this.input.keyboard.addKey(
+        Phaser.Input.Keyboard.KeyCodes.D
+      );
     }
 
     this.cameras.main.setBounds(0, 0, WORLD.WIDTH, WORLD.HEIGHT);
@@ -104,6 +136,9 @@ export default class GameScene extends Phaser.Scene {
       levelData.playerSpawnPosition.x,
       levelData.playerSpawnPosition.y
     );
+
+    // Setup debug drawing
+    this.setupDebugDraw();
 
     this.createUI();
     this.setupInput();
@@ -154,13 +189,205 @@ export default class GameScene extends Phaser.Scene {
     this.mobileControls.jumpButton?.setDepth(100);
   }
 
+  /**
+   * Sets up the Box2D debug drawing functionality
+   */
+  setupDebugDraw() {
+    // Create a graphics object for Box2D debug rendering
+    this.debugGraphics = this.add.graphics();
+    this.debugGraphics.setDepth(1000);
+
+    // Initialize as disabled
+    this.debugEnabled = false;
+    this.debugGraphics.visible = false;
+
+    // Create help text for debug mode
+    const debugText = this.add.text(
+      10,
+      10,
+      "Press D to toggle physics debug view",
+      {
+        fontFamily: "Arial",
+        fontSize: "18px",
+        color: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 4,
+      }
+    );
+    debugText.setScrollFactor(0);
+    debugText.setDepth(2000);
+    debugText.visible = false;
+
+    this.debugText = debugText;
+  }
+
   update(_time: number, delta: number) {
     const { worldId } = gameState;
     if (!worldId) return;
 
-    b2World_Step(worldId, delta / 1000, 60);
+    // Check for debug toggle
+    if (Phaser.Input.Keyboard.JustDown(this.debugKey)) {
+      this.debugEnabled = !this.debugEnabled;
+      this.debugGraphics.visible = this.debugEnabled;
+      if (this.debugText) {
+        this.debugText.visible = this.debugEnabled;
+      }
+      console.log("Debug drawing:", this.debugEnabled ? "enabled" : "disabled");
+    }
 
+    b2World_Step(worldId, delta / 1000, 60);
     UpdateWorldSprites(worldId);
+
+    // Draw debug graphics if enabled
+    if (this.debugEnabled) {
+      // Clear previous debug drawing
+      this.debugGraphics.clear();
+
+      // DRAW ALL PHYSICS ENTITIES WITH VIVID COLORS
+
+      // 1. Draw player physics body - MAGENTA
+      if (this.player) {
+        this.debugGraphics.lineStyle(4, 0xff00ff, 1);
+        const playerWidth = this.player.width * 0.6;
+        const playerHeight = this.player.height * 0.8;
+        this.debugGraphics.strokeRect(
+          this.player.x - playerWidth / 2,
+          this.player.y - playerHeight / 2,
+          playerWidth,
+          playerHeight
+        );
+        // Draw center point
+        this.debugGraphics.fillStyle(0xff0000, 1);
+        this.debugGraphics.fillCircle(this.player.x, this.player.y, 5);
+      }
+
+      // 2. Draw all coins - YELLOW/GOLD
+      if (this.coins) {
+        this.coins.getChildren().forEach((coin: any) => {
+          if (coin.active) {
+            this.debugGraphics.lineStyle(3, 0xffff00, 1);
+            this.debugGraphics.strokeCircle(coin.x, coin.y, coin.width / 2);
+            // Fill with semi-transparent gold
+            this.debugGraphics.fillStyle(0xffd700, 0.3);
+            this.debugGraphics.fillCircle(coin.x, coin.y, coin.width / 2);
+          }
+        });
+      }
+
+      // 3. Draw all enemies - RED
+      this.enemies.forEach((enemy) => {
+        this.debugGraphics.lineStyle(4, 0xff0000, 1);
+        this.debugGraphics.strokeRect(
+          enemy.x - enemy.width / 2,
+          enemy.y - enemy.height / 2,
+          enemy.width,
+          enemy.height
+        );
+        // Add enemy marker
+        this.debugGraphics.fillStyle(0xff0000, 0.5);
+        this.debugGraphics.fillRect(
+          enemy.x - enemy.width / 2,
+          enemy.y - enemy.height / 2,
+          enemy.width,
+          enemy.height
+        );
+      });
+
+      // 4. Iterate through all sprite map entries
+      this.bodyIdToSpriteMap.forEach((sprite) => {
+        if (sprite instanceof Crate) {
+          // 5. Draw crates - GREEN
+          this.debugGraphics.lineStyle(4, 0x00ff00, 1);
+          this.debugGraphics.strokeRect(
+            sprite.x - sprite.width / 2,
+            sprite.y - sprite.height / 2,
+            sprite.width,
+            sprite.height
+          );
+          // Add slight fill to make more visible
+          this.debugGraphics.fillStyle(0x00ff00, 0.3);
+          this.debugGraphics.fillRect(
+            sprite.x - sprite.width / 2,
+            sprite.y - sprite.height / 2,
+            sprite.width,
+            sprite.height
+          );
+        } else if (!(sprite instanceof Enemy) && sprite !== this.player) {
+          // 6. All other physics bodies (including platforms) - BLUE
+          const bodyId = (sprite as any).bodyId;
+          if (bodyId) {
+            // Check if it's a platform by looking at UserData
+            const shapes: any[] = [];
+            b2Body_GetShapes(bodyId, shapes);
+
+            if (shapes.length > 0) {
+              const userData = b2Shape_GetUserData(shapes[0]) as ShapeUserData;
+
+              // Draw PLATFORMS - CYAN
+              if (userData?.type === "platform") {
+                this.debugGraphics.lineStyle(4, 0x00ffff, 1);
+                this.debugGraphics.strokeRect(
+                  sprite.x - sprite.width / 2,
+                  sprite.y - sprite.height / 2,
+                  sprite.width,
+                  sprite.height
+                );
+                // Add slight fill
+                this.debugGraphics.fillStyle(0x00ffff, 0.3);
+                this.debugGraphics.fillRect(
+                  sprite.x - sprite.width / 2,
+                  sprite.y - sprite.height / 2,
+                  sprite.width,
+                  sprite.height
+                );
+              } else {
+                // Unknown physics objects - ORANGE
+                this.debugGraphics.lineStyle(4, 0xffa500, 1);
+                this.debugGraphics.strokeRect(
+                  sprite.x - sprite.width / 2,
+                  sprite.y - sprite.height / 2,
+                  sprite.width,
+                  sprite.height
+                );
+              }
+            }
+          }
+        }
+      });
+
+      // 7. Draw death sensor - RED LINE
+      if (this.deathSensor) {
+        this.debugGraphics.lineStyle(6, 0xff0000, 0.8);
+        this.debugGraphics.lineBetween(
+          0,
+          WORLD.DEATH_SENSOR_Y,
+          WORLD.WIDTH,
+          WORLD.DEATH_SENSOR_Y
+        );
+      }
+
+      // 8. Draw world bounds - WHITE DASHED
+      this.debugGraphics.lineStyle(2, 0xffffff, 0.5);
+      this.debugGraphics.strokeRect(0, 0, WORLD.WIDTH, WORLD.HEIGHT);
+
+      // Display debug information
+      const debugInfo = [
+        `Player position: (${Math.floor(this.player.x)}, ${Math.floor(
+          this.player.y
+        )})`,
+        `Grounded: ${this.player.playerState.isGrounded}`,
+        `Collected coins: ${this.coinCounter.text?.text ?? "0"}`,
+        `Entities: P:1 E:${this.enemies.length} C:${
+          this.coins.getChildren().length
+        }`,
+      ].join("\n");
+
+      if (this.debugText) {
+        this.debugText.setText(
+          "Press D to toggle physics debug view\n" + debugInfo
+        );
+      }
+    }
 
     if (gameState.isPlaying) {
       this.processPhysicsEvents(worldId);
