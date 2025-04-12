@@ -27,6 +27,9 @@ import {
   b2Vec2,
   DYNAMIC,
   STATIC,
+  b2Body_EnableSleep,
+  b2Body_SetAwake,
+  b2Body_IsAwake,
 } from "@PhaserBox2D";
 
 /**
@@ -94,7 +97,7 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
       position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE),
       fixedRotation: true,
       enableContactListener: true,
-      allowSleep: false,
+      allowSleep: true, // Allow enemies to sleep when not visible
       linearDamping: 0.1,
       gravityScale: 1,
     };
@@ -129,6 +132,75 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
       this.bodyId,
       new b2Vec2((this.speed / PHYSICS.SCALE) * this.direction, 0)
     );
+
+    // Enable sleep for this enemy's body
+    if (this.bodyId) {
+      b2Body_EnableSleep(this.bodyId, true);
+    }
+  }
+
+  /**
+   * Checks if the enemy is visible to the camera.
+   *
+   * @returns True if the enemy is visible to the camera, false otherwise.
+   */
+  isVisibleToCamera(): boolean {
+    if (!this.scene || !this.scene.cameras || !this.scene.cameras.main) {
+      return true; // Default to visible if we can't check
+    }
+
+    const camera = this.scene.cameras.main;
+
+    // Get camera bounds
+    const cameraBounds = {
+      left: camera.scrollX,
+      right: camera.scrollX + camera.width,
+      top: camera.scrollY,
+      bottom: camera.scrollY + camera.height,
+    };
+
+    // Calculate enemy bounds
+    const enemyBounds = {
+      left: this.x - this.width / 2,
+      right: this.x + this.width / 2,
+      top: this.y - this.height / 2,
+      bottom: this.y + this.height / 2,
+    };
+
+    // Check if enemy is visible (overlaps with camera)
+    return !(
+      enemyBounds.right < cameraBounds.left ||
+      enemyBounds.left > cameraBounds.right ||
+      enemyBounds.bottom < cameraBounds.top ||
+      enemyBounds.top > cameraBounds.bottom
+    );
+  }
+
+  /**
+   * Updates the enemy's sleep state based on visibility.
+   * Enemies not visible to the camera will be put to sleep for performance.
+   *
+   * @returns True if the enemy is visible and awake, false if sleeping
+   */
+  updateSleepState(): boolean {
+    if (!this.bodyId) return false;
+
+    const isVisible = this.isVisibleToCamera();
+
+    // Set awake or asleep based on visibility
+    b2Body_SetAwake(this.bodyId, isVisible);
+
+    return isVisible;
+  }
+
+  /**
+   * Checks if the enemy's physics body is currently awake.
+   *
+   * @returns True if the physics body is awake, false if asleep.
+   */
+  isAwake(): boolean {
+    if (!this.bodyId) return false;
+    return b2Body_IsAwake(this.bodyId);
   }
 
   /**
@@ -139,6 +211,11 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
       if (this.bodyId) {
         b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
       }
+      return;
+    }
+
+    // Only update behavior if the enemy is awake
+    if (!this.isAwake()) {
       return;
     }
 

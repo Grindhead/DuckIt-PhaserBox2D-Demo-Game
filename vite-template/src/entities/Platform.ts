@@ -16,6 +16,9 @@ import {
   b2CreatePolygonShape,
   b2Vec2,
   AddSpriteToWorld,
+  b2Body_EnableSleep,
+  b2Body_SetAwake,
+  b2Body_IsAwake,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
 
@@ -26,6 +29,14 @@ export default class Platform {
   /** Box2D shape identifier */
   shapeId: ReturnType<typeof b2CreatePolygonShape> | null = null;
   platformSprites: Phaser.GameObjects.Image[] = [];
+  /** Width of the platform in pixels */
+  width: number = 0;
+  /** Height of the platform in pixels */
+  height: number = 0;
+  /** Center X position of the platform in pixels */
+  centerX: number = 0;
+  /** Center Y position of the platform in pixels */
+  centerY: number = 0;
 
   /**
    * Creates a composite platform entity.
@@ -44,12 +55,16 @@ export default class Platform {
     middleTileCount: number
   ) {
     this.scene = scene;
+    this.width = width;
+    this.centerX = centerX;
+    this.centerY = centerY;
 
     // --- Physics Body Creation ---
     const tileHeight = this.scene.textures.getFrame(
       ASSETS.ATLAS,
       ASSETS.PLATFORM.MIDDLE
     ).height;
+    this.height = tileHeight;
 
     // Get world ID from game state
     const worldId = gameState.worldId;
@@ -67,7 +82,7 @@ export default class Platform {
         -centerY / PHYSICS.SCALE + offsetY
       ),
       fixedRotation: true, // Prevent rotation of the platform
-      allowSleep: false, // Keep the platform awake for reliable collision
+      allowSleep: true, // Allow platforms to sleep when not visible
     };
 
     // Create the body
@@ -146,5 +161,72 @@ export default class Platform {
       ASSETS.PLATFORM.RIGHT
     );
     this.platformSprites.push(rightSprite);
+
+    // Enable sleep for this platform body
+    if (this.bodyId) {
+      b2Body_EnableSleep(this.bodyId, true);
+    }
+  }
+
+  /**
+   * Checks if the platform is visible to the camera.
+   *
+   * @returns True if the platform is visible to the camera, false otherwise.
+   */
+  isVisibleToCamera(): boolean {
+    if (!this.scene || !this.scene.cameras || !this.scene.cameras.main) {
+      return true; // Default to visible if we can't check
+    }
+
+    const camera = this.scene.cameras.main;
+
+    // Get camera bounds
+    const cameraBounds = {
+      left: camera.scrollX,
+      right: camera.scrollX + camera.width,
+      top: camera.scrollY,
+      bottom: camera.scrollY + camera.height,
+    };
+
+    // Calculate platform bounds
+    const platformBounds = {
+      left: this.centerX - this.width / 2,
+      right: this.centerX + this.width / 2,
+      top: this.centerY - this.height / 2,
+      bottom: this.centerY + this.height / 2,
+    };
+
+    // Check if platform is visible (overlaps with camera)
+    return !(
+      platformBounds.right < cameraBounds.left ||
+      platformBounds.left > cameraBounds.right ||
+      platformBounds.bottom < cameraBounds.top ||
+      platformBounds.top > cameraBounds.bottom
+    );
+  }
+
+  /**
+   * Updates the platform's sleep state based on visibility.
+   * Platforms not visible to the camera will be put to sleep for performance.
+   */
+  updateSleepState(): boolean {
+    if (!this.bodyId) return false;
+
+    const isVisible = this.isVisibleToCamera();
+
+    // Set awake or asleep based on visibility
+    b2Body_SetAwake(this.bodyId, isVisible);
+
+    return isVisible;
+  }
+
+  /**
+   * Checks if the platform's physics body is currently awake.
+   *
+   * @returns True if the physics body is awake, false if asleep.
+   */
+  isAwake(): boolean {
+    if (!this.bodyId) return true; // Default to awake if no body
+    return b2Body_IsAwake(this.bodyId);
   }
 }

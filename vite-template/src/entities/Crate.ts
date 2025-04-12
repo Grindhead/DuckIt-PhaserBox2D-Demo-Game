@@ -24,6 +24,8 @@ import {
   b2Body_SetAwake,
   b2Body_GetPosition,
   b2Body_GetLinearVelocity,
+  b2Body_EnableSleep,
+  b2Body_IsAwake,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
 
@@ -85,6 +87,7 @@ export default class Crate extends Phaser.GameObjects.Sprite {
       position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE), // Scale and negate Y for Box2D
       fixedRotation: true, // Prevent rotation for better gameplay
       userData: { type: "crate", crateInstance: this, size: this.size },
+      allowSleep: true, // Allow crates to sleep when not visible
     };
 
     // Create the body
@@ -125,6 +128,11 @@ export default class Crate extends Phaser.GameObjects.Sprite {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     AddSpriteToWorld(gameState.worldId as any, this, { bodyId: this.bodyId });
 
+    // Enable sleep for this crate's body
+    if (this.bodyId) {
+      b2Body_EnableSleep(this.bodyId, true);
+    }
+
     // Register in GameScene's map if available
     if (this.bodyId && this.scene instanceof GameScene) {
       (this.scene as GameScene).bodyIdToSpriteMap.set(this.bodyId.index1, this);
@@ -132,38 +140,105 @@ export default class Crate extends Phaser.GameObjects.Sprite {
   }
 
   /**
+   * Checks if the crate is visible to the camera.
+   *
+   * @returns True if the crate is visible to the camera, false otherwise.
+   */
+  isVisibleToCamera(): boolean {
+    if (!this.scene || !this.scene.cameras || !this.scene.cameras.main) {
+      return true; // Default to visible if we can't check
+    }
+
+    const camera = this.scene.cameras.main;
+
+    // Get camera bounds
+    const cameraBounds = {
+      left: camera.scrollX,
+      right: camera.scrollX + camera.width,
+      top: camera.scrollY,
+      bottom: camera.scrollY + camera.height,
+    };
+
+    // Calculate crate bounds
+    const crateBounds = {
+      left: this.x - this.width / 2,
+      right: this.x + this.width / 2,
+      top: this.y - this.height / 2,
+      bottom: this.y + this.height / 2,
+    };
+
+    // Check if crate is visible (overlaps with camera)
+    return !(
+      crateBounds.right < cameraBounds.left ||
+      crateBounds.left > cameraBounds.right ||
+      crateBounds.bottom < cameraBounds.top ||
+      crateBounds.top > cameraBounds.bottom
+    );
+  }
+
+  /**
+   * Updates the crate's sleep state based on visibility.
+   * Crates not visible to the camera will be put to sleep for performance.
+   *
+   * @returns True if the crate is visible and awake, false if sleeping
+   */
+  updateSleepState(): boolean {
+    if (!this.bodyId) return false;
+
+    const isVisible = this.isVisibleToCamera();
+
+    // Set awake or asleep based on visibility
+    b2Body_SetAwake(this.bodyId, isVisible);
+
+    return isVisible;
+  }
+
+  /**
+   * Checks if the crate's physics body is currently awake.
+   *
+   * @returns True if the physics body is awake, false if asleep.
+   */
+  isAwake(): boolean {
+    if (!this.bodyId) return false;
+    return b2Body_IsAwake(this.bodyId);
+  }
+
+  /**
    * Prevents the crate from moving horizontally too fast
    * Called during the update cycle
    */
   update() {
-    if (this.bodyId) {
-      const pos = b2Body_GetPosition(this.bodyId);
-      const vel = b2Body_GetLinearVelocity(this.bodyId);
+    if (!this.bodyId) return;
 
-      const crateLeftEdge = pos.x - this.halfWidthMeters;
-      const crateRightEdge = pos.x + this.halfWidthMeters;
+    // Skip update if crate is asleep
+    if (!this.isAwake()) return;
 
-      // Check left boundary
-      if (vel.x < 0 && crateLeftEdge <= this.platformMinX) {
-        // Stop horizontal movement and slightly adjust position to prevent sticking
-        b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, vel.y));
-        b2Body_SetTransform(
-          this.bodyId,
-          new b2Vec2(this.platformMinX + this.halfWidthMeters + 0.01, pos.y),
-          0
-        );
-      }
+    const pos = b2Body_GetPosition(this.bodyId);
+    const vel = b2Body_GetLinearVelocity(this.bodyId);
 
-      // Check right boundary
-      if (vel.x > 0 && crateRightEdge >= this.platformMaxX) {
-        // Stop horizontal movement and slightly adjust position
-        b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, vel.y));
-        b2Body_SetTransform(
-          this.bodyId,
-          new b2Vec2(this.platformMaxX - this.halfWidthMeters - 0.01, pos.y),
-          0
-        );
-      }
+    const crateLeftEdge = pos.x - this.halfWidthMeters;
+    const crateRightEdge = pos.x + this.halfWidthMeters;
+
+    // Check left boundary
+    if (vel.x < 0 && crateLeftEdge <= this.platformMinX) {
+      // Stop horizontal movement and slightly adjust position to prevent sticking
+      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, vel.y));
+      b2Body_SetTransform(
+        this.bodyId,
+        new b2Vec2(this.platformMinX + this.halfWidthMeters + 0.01, pos.y),
+        0
+      );
+    }
+
+    // Check right boundary
+    if (vel.x > 0 && crateRightEdge >= this.platformMaxX) {
+      // Stop horizontal movement and slightly adjust position
+      b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, vel.y));
+      b2Body_SetTransform(
+        this.bodyId,
+        new b2Vec2(this.platformMaxX - this.halfWidthMeters - 0.01, pos.y),
+        0
+      );
     }
   }
 

@@ -15,6 +15,7 @@ import Coin from "@entities/Coin";
 import Crate from "@entities/Crate";
 import DeathSensor from "@entities/DeathSensor";
 import Enemy from "@entities/Enemy";
+import Platform from "@entities/Platform";
 import Player from "@entities/Player";
 import { gameState } from "@gameState";
 import {
@@ -34,6 +35,7 @@ import {
   b2Body_ApplyLinearImpulseToCenter,
   b2World_Draw,
   b2Body_GetShapes,
+  b2Body_IsAwake,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -79,6 +81,7 @@ export default class GameScene extends Phaser.Scene {
   mobileControls!: MobileControls;
   coins!: Phaser.GameObjects.Group;
   enemies: Enemy[] = [];
+  platforms: Platform[] = []; // Array to store all Platform instances
 
   bodyIdToSpriteMap = new Map<number, MappedSprite>();
 
@@ -103,12 +106,14 @@ export default class GameScene extends Phaser.Scene {
     gameState.setWorldId(worldId);
 
     this.bodyIdToSpriteMap.clear();
+    this.platforms = []; // Clear platforms array
 
     this.coins = this.add.group();
     this.enemies = [];
 
     const levelData: GeneratedLevelData = generateLevel(this, this.coins);
     this.enemies = levelData.enemies;
+    this.platforms = levelData.platforms; // Store platforms from level data
 
     this.player = new Player(
       this,
@@ -235,6 +240,69 @@ export default class GameScene extends Phaser.Scene {
       console.log("Debug drawing:", this.debugEnabled ? "enabled" : "disabled");
     }
 
+    // Update platform sleep states based on visibility
+    // This needs to be done before physics step for proper culling
+    let activePlatformCount = 0;
+    let sleepingPlatformCount = 0;
+
+    // Update platform sleep states based on visibility to camera
+    this.platforms.forEach((platform: Platform) => {
+      const isVisible = platform.updateSleepState();
+      if (isVisible) {
+        activePlatformCount++;
+      } else {
+        sleepingPlatformCount++;
+      }
+    });
+
+    // Update sleep states for coins based on visibility
+    let activeCoinsCount = 0;
+    let sleepingCoinsCount = 0;
+
+    if (this.coins) {
+      this.coins.getChildren().forEach((coin: any) => {
+        if (coin instanceof Coin && !coin.isCollected) {
+          const isVisible = coin.updateSleepState();
+          if (isVisible) {
+            activeCoinsCount++;
+          } else {
+            sleepingCoinsCount++;
+          }
+        }
+      });
+    }
+
+    // Update sleep states for enemies based on visibility
+    let activeEnemiesCount = 0;
+    let sleepingEnemiesCount = 0;
+
+    this.enemies.forEach((enemy: Enemy) => {
+      const isVisible = enemy.updateSleepState();
+      if (isVisible) {
+        activeEnemiesCount++;
+      } else {
+        sleepingEnemiesCount++;
+      }
+    });
+
+    // Update sleep states for crates based on visibility
+    let activeCratesCount = 0;
+    let sleepingCratesCount = 0;
+
+    // Find all crates in the sprite map
+    const crates = Array.from(this.bodyIdToSpriteMap.values()).filter(
+      (sprite) => sprite instanceof Crate
+    ) as Crate[];
+
+    crates.forEach((crate: Crate) => {
+      const isVisible = crate.updateSleepState();
+      if (isVisible) {
+        activeCratesCount++;
+      } else {
+        sleepingCratesCount++;
+      }
+    });
+
     b2World_Step(worldId, delta / 1000, 60);
     UpdateWorldSprites(worldId);
 
@@ -284,17 +352,31 @@ export default class GameScene extends Phaser.Scene {
         ...new Set([...platformTiles, ...platformsByTexture]),
       ];
 
-      // Draw each platform with a thick CYAN outline
+      // Draw each platform - use different colors for active vs sleeping platforms
       platformTiles.forEach((platform: any) => {
-        this.debugGraphics.lineStyle(6, 0x00ffff, 1); // Thick cyan outline
+        // Check if this platform is a Platform instance and if it's awake
+        const isPlatformInstance = platform instanceof Platform;
+        const isAwake =
+          isPlatformInstance && platform.bodyId
+            ? b2Body_IsAwake(platform.bodyId)
+            : true;
+
+        // Use bright cyan for active platforms, darker blue for sleeping platforms
+        if (isAwake) {
+          this.debugGraphics.lineStyle(6, 0x00ffff, 1); // Thick cyan outline for active
+          this.debugGraphics.fillStyle(0x00ffff, 0.4); // Bright cyan fill for active
+        } else {
+          this.debugGraphics.lineStyle(3, 0x0066aa, 0.7); // Thinner darker blue for sleeping
+          this.debugGraphics.fillStyle(0x0066aa, 0.2); // Darker transparent blue for sleeping
+        }
+
         this.debugGraphics.strokeRect(
           platform.x - platform.width / 2,
           platform.y - platform.height / 2,
           platform.width,
           platform.height
         );
-        // Add bright fill
-        this.debugGraphics.fillStyle(0x00ffff, 0.4);
+
         this.debugGraphics.fillRect(
           platform.x - platform.width / 2,
           platform.y - platform.height / 2,
@@ -309,15 +391,29 @@ export default class GameScene extends Phaser.Scene {
           // Check if this is a platform by texture frame name
           const frame = child.frame?.name || "";
           if (frame.includes("platforms/platform")) {
-            // It's a platform by texture frame
-            this.debugGraphics.lineStyle(4, 0x00ddff, 1);
+            // Check if this is part of a Platform instance and if it's awake
+            let isAwake = true;
+            if (child.parentContainer instanceof Platform) {
+              isAwake = child.parentContainer.bodyId
+                ? b2Body_IsAwake(child.parentContainer.bodyId)
+                : true;
+            }
+
+            // Use color based on awake status
+            if (isAwake) {
+              this.debugGraphics.lineStyle(4, 0x00ddff, 1);
+              this.debugGraphics.fillStyle(0x00ddff, 0.3);
+            } else {
+              this.debugGraphics.lineStyle(2, 0x005588, 0.7);
+              this.debugGraphics.fillStyle(0x005588, 0.2);
+            }
+
             this.debugGraphics.strokeRect(
               child.x - child.width / 2,
               child.y - child.height / 2,
               child.width,
               child.height
             );
-            this.debugGraphics.fillStyle(0x00ddff, 0.3);
             this.debugGraphics.fillRect(
               child.x - child.width / 2,
               child.y - child.height / 2,
@@ -423,15 +519,28 @@ export default class GameScene extends Phaser.Scene {
 
               // Draw PLATFORMS - CYAN
               if (userData?.type === "platform") {
-                this.debugGraphics.lineStyle(4, 0x00ffff, 1);
+                // Check if this platform is awake
+                let isAwake = true;
+                if (sprite instanceof Platform) {
+                  isAwake = sprite.bodyId
+                    ? b2Body_IsAwake(sprite.bodyId)
+                    : true;
+                }
+
+                if (isAwake) {
+                  this.debugGraphics.lineStyle(4, 0x00ffff, 1);
+                  this.debugGraphics.fillStyle(0x00ffff, 0.3);
+                } else {
+                  this.debugGraphics.lineStyle(2, 0x0066aa, 0.7);
+                  this.debugGraphics.fillStyle(0x0066aa, 0.2);
+                }
+
                 this.debugGraphics.strokeRect(
                   sprite.x - sprite.width / 2,
                   sprite.y - sprite.height / 2,
                   sprite.width,
                   sprite.height
                 );
-                // Add slight fill
-                this.debugGraphics.fillStyle(0x00ffff, 0.3);
                 this.debugGraphics.fillRect(
                   sprite.x - sprite.width / 2,
                   sprite.y - sprite.height / 2,
@@ -487,13 +596,17 @@ export default class GameScene extends Phaser.Scene {
         )})`,
         `Grounded: ${this.player.playerState.isGrounded}`,
         `Collected coins: ${this.coinCounter.text?.text ?? "0"}`,
-        `Entities: P:1 E:${this.enemies.length} C:${
+        `Game Entities:`,
+        `  Player: 1`,
+        `  Enemies: ${this.enemies.length} (${activeEnemiesCount} active, ${sleepingEnemiesCount} sleeping)`,
+        `  Coins: ${
           this.coins.getChildren().length
-        }`,
+        } (${activeCoinsCount} active, ${sleepingCoinsCount} sleeping)`,
+        `  Crates: ${crates.length} (${activeCratesCount} active, ${sleepingCratesCount} sleeping)`,
         `Camera: (${Math.floor(this.cameras.main.scrollX)}, ${Math.floor(
           this.cameras.main.scrollY
         )})`,
-        `Platform count: ${allPlatforms.length} visible`,
+        `Platforms: ${allPlatforms.length} total (${activePlatformCount} active, ${sleepingPlatformCount} sleeping)`,
       ].join("\n");
 
       if (this.debugText) {
@@ -830,6 +943,9 @@ export default class GameScene extends Phaser.Scene {
     this.enemies.forEach((enemy) => enemy.destroy());
     this.enemies = [];
 
+    // Clear existing platforms
+    this.platforms = [];
+
     // Destroy existing coins (might be simpler than resetting state)
     this.coins.clear(true, true); // Destroy children and remove from group
 
@@ -844,6 +960,7 @@ export default class GameScene extends Phaser.Scene {
     // Note: We are NOT destroying/recreating the Box2D world itself
     const levelData = generateLevel(this, this.coins); // Regenerate platforms, coins, enemies
     this.enemies = levelData.enemies; // Store new enemies
+    this.platforms = levelData.platforms; // Store new platforms
 
     // --- Reset Player --- //
     if (this.player) {

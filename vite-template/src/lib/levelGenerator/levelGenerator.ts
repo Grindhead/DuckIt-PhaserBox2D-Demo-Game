@@ -6,6 +6,7 @@ import * as Phaser from "phaser";
 
 import { WORLD } from "@constants";
 import Enemy from "@entities/Enemy"; // Import Enemy type
+import Platform from "@entities/Platform"; // Import Platform class
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
 
 // Import generator modules
@@ -33,6 +34,7 @@ export interface PlayerSpawnPosition {
 export interface GeneratedLevelData {
   playerSpawnPosition: PlayerSpawnPosition;
   enemies: Enemy[]; // Use imported Enemy type
+  platforms: Platform[]; // Store all platform instances
 }
 
 /**
@@ -74,6 +76,7 @@ export function generateLevel(
   };
 
   const generatedEnemies: Enemy[] = []; // Array to store generated enemies
+  const generatedPlatforms: Platform[] = []; // Array to store all platforms
 
   let currentX = config.edgePadding;
 
@@ -88,6 +91,7 @@ export function generateLevel(
   };
 
   const firstPlatformData: GeneratedPlatform = generatePlatform(platformConfig);
+  generatedPlatforms.push(firstPlatformData.platform); // Track the first platform
 
   // Calculate player start position above the first platform
   const playerStartX = firstPlatformData.platformCenterX;
@@ -126,6 +130,7 @@ export function generateLevel(
     };
     const platformData: GeneratedPlatform =
       generatePlatform(nextPlatformConfig);
+    generatedPlatforms.push(platformData.platform); // Track the platform
 
     // Ensure the platform doesn't exceed world bounds
     if (
@@ -204,5 +209,6 @@ export function generateLevel(
       y: playerStartY,
     },
     enemies: generatedEnemies,
+    platforms: generatedPlatforms,
   };
 }

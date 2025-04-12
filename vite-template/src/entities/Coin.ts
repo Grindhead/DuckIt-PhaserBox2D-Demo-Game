@@ -18,6 +18,9 @@ import {
   b2Vec2,
   b2Body_Disable,
   b2Body_Enable,
+  b2Body_EnableSleep,
+  b2Body_SetAwake,
+  b2Body_IsAwake,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
 
@@ -40,6 +43,7 @@ export default class Coin extends Phaser.GameObjects.Sprite {
       type: STATIC,
       position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE), // Scale and negate Y for Box2D
       userData: { type: "coin", coinInstance: this },
+      allowSleep: true, // Allow coins to sleep when not visible
     };
 
     // Create the body directly
@@ -77,6 +81,11 @@ export default class Coin extends Phaser.GameObjects.Sprite {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     AddSpriteToWorld(gameState.worldId as any, this, { bodyId: this.bodyId });
 
+    // Enable sleep for this coin's body
+    if (this.bodyId) {
+      b2Body_EnableSleep(this.bodyId, true);
+    }
+
     // Register this coin's bodyId and sprite instance in the GameScene map
     if (this.bodyId && this.scene instanceof GameScene) {
       (this.scene as GameScene).bodyIdToSpriteMap.set(this.bodyId.index1, this);
@@ -89,6 +98,75 @@ export default class Coin extends Phaser.GameObjects.Sprite {
         "Failed to register coin in bodyIdToSpriteMap. BodyId invalid."
       );
     }
+  }
+
+  /**
+   * Checks if the coin is visible to the camera.
+   *
+   * @returns True if the coin is visible to the camera, false otherwise.
+   */
+  isVisibleToCamera(): boolean {
+    if (
+      !this.scene ||
+      !this.scene.cameras ||
+      !this.scene.cameras.main ||
+      this.isCollected
+    ) {
+      return false; // Default to not visible if we can't check or the coin is collected
+    }
+
+    const camera = this.scene.cameras.main;
+
+    // Get camera bounds
+    const cameraBounds = {
+      left: camera.scrollX,
+      right: camera.scrollX + camera.width,
+      top: camera.scrollY,
+      bottom: camera.scrollY + camera.height,
+    };
+
+    // Calculate coin bounds
+    const coinBounds = {
+      left: this.x - this.width / 2,
+      right: this.x + this.width / 2,
+      top: this.y - this.height / 2,
+      bottom: this.y + this.height / 2,
+    };
+
+    // Check if coin is visible (overlaps with camera)
+    return !(
+      coinBounds.right < cameraBounds.left ||
+      coinBounds.left > cameraBounds.right ||
+      coinBounds.bottom < cameraBounds.top ||
+      coinBounds.top > cameraBounds.bottom
+    );
+  }
+
+  /**
+   * Updates the coin's sleep state based on visibility.
+   * Coins not visible to the camera will be put to sleep for performance.
+   *
+   * @returns True if the coin is visible and awake, false if sleeping
+   */
+  updateSleepState(): boolean {
+    if (!this.bodyId || this.isCollected) return false;
+
+    const isVisible = this.isVisibleToCamera();
+
+    // Set awake or asleep based on visibility
+    b2Body_SetAwake(this.bodyId, isVisible);
+
+    return isVisible;
+  }
+
+  /**
+   * Checks if the coin's physics body is currently awake.
+   *
+   * @returns True if the physics body is awake, false if asleep.
+   */
+  isAwake(): boolean {
+    if (!this.bodyId || this.isCollected) return false;
+    return b2Body_IsAwake(this.bodyId);
   }
 
   collect() {
