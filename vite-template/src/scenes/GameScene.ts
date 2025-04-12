@@ -10,7 +10,7 @@
 
 import * as Phaser from "phaser";
 
-import { PHYSICS, WORLD, SCENES } from "@constants";
+import { PHYSICS, WORLD, SCENES, ASSETS } from "@constants";
 import Coin from "@entities/Coin";
 import Crate from "@entities/Crate";
 import DeathSensor from "@entities/DeathSensor";
@@ -245,6 +245,88 @@ export default class GameScene extends Phaser.Scene {
 
       // DRAW ALL PHYSICS ENTITIES WITH VIVID COLORS
 
+      // --- DRAW PLATFORMS FIRST (SO THEY APPEAR BEHIND OTHER OBJECTS) ---
+      // Find all platforms in the world - draw with BRIGHT CYAN color
+      // Draw all platform tiles from the physics world
+      const platformTiles = this.children.list.filter((child: any) => {
+        // Find objects with platform user data
+        if (
+          child.body &&
+          child.body.userData &&
+          child.body.userData.type === "platform"
+        ) {
+          return true;
+        }
+        // Check if the sprite has a bodyId (direct Box2D body)
+        if (child.bodyId) {
+          const shapes: any[] = [];
+          b2Body_GetShapes(child.bodyId, shapes);
+          if (shapes.length > 0) {
+            const userData = b2Shape_GetUserData(shapes[0]) as ShapeUserData;
+            return userData?.type === "platform";
+          }
+        }
+        return false;
+      });
+
+      // Draw each platform with a thick CYAN outline
+      platformTiles.forEach((platform: any) => {
+        this.debugGraphics.lineStyle(6, 0x00ffff, 1); // Thick cyan outline
+        this.debugGraphics.strokeRect(
+          platform.x - platform.width / 2,
+          platform.y - platform.height / 2,
+          platform.width,
+          platform.height
+        );
+        // Add bright fill
+        this.debugGraphics.fillStyle(0x00ffff, 0.4);
+        this.debugGraphics.fillRect(
+          platform.x - platform.width / 2,
+          platform.y - platform.height / 2,
+          platform.width,
+          platform.height
+        );
+      });
+
+      // SPECIAL HANDLING: Direct lookup for platforms in the scene by texture name
+      this.children.list.forEach((child: any) => {
+        if (child.texture && child.texture.key === ASSETS.ATLAS) {
+          // Check if this is a platform by texture frame name
+          const frame = child.frame?.name || "";
+          if (frame.includes("platforms/platform")) {
+            // It's a platform by texture frame
+            this.debugGraphics.lineStyle(4, 0x00ddff, 1);
+            this.debugGraphics.strokeRect(
+              child.x - child.width / 2,
+              child.y - child.height / 2,
+              child.width,
+              child.height
+            );
+            this.debugGraphics.fillStyle(0x00ddff, 0.3);
+            this.debugGraphics.fillRect(
+              child.x - child.width / 2,
+              child.y - child.height / 2,
+              child.width,
+              child.height
+            );
+          }
+        }
+      });
+
+      // ONE MORE WAY TO FIND PLATFORMS - Draw any object with "platform" in the name
+      this.children.list.forEach((child: any) => {
+        if (child.name && child.name.toLowerCase().includes("platform")) {
+          // Extra-thick yellow outline for platform by name
+          this.debugGraphics.lineStyle(5, 0xffff00, 1);
+          this.debugGraphics.strokeRect(
+            child.x - child.width / 2,
+            child.y - child.height / 2,
+            child.width,
+            child.height
+          );
+        }
+      });
+
       // 1. Draw player physics body - MAGENTA
       if (this.player) {
         this.debugGraphics.lineStyle(4, 0xff00ff, 1);
@@ -366,11 +448,23 @@ export default class GameScene extends Phaser.Scene {
         );
       }
 
-      // 8. Draw world bounds - WHITE DASHED
+      // --- DIRECT WORLD BOUNDS OUTLINE ---
+      // Draw world bounds - WHITE DASHED
       this.debugGraphics.lineStyle(2, 0xffffff, 0.5);
       this.debugGraphics.strokeRect(0, 0, WORLD.WIDTH, WORLD.HEIGHT);
 
-      // Display debug information
+      // Draw visible green "ground level" line at the bottom of the current visible area
+      const visibleBottom =
+        this.cameras.main.scrollY + this.cameras.main.height;
+      this.debugGraphics.lineStyle(3, 0x00ff00, 0.7);
+      this.debugGraphics.lineBetween(
+        this.cameras.main.scrollX,
+        visibleBottom,
+        this.cameras.main.scrollX + this.cameras.main.width,
+        visibleBottom
+      );
+
+      // Display debug information with more details
       const debugInfo = [
         `Player position: (${Math.floor(this.player.x)}, ${Math.floor(
           this.player.y
@@ -380,6 +474,10 @@ export default class GameScene extends Phaser.Scene {
         `Entities: P:1 E:${this.enemies.length} C:${
           this.coins.getChildren().length
         }`,
+        `Camera: (${Math.floor(this.cameras.main.scrollX)}, ${Math.floor(
+          this.cameras.main.scrollY
+        )})`,
+        `Platform count: ${platformTiles.length} visible`,
       ].join("\n");
 
       if (this.debugText) {
