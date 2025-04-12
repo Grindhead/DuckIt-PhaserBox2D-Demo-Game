@@ -372,7 +372,11 @@ export default class Crate extends Phaser.GameObjects.Sprite {
         },
         filter: {
           categoryBits: CATEGORY_CRATE,
-          maskBits: CATEGORY_DEFAULT | CATEGORY_PLAYER | CATEGORY_ENEMY,
+          maskBits:
+            CATEGORY_DEFAULT |
+            CATEGORY_PLAYER |
+            CATEGORY_ENEMY |
+            CATEGORY_CRATE,
           groupIndex: 0,
         },
       };
