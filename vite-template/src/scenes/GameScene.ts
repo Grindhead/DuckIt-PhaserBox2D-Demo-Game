@@ -269,6 +269,21 @@ export default class GameScene extends Phaser.Scene {
         return false;
       });
 
+      // SPECIAL HANDLING: Direct lookup for platforms in the scene by texture name
+      const platformsByTexture = this.children.list.filter((child: any) => {
+        if (child.texture && child.texture.key === ASSETS.ATLAS) {
+          // Check if this is a platform by texture frame name
+          const frame = child.frame?.name || "";
+          return frame.includes("platforms/platform");
+        }
+        return false;
+      });
+
+      // Combine all platform detection methods for accurate counting
+      const allPlatforms = [
+        ...new Set([...platformTiles, ...platformsByTexture]),
+      ];
+
       // Draw each platform with a thick CYAN outline
       platformTiles.forEach((platform: any) => {
         this.debugGraphics.lineStyle(6, 0x00ffff, 1); // Thick cyan outline
@@ -478,7 +493,7 @@ export default class GameScene extends Phaser.Scene {
         `Camera: (${Math.floor(this.cameras.main.scrollX)}, ${Math.floor(
           this.cameras.main.scrollY
         )})`,
-        `Platform count: ${platformTiles.length} visible`,
+        `Platform count: ${allPlatforms.length} visible`,
       ].join("\n");
 
       if (this.debugText) {
