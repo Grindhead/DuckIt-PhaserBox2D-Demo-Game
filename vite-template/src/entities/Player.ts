@@ -8,14 +8,11 @@ import * as Phaser from "phaser";
 
 import { ASSETS, PHYSICS, ANIMATION } from "@constants";
 import { gameState } from "@gameState";
-import GameScene from "@scenes/GameScene";
-
 import {
   AddSpriteToWorld,
   b2Body_ApplyLinearImpulseToCenter,
   b2Body_GetLinearVelocity,
   b2Body_GetMass,
-  b2Body_IsAwake,
   b2Body_SetAwake,
   b2Body_SetGravityScale,
   b2Body_SetLinearVelocity,
@@ -29,6 +26,7 @@ import {
   b2Vec2,
   DYNAMIC,
 } from "@PhaserBox2D";
+import GameScene from "@scenes/GameScene";
 
 import { createPhysicsBody } from "../lib/physics/PhysicsBodyFactory";
 
@@ -82,11 +80,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
     // Set depth (render order)
     this.setDepth(10);
 
-    // Create animations if needed
-    if (!this.scene.anims.exists(ASSETS.PLAYER.IDLE.KEY)) {
-      this.createAnimations();
-    }
-
     // Start with idle animation
     this.play(ASSETS.PLAYER.IDLE.KEY);
 
@@ -97,93 +90,6 @@ export default class Player extends Phaser.GameObjects.Sprite {
     this.scene.time.delayedCall(100, this.verifyPhysicsSetup, [], this);
 
     console.log("Player created at position:", { x: this.x, y: this.y });
-  }
-
-  /**
-   * Create all player animations
-   */
-  createAnimations() {
-    const { IDLE, RUN, JUMP, FALL, DEAD } = ASSETS.PLAYER;
-
-    // Idle animation
-    if (!this.scene.anims.exists(IDLE.KEY)) {
-      this.scene.anims.create({
-        key: IDLE.KEY,
-        frames: this.scene.anims.generateFrameNames(ASSETS.ATLAS, {
-          prefix: "player/idle/duck-idle-",
-          start: 1,
-          end: IDLE.FRAME_COUNT,
-          zeroPad: 4,
-          suffix: ".png",
-        }),
-        frameRate: ANIMATION.FRAME_RATE,
-        repeat: 0,
-      });
-    }
-
-    // Run animation
-    if (!this.scene.anims.exists(RUN.KEY)) {
-      this.scene.anims.create({
-        key: RUN.KEY,
-        frames: this.scene.anims.generateFrameNames(ASSETS.ATLAS, {
-          prefix: RUN.FRAME_PREFIX,
-          start: 1,
-          end: RUN.FRAME_COUNT,
-          zeroPad: 4,
-          suffix: ".png",
-        }),
-        frameRate: ANIMATION.FRAME_RATE,
-        repeat: -1,
-      });
-    }
-
-    // Jump animation
-    if (!this.scene.anims.exists(JUMP.KEY)) {
-      this.scene.anims.create({
-        key: JUMP.KEY,
-        frames: this.scene.anims.generateFrameNames(ASSETS.ATLAS, {
-          prefix: JUMP.FRAME_PREFIX,
-          start: 1,
-          end: JUMP.FRAME_COUNT,
-          zeroPad: 4,
-          suffix: ".png",
-        }),
-        frameRate: ANIMATION.FRAME_RATE,
-        repeat: 0,
-      });
-    }
-
-    // Fall animation
-    if (!this.scene.anims.exists(FALL.KEY)) {
-      this.scene.anims.create({
-        key: FALL.KEY,
-        frames: this.scene.anims.generateFrameNames(ASSETS.ATLAS, {
-          prefix: FALL.FRAME_PREFIX,
-          start: 1,
-          end: FALL.FRAME_COUNT,
-          zeroPad: 4,
-          suffix: ".png",
-        }),
-        frameRate: ANIMATION.FRAME_RATE,
-        repeat: -1,
-      });
-    }
-
-    // Dead animation
-    if (!this.scene.anims.exists(DEAD.KEY)) {
-      this.scene.anims.create({
-        key: DEAD.KEY,
-        frames: this.scene.anims.generateFrameNames(ASSETS.ATLAS, {
-          prefix: DEAD.FRAME_PREFIX,
-          start: 1,
-          end: DEAD.FRAME_COUNT,
-          zeroPad: 4,
-          suffix: ".png",
-        }),
-        frameRate: ANIMATION.FRAME_RATE,
-        repeat: 0,
-      });
-    }
   }
 
   destroyPhysics() {
