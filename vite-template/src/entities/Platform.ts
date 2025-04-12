@@ -13,8 +13,6 @@ import {
   b2DefaultFilter,
   b2CreateBody,
   b2MakeBox,
-  b2MakeOffsetBox,
-  b2MakeRot,
   b2CreatePolygonShape,
   b2Vec2,
   AddSpriteToWorld,

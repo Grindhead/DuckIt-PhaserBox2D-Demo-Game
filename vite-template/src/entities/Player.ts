@@ -385,7 +385,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
     // Only jump if we're not already moving upward significantly
     if (velocity.y < PHYSICS.PLAYER.JUMP_THRESHOLD) {
       // Apply jump impulse - slightly stronger to ensure good platform clearance
-      const jumpImpulse = new b2Vec2(0, PHYSICS.PLAYER.JUMP_FORCE * 1.3);
+      const jumpImpulse = new b2Vec2(0, PHYSICS.PLAYER.JUMP_FORCE);
       b2Body_ApplyLinearImpulseToCenter(this.bodyId, jumpImpulse, true);
 
       // Set grounded to false since we're jumping
@@ -407,10 +407,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       );
       // --- Add Event Listener for Jump Completion --- End
 
-      console.log(
-        "Player jumped with impulse:",
-        PHYSICS.PLAYER.JUMP_FORCE * 1.3
-      );
+      console.log("Player jumped with impulse:", PHYSICS.PLAYER.JUMP_FORCE);
       return true;
     }
 
