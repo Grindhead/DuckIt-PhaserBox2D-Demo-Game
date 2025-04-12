@@ -16,6 +16,8 @@ import {
   b2CreatePolygonShape,
   b2MakeBox,
   b2Vec2,
+  b2Body_Disable,
+  b2Body_Enable,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
 
@@ -93,6 +95,16 @@ export default class Coin extends Phaser.GameObjects.Sprite {
     if (this.isCollected) return;
     this.isCollected = true;
 
+    // Disable the physics body immediately to prevent further collisions and debug drawing
+    if (this.bodyId) {
+      b2Body_Disable(this.bodyId);
+
+      // Also remove this coin from the bodyIdToSpriteMap to prevent debug drawing
+      if (this.scene instanceof GameScene) {
+        (this.scene as GameScene).bodyIdToSpriteMap.delete(this.bodyId.index1);
+      }
+    }
+
     // Play the collect animation
     this.play(ASSETS.COIN.COLLECT.KEY);
 
@@ -114,7 +126,21 @@ export default class Coin extends Phaser.GameObjects.Sprite {
     this.isCollected = false;
     this.setVisible(true);
     this.setActive(true);
-    // No need to re-initialize physics as the body was never destroyed/orphaned
+
+    // Re-enable the physics body if it was disabled
+    if (this.bodyId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      b2Body_Enable(this.bodyId);
+
+      // Re-add this coin to the bodyIdToSpriteMap for proper rendering
+      if (this.scene instanceof GameScene) {
+        (this.scene as GameScene).bodyIdToSpriteMap.set(
+          this.bodyId.index1,
+          this
+        );
+      }
+    }
+
     this.play(ASSETS.COIN.IDLE.KEY);
   }
 }

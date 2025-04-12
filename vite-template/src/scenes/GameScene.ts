@@ -346,7 +346,8 @@ export default class GameScene extends Phaser.Scene {
       // 2. Draw all coins - YELLOW/GOLD
       if (this.coins) {
         this.coins.getChildren().forEach((coin: any) => {
-          if (coin.active) {
+          // Only draw coins that are active AND not collected
+          if (coin.active && !coin.isCollected) {
             this.debugGraphics.lineStyle(3, 0xffff00, 1);
             this.debugGraphics.strokeCircle(coin.x, coin.y, coin.width / 2);
             // Fill with semi-transparent gold
