@@ -29,6 +29,8 @@ import {
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
 
+import { createPhysicsBody } from "../lib/physics/PhysicsBodyFactory";
+
 // Define collision categories - these must match those in Enemy.ts
 const CATEGORY_DEFAULT = 0x0001;
 const CATEGORY_ENEMY = 0x0002;
@@ -87,59 +89,30 @@ export default class Crate extends Phaser.GameObjects.Sprite {
    * Initializes the Box2D physics body for the crate
    */
   initPhysics() {
-    const bodyDef = {
-      ...b2DefaultBodyDef(),
-      type: DYNAMIC,
-      position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE), // Scale and negate Y for Box2D
-      fixedRotation: true, // Prevent rotation for better gameplay
-      userData: { type: "crate", crateInstance: this, size: this.size },
-      allowSleep: true, // Allow crates to sleep when not visible
-    };
+    // Remove existing physics body if it exists
+    if (this.bodyId) {
+      if (this.scene instanceof GameScene) {
+        (this.scene as GameScene).bodyIdToSpriteMap.delete(this.bodyId.index1);
+      }
+      this.bodyId = null;
+    }
 
-    // Create the body
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const bodyId = b2CreateBody(gameState.worldId as any, bodyDef);
-    this.bodyId = bodyId;
+    // Create the physics body using the PhysicsBodyFactory
+    // Use the correct crate size from physics.xml
+    const entityType = this.size === "BIG" ? "crate-big" : "crate-small";
+    this.bodyId = createPhysicsBody(entityType, this.x, this.y, true);
 
-    if (!bodyId) {
+    if (!this.bodyId) {
       console.error(`Failed to create ${this.size} crate physics body!`);
       return;
     }
 
-    // Create default shape definition (type is inferred)
-    const shapeDef = b2DefaultShapeDef();
-
-    // Set specific properties on the shapeDef object
-    shapeDef.density = ASSETS.CRATE[this.size].DENSITY;
-    shapeDef.friction = ASSETS.CRATE[this.size].FRICTION;
-    shapeDef.restitution = ASSETS.CRATE[this.size].RESTITUTION;
-    shapeDef.userData = { type: "crate", crateInstance: this, size: this.size };
-    // Set collision filtering to interact with enemies and players
-    shapeDef.filter = {
-      categoryBits: CATEGORY_CRATE,
-      maskBits:
-        CATEGORY_DEFAULT | CATEGORY_ENEMY | CATEGORY_PLAYER | CATEGORY_CRATE,
-      groupIndex: 0,
-    };
-    // Invalid properties like isSensor are not set
-
-    // Define the shape
-
-    // Create box geometry using dimensions from constants, scaled for Box2D (meters)
+    // Store the half-width for boundary checks
     const constWidth = ASSETS.CRATE[this.size].WIDTH;
-    const constHeight = ASSETS.CRATE[this.size].HEIGHT;
-
-    const halfWidth = constWidth / (2 * PHYSICS.SCALE);
-    const halfHeight = constHeight / (2 * PHYSICS.SCALE);
-    this.halfWidthMeters = halfWidth; // Store accurate half-width in meters
-
-    const box = b2MakeBox(halfWidth, halfHeight);
-
-    b2CreatePolygonShape(bodyId, shapeDef, box);
+    this.halfWidthMeters = constWidth / (2 * PHYSICS.SCALE);
 
     // Link the sprite to the body for rendering updates
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    AddSpriteToWorld(gameState.worldId as any, this, { bodyId: this.bodyId });
+    AddSpriteToWorld(gameState.worldId, this, { bodyId: this.bodyId });
 
     // Enable sleep for this crate's body
     if (this.bodyId) {
@@ -150,6 +123,10 @@ export default class Crate extends Phaser.GameObjects.Sprite {
     if (this.bodyId && this.scene instanceof GameScene) {
       (this.scene as GameScene).bodyIdToSpriteMap.set(this.bodyId.index1, this);
     }
+
+    console.log(
+      `${this.size} crate physics body created using physics.xml data`
+    );
   }
 
   /**

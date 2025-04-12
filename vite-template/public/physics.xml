@@ -1,20 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- created with http://www.physicseditor.de -->
 <bodydef version="1.0">
-    <bodies numBodies="9">
+    <bodies numBodies="6">
+        <body name="duck" dynamic="true" numFixtures="1">
+            <fixture
+                density="2"
+                friction="0"
+                restitution="0"
+                filter_categoryBits="1"
+                filter_groupIndex="0"
+                filter_maskBits="65535"
+                isSensor="false"
+                type="CIRCLE"
+                numPolygons=""
+                >
+                <circle r="23.656" x="1.434" y="8.458"/>
+            </fixture>
+        </body>
         <body name="coin" dynamic="true" numFixtures="1">
             <fixture
                 density="2"
                 friction="0"
                 restitution="0"
-                filter_categoryBits="4"
+                filter_categoryBits="2"
                 filter_groupIndex="0"
-                filter_maskBits="0"
+                filter_maskBits="1"
                 isSensor="true"
                 type="CIRCLE"
                 numPolygons=""
                 >
-                <circle r="10.857" x="-1.410" y="-0.820"/>
+                <circle r="12.270" x="-1.959" y="-0.906"/>
             </fixture>
         </body>
         <body name="crate-big" dynamic="true" numFixtures="1">
@@ -22,18 +37,18 @@
                 density="2"
                 friction="0"
                 restitution="0"
-                filter_categoryBits="2"
+                filter_categoryBits="4"
                 filter_groupIndex="0"
-                filter_maskBits="0"
+                filter_maskBits="1"
                 isSensor="false"
                 type="POLYGON"
                 numPolygons="1"
                 >
                 <polygon numVertexes="4">
-                    <vertex x="19.0000" y="-23.0000" />
-                    <vertex x="19.0000" y="30.0000" />
-                    <vertex x="-34.0000" y="30.0000" />
-                    <vertex x="-34.0000" y="-23.0000" />
+                    <vertex x="21.0000" y="-25.0000" />
+                    <vertex x="21.0000" y="23.0000" />
+                    <vertex x="-35.0000" y="23.0000" />
+                    <vertex x="-35.0000" y="-25.0000" />
                 </polygon>
             </fixture>
         </body>
@@ -42,18 +57,18 @@
                 density="2"
                 friction="0"
                 restitution="0"
-                filter_categoryBits="2"
+                filter_categoryBits="4"
                 filter_groupIndex="0"
-                filter_maskBits="0"
+                filter_maskBits="1"
                 isSensor="false"
                 type="POLYGON"
                 numPolygons="1"
                 >
                 <polygon numVertexes="4">
-                    <vertex x="12.0000" y="-15.0000" />
-                    <vertex x="12.0000" y="21.0000" />
-                    <vertex x="-23.0000" y="21.0000" />
-                    <vertex x="-23.0000" y="-15.0000" />
+                    <vertex x="16.0000" y="-16.0000" />
+                    <vertex x="16.0000" y="15.0000" />
+                    <vertex x="-25.0000" y="15.0000" />
+                    <vertex x="-25.0000" y="-16.0000" />
                 </polygon>
             </fixture>
         </body>
@@ -62,113 +77,33 @@
                 density="2"
                 friction="0"
                 restitution="0"
-                filter_categoryBits="3"
+                filter_categoryBits="8"
                 filter_groupIndex="0"
-                filter_maskBits="0"
+                filter_maskBits="1"
                 isSensor="false"
                 type="CIRCLE"
                 numPolygons=""
                 >
-                <circle r="34.655" x="-1.771" y="-2.684"/>
+                <circle r="34.533" x="-2.362" y="-2.437"/>
             </fixture>
         </body>
-        <body name="finish" dynamic="true" numFixtures="1">
+        <body name="finish" dynamic="false" numFixtures="1">
             <fixture
                 density="2"
                 friction="0"
                 restitution="0"
-                filter_categoryBits="1"
+                filter_categoryBits="2"
                 filter_groupIndex="0"
-                filter_maskBits="0"
-                isSensor="false"
+                filter_maskBits="1"
+                isSensor="true"
                 type="POLYGON"
                 numPolygons="1"
                 >
                 <polygon numVertexes="4">
-                    <vertex x="-34.0000" y="62.5000" />
-                    <vertex x="-36.0000" y="-43.5000" />
-                    <vertex x="-2.0000" y="-43.5000" />
-                    <vertex x="1.0000" y="62.5000" />
-                </polygon>
-            </fixture>
-        </body>
-        <body name="platform-middle" dynamic="true" numFixtures="1">
-            <fixture
-                density="2"
-                friction="0"
-                restitution="0"
-                filter_categoryBits="65535"
-                filter_groupIndex="0"
-                filter_maskBits="0"
-                isSensor="false"
-                type="POLYGON"
-                numPolygons="1"
-                >
-                <polygon numVertexes="4">
-                    <vertex x="13.0000" y="-12.0000" />
-                    <vertex x="13.0000" y="10.0000" />
-                    <vertex x="-13.0000" y="10.0000" />
-                    <vertex x="-13.0000" y="-12.0000" />
-                </polygon>
-            </fixture>
-        </body>
-        <body name="platform-left" dynamic="true" numFixtures="1">
-            <fixture
-                density="2"
-                friction="0"
-                restitution="0"
-                filter_categoryBits="65535"
-                filter_groupIndex="0"
-                filter_maskBits="0"
-                isSensor="false"
-                type="POLYGON"
-                numPolygons="1"
-                >
-                <polygon numVertexes="4">
-                    <vertex x="13.5000" y="-9.0000" />
-                    <vertex x="13.5000" y="13.0000" />
-                    <vertex x="-11.5000" y="13.0000" />
-                    <vertex x="-11.5000" y="-9.0000" />
-                </polygon>
-            </fixture>
-        </body>
-        <body name="platform-right" dynamic="true" numFixtures="1">
-            <fixture
-                density="2"
-                friction="0"
-                restitution="0"
-                filter_categoryBits="65535"
-                filter_groupIndex="0"
-                filter_maskBits="0"
-                isSensor="false"
-                type="POLYGON"
-                numPolygons="1"
-                >
-                <polygon numVertexes="4">
-                    <vertex x="11.5000" y="-10.0000" />
-                    <vertex x="11.5000" y="11.0000" />
-                    <vertex x="-13.5000" y="11.0000" />
-                    <vertex x="-13.5000" y="-10.0000" />
-                </polygon>
-            </fixture>
-        </body>
-        <body name="duck" dynamic="true" numFixtures="1">
-            <fixture
-                density="2"
-                friction="0.8"
-                restitution="0"
-                filter_categoryBits="65535"
-                filter_groupIndex="0"
-                filter_maskBits="65535"
-                isSensor="false"
-                type="POLYGON"
-                numPolygons="1"
-                >
-                <polygon numVertexes="4">
-                    <vertex x="21.5000" y="-21.0000" />
-                    <vertex x="21.5000" y="32.0000" />
-                    <vertex x="-16.5000" y="32.0000" />
-                    <vertex x="-16.5000" y="-21.0000" />
+                    <vertex x="-2.0000" y="-41.5000" />
+                    <vertex x="-11.0000" y="62.5000" />
+                    <vertex x="-29.0000" y="62.5000" />
+                    <vertex x="-37.0000" y="-43.5000" />
                 </polygon>
             </fixture>
         </body>

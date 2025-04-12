@@ -9,6 +9,8 @@ import * as Phaser from "phaser";
 // Internal Modules
 import { ASSETS, PHYSICS } from "@constants";
 import { gameState } from "@gameState";
+import GameScene from "@scenes/GameScene";
+
 import {
   AddSpriteToWorld,
   b2BodyId,
@@ -28,7 +30,8 @@ import {
   b2Body_SetAwake,
   b2Body_IsAwake,
 } from "@PhaserBox2D";
-import GameScene from "@scenes/GameScene";
+
+import { createPhysicsBody } from "../lib/physics/PhysicsBodyFactory";
 
 // Define collision categories - add these constants
 const CATEGORY_DEFAULT = 0x0001;
@@ -49,13 +52,12 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
   halfWidthMeters: number;
 
   /**
-   * Creates an instance of the Enemy.
-   *
-   * @param scene - The GameScene to add the enemy to
-   * @param x - Initial x position in pixels
-   * @param y - Initial y position in pixels
-   * @param platformMinX - Minimum x boundary (pixels) of the platform
-   * @param platformMaxX - Maximum x boundary (pixels) of the platform
+   * Creates a new enemy entity
+   * @param scene The game scene
+   * @param x The initial x position
+   * @param y The initial y position
+   * @param platformMinX The minimum x-coordinate of the platform the enemy is on
+   * @param platformMaxX The maximum x-coordinate of the platform the enemy is on
    */
   constructor(
     scene: GameScene,
@@ -65,24 +67,17 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
     platformMaxX: number
   ) {
     super(scene, x, y, ASSETS.ATLAS, ASSETS.ENEMY.FRAME);
-
     this.scene = scene;
     this.platformMinX = platformMinX;
     this.platformMaxX = platformMaxX;
-
-    // Calculate enemy speed based on player speed
     this.speed = PHYSICS.PLAYER.SPEED * ASSETS.ENEMY.SPEED_FACTOR;
     this.halfWidthMeters = ASSETS.ENEMY.WIDTH / 2 / PHYSICS.SCALE;
 
-    scene.add.existing(this);
-    this.setDepth(9); // Render below player (player is 10)
+    // Add to scene
+    this.scene.add.existing(this);
 
+    // Initialize physics
     this.initPhysics();
-
-    // Map bodyId to this sprite in the scene
-    if (this.bodyId) {
-      this.scene.bodyIdToSpriteMap.set(this.bodyId.index1, this);
-    }
   }
 
   /**
@@ -95,58 +90,30 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
       this.bodyId = null;
     }
 
-    const bodyDef = {
-      ...b2DefaultBodyDef(),
-      type: DYNAMIC,
-      position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE),
-      fixedRotation: true,
-      enableContactListener: true,
-      allowSleep: true, // Allow enemies to sleep when not visible
-      linearDamping: 0.1,
-      gravityScale: 1,
-    };
+    // Create the physics body using the PhysicsBodyFactory
+    // 'enemy' is the name of the body in physics.xml
+    this.bodyId = createPhysicsBody("enemy", this.x, this.y, true);
 
-    const bodyId = b2CreateBody(gameState.worldId, bodyDef);
-    this.bodyId = bodyId;
+    if (!this.bodyId) {
+      console.error("Failed to create enemy physics body!");
+      return;
+    }
 
-    const halfWidth = ASSETS.ENEMY.WIDTH / 2 / PHYSICS.SCALE;
-    const halfHeight = ASSETS.ENEMY.HEIGHT / 2 / PHYSICS.SCALE;
+    // Link sprite to Box2D body and add to the scene's body-sprite map
+    AddSpriteToWorld(this.bodyId, this);
 
-    // Generate the shape using the helper
-    const boxShape = b2MakeBox(halfWidth, halfHeight);
-    console.log("[Enemy.initPhysics] Shape object from b2MakeBox:", boxShape); // Log the shape object
-
-    const shapeDef = {
-      ...b2DefaultShapeDef(),
-      shape: boxShape, // Use the shape from b2MakeBox
-      density: ASSETS.ENEMY.DENSITY,
-      friction: ASSETS.ENEMY.FRICTION,
-      restitution: ASSETS.ENEMY.RESTITUTION,
-      userData: { type: "enemy" }, // Add user data for collision identification
-      // Set up collision filtering to collide with crates
-      filter: {
-        categoryBits: CATEGORY_ENEMY,
-        maskBits: CATEGORY_DEFAULT | CATEGORY_CRATE | CATEGORY_PLAYER,
-        groupIndex: 0,
-      },
-    };
-
-    console.log(
-      "[Enemy.initPhysics] Calling b2CreatePolygonShape with shapeDef:",
-      shapeDef
-    ); // Log the shapeDef
-    b2CreatePolygonShape(bodyId, shapeDef, boxShape); // Pass boxShape as the third argument
-
-    AddSpriteToWorld(bodyId, this); // Link sprite to Box2D body
+    // Set initial velocity for patrolling
     b2Body_SetLinearVelocity(
       this.bodyId,
       new b2Vec2((this.speed / PHYSICS.SCALE) * this.direction, 0)
     );
 
-    // Enable sleep for this enemy's body
+    // Enable sleep for this enemy's body when off-screen
     if (this.bodyId) {
       b2Body_EnableSleep(this.bodyId, true);
     }
+
+    console.log("Enemy physics body created using physics.xml data");
   }
 
   /**

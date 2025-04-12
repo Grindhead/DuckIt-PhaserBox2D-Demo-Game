@@ -9,6 +9,8 @@ import * as Phaser from "phaser";
 
 import { SCENES, ASSETS, ANIMATION } from "@constants";
 
+import { initPhysicsData } from "../lib/physics/PhysicsBodyFactory";
+
 export default class PreloaderScene extends Phaser.Scene {
   constructor() {
     super({ key: SCENES.PRELOADER });
@@ -41,14 +43,89 @@ export default class PreloaderScene extends Phaser.Scene {
         (width / 2 - 20) * value,
         30
       );
-      percentText.setText(Math.max(value * 100).toString() + "%");
+      percentText.setText(Math.floor(value * 100).toString() + "%");
     });
 
     // Load texture atlas from the correct location
     this.load.atlas(ASSETS.ATLAS, "/assets.png", "/assets.json");
+
+    // Load physics XML file - make sure the path is correct
+    this.load.xml("physics", "/physics.xml");
+
+    // Add a complete handler to verify XML was loaded
+    this.load.on("complete", () => {
+      console.log("All assets loaded, checking physics XML...");
+      if (this.cache.xml.exists("physics")) {
+        console.log("Physics XML successfully loaded into cache");
+      } else {
+        console.error("Failed to load physics XML into cache!");
+      }
+    });
   }
 
-  create() {
+  async create() {
+    // Create a global variable to track whether physics data was successfully initialized
+    const loadingText = this.add.text(
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2 + 50,
+      "Initializing physics...",
+      {
+        fontSize: "24px",
+        color: "#ffffff",
+      }
+    );
+    loadingText.setOrigin(0.5, 0.5);
+
+    try {
+      // Explicitly verify the XML is loaded before initializing
+      if (!this.cache.xml.exists("physics")) {
+        throw new Error(
+          "Physics XML not found in cache. Check file path and format."
+        );
+      }
+
+      // Get the XML directly to validate content
+      const physicsXml = this.cache.xml.get("physics");
+      const bodyElements = physicsXml.getElementsByTagName("body");
+
+      if (!bodyElements || bodyElements.length === 0) {
+        throw new Error("Physics XML contains no body elements!");
+      }
+
+      console.log(`Found ${bodyElements.length} physics bodies in XML`);
+
+      // Check for required physics bodies
+      const bodyNames = [];
+      for (let i = 0; i < bodyElements.length; i++) {
+        const name = bodyElements[i].getAttribute("name");
+        bodyNames.push(name);
+      }
+
+      console.log("Available physics bodies:", bodyNames.join(", "));
+
+      if (!bodyNames.includes("duck")) {
+        console.warn("Required 'duck' body not found in physics XML!");
+      }
+
+      // Initialize physics data from the loaded XML file
+      await initPhysicsData();
+      console.log("Physics data successfully initialized from physics.xml");
+
+      loadingText.setText("Physics initialized successfully!");
+
+      // Short delay to show success message
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error("Error initializing physics data:", error);
+      loadingText.setText("Physics error! Check console.");
+      loadingText.setColor("#ff0000");
+
+      // Show error for a moment instead of proceeding
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    } finally {
+      loadingText.destroy();
+    }
+
     // Define animations
     this.createAnimations();
 

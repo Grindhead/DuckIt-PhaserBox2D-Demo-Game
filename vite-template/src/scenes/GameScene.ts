@@ -19,23 +19,30 @@ import Platform from "@entities/Platform";
 import Player from "@entities/Player";
 import { gameState } from "@gameState";
 import {
-  b2Body_GetLinearVelocity,
+  b2Vec2,
   b2CreateWorld,
   b2CreateWorldArray,
   b2DefaultWorldDef,
-  b2Shape_GetUserData,
-  b2Shape_IsSensor,
-  b2Vec2,
-  b2World_GetContactEvents,
-  b2World_GetSensorEvents,
-  b2World_Step,
-  UpdateWorldSprites,
   b2WorldId,
-  b2Body_SetGravityScale,
-  b2Body_ApplyLinearImpulseToCenter,
+  UpdateWorldSprites,
+  AddSpriteToWorld,
+  b2World_Step,
   b2World_Draw,
+  b2World_GetContactEvents,
+  b2World_SetGravity,
+  b2World_GetSensorEvents,
+  b2World_GetBodyEvents,
+  b2Shape_GetUserData,
+  b2Shape_SetUserData,
   b2Body_GetShapes,
   b2Body_IsAwake,
+  b2Body_SetAwake,
+  b2Body_SetTransform,
+  b2Body_SetGravityScale,
+  b2Body_GetLinearVelocity,
+  b2Body_ApplyLinearImpulseToCenter,
+  b2Body_GetMass,
+  b2Shape_IsSensor,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -46,6 +53,7 @@ import {
   generateLevel,
   GeneratedLevelData,
 } from "../lib/levelGenerator/levelGenerator";
+import { initPhysicsData } from "../lib/physics/PhysicsBodyFactory";
 
 type b2WorldIdInstance = InstanceType<typeof b2WorldId>;
 type MappedSprite = Phaser.GameObjects.Sprite | Crate | Enemy;
@@ -96,7 +104,15 @@ export default class GameScene extends Phaser.Scene {
     super({ key: SCENES.GAME });
   }
 
-  create() {
+  async create() {
+    console.log("GameScene: Creating game...");
+
+    // Set up basic scene requirements first
+    this.setupDebugDraw();
+    this.createUI();
+    this.setupInput();
+
+    // Initialize game world
     b2CreateWorldArray();
     const worldDef = b2DefaultWorldDef();
     worldDef.gravity = new b2Vec2(0, PHYSICS.GRAVITY.y);
@@ -105,36 +121,37 @@ export default class GameScene extends Phaser.Scene {
     const worldId = b2CreateWorld(worldDef);
     gameState.setWorldId(worldId);
 
+    // Clear any existing entities
     this.bodyIdToSpriteMap.clear();
-    this.platforms = []; // Clear platforms array
-
-    this.coins = this.add.group();
+    this.platforms = [];
     this.enemies = [];
+    this.coins = this.add.group();
 
+    // Generate level with physics bodies from the preloaded physics data
     const levelData: GeneratedLevelData = generateLevel(this, this.coins);
     this.enemies = levelData.enemies;
-    this.platforms = levelData.platforms; // Store platforms from level data
+    this.platforms = levelData.platforms;
 
+    // Create player with physics body from the preloaded data
     this.player = new Player(
       this,
       levelData.playerSpawnPosition.x,
       levelData.playerSpawnPosition.y
     );
 
-    // Initial setup of player after creation
+    // Initial setup of player
     this.setupPlayerState();
-
     this.deathSensor = new DeathSensor(this);
 
+    // Set up input controls
     if (this.input.keyboard) {
       this.controls = this.input.keyboard.createCursorKeys();
-
-      // Add debug toggle key
       this.debugKey = this.input.keyboard.addKey(
         Phaser.Input.Keyboard.KeyCodes.D
       );
     }
 
+    // Set up camera
     this.cameras.main.setBounds(0, 0, WORLD.WIDTH, WORLD.HEIGHT);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.cameras.main.centerOn(
@@ -142,12 +159,22 @@ export default class GameScene extends Phaser.Scene {
       levelData.playerSpawnPosition.y
     );
 
-    // Setup debug drawing
-    this.setupDebugDraw();
+    // Verify physics are ready before showing start screen
+    this.time.delayedCall(200, () => {
+      if (this.player && this.player.bodyId && gameState.worldId) {
+        console.log("Physics initialization verified, showing start screen");
+        this.startScreen.show();
+      } else {
+        console.warn("Physics not ready, delaying start screen");
+        // Try again in a bit
+        this.time.delayedCall(300, () => {
+          console.log("Second attempt to verify physics and show start screen");
+          this.startScreen.show();
+        });
+      }
+    });
 
-    this.createUI();
-    this.setupInput();
-    this.startScreen.show();
+    console.log("Game scene creation complete");
   }
 
   /**
@@ -230,8 +257,8 @@ export default class GameScene extends Phaser.Scene {
     const { worldId } = gameState;
     if (!worldId) return;
 
-    // Check for debug toggle
-    if (Phaser.Input.Keyboard.JustDown(this.debugKey)) {
+    // Check for debug toggle - add null check for debugKey
+    if (this.debugKey && Phaser.Input.Keyboard.JustDown(this.debugKey)) {
       this.debugEnabled = !this.debugEnabled;
       this.debugGraphics.visible = this.debugEnabled;
       if (this.debugText) {
@@ -496,20 +523,41 @@ export default class GameScene extends Phaser.Scene {
     if (gameState.isPlaying) {
       this.processPhysicsEvents(worldId);
 
-      if (this.player && this.controls) {
-        this.player.update(this.controls);
+      if (this.player) {
+        // Add check to ensure player's bodyId and gameState.worldId are both initialized
+        if (this.player.bodyId && gameState.worldId) {
+          // Update player if it exists, regardless of controls
+          if (this.controls) {
+            this.player.update(this.controls);
+          } else {
+            // If controls aren't available, still update player without controls
+            this.player.update({} as Phaser.Types.Input.Keyboard.CursorKeys);
+          }
 
-        // Ensure camera is properly following the player every frame
-        this.cameras.main.scrollX = Phaser.Math.Linear(
-          this.cameras.main.scrollX,
-          this.player.x - this.cameras.main.width / 2,
-          0.1
-        );
-        this.cameras.main.scrollY = Phaser.Math.Linear(
-          this.cameras.main.scrollY,
-          this.player.y - this.cameras.main.height / 2,
-          0.1
-        );
+          // Ensure camera is properly following the player every frame
+          this.cameras.main.scrollX = Phaser.Math.Linear(
+            this.cameras.main.scrollX,
+            this.player.x - this.cameras.main.width / 2,
+            0.1
+          );
+          this.cameras.main.scrollY = Phaser.Math.Linear(
+            this.cameras.main.scrollY,
+            this.player.y - this.cameras.main.height / 2,
+            0.1
+          );
+        } else if (!this.player.playerState.hasLoggedPhysicsWarning) {
+          // If physics aren't ready, log a warning once
+          console.warn(
+            "GameScene: Skipping player update until physics are ready"
+          );
+          this.player.playerState.hasLoggedPhysicsWarning = true;
+
+          // Try to reinitialize player physics if needed
+          if (!this.player.bodyId) {
+            console.log("Attempting to reinitialize player physics...");
+            this.player.initPhysics();
+          }
+        }
       }
 
       // Update enemies
@@ -528,6 +576,14 @@ export default class GameScene extends Phaser.Scene {
 
   processPhysicsEvents(worldId: b2WorldIdInstance) {
     const sensorEvents = b2World_GetSensorEvents(worldId);
+
+    // Debug logging for sensor events
+    if (sensorEvents.beginEvents.length > 0) {
+      console.log(
+        `Processing ${sensorEvents.beginEvents.length} sensor begin events`
+      );
+    }
+
     for (const event of sensorEvents.beginEvents) {
       const sensorShapeId = event.sensorShapeId;
       const visitorShapeId = event.visitorShapeId;
@@ -538,20 +594,43 @@ export default class GameScene extends Phaser.Scene {
         visitorShapeId
       ) as ShapeUserData;
 
+      // Debug logging for user data
+      console.log("Sensor event userData:", {
+        sensorType: sensorUserData?.type,
+        visitorType: visitorUserData?.type,
+        sensorData: sensorUserData,
+        visitorData: visitorUserData,
+      });
+
       let coinInstance: Coin | null = null;
       if (
         sensorUserData?.type === "coin" &&
         visitorUserData?.type === "player"
       ) {
+        console.log("Coin-Player collision detected");
         coinInstance = sensorUserData.coinInstance as Coin;
+        if (!coinInstance) {
+          console.error(
+            "Missing coinInstance in sensorUserData:",
+            sensorUserData
+          );
+        }
       } else if (
         sensorUserData?.type === "player" &&
         visitorUserData?.type === "coin"
       ) {
+        console.log("Player-Coin collision detected");
         coinInstance = visitorUserData.coinInstance as Coin;
+        if (!coinInstance) {
+          console.error(
+            "Missing coinInstance in visitorUserData:",
+            visitorUserData
+          );
+        }
       }
 
       if (coinInstance && !coinInstance.isCollected) {
+        console.log("Collecting coin:", coinInstance);
         coinInstance.collect();
         gameState.incrementCoins();
       }

@@ -14,6 +14,7 @@ import {
   b2DefaultShapeDef,
   b2CreateBody,
   b2CreatePolygonShape,
+  b2CreateCircleShape,
   b2MakeBox,
   b2Vec2,
   b2Body_Disable,
@@ -23,6 +24,8 @@ import {
   b2Body_IsAwake,
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
+
+import { createPhysicsBody } from "../lib/physics/PhysicsBodyFactory";
 
 export default class Coin extends Phaser.GameObjects.Sprite {
   scene: Phaser.Scene;
@@ -38,48 +41,33 @@ export default class Coin extends Phaser.GameObjects.Sprite {
   }
 
   initPhysics() {
-    const bodyDef = {
-      ...b2DefaultBodyDef(),
-      type: STATIC,
-      position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE), // Scale and negate Y for Box2D
-      userData: { type: "coin", coinInstance: this },
-      allowSleep: true, // Allow coins to sleep when not visible
-    };
+    // Remove existing physics body if it exists
+    if (this.bodyId) {
+      if (this.scene instanceof GameScene) {
+        (this.scene as GameScene).bodyIdToSpriteMap.delete(this.bodyId.index1);
+      }
+      b2Body_Disable(this.bodyId);
+      this.bodyId = null;
+    }
 
-    // Create the body directly
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const bodyId = b2CreateBody(gameState.worldId as any, bodyDef);
-    this.bodyId = bodyId;
+    // Create the physics body using the PhysicsBodyFactory
+    // 'coin' is the name of the body in physics.xml
+    try {
+      // Pass 'this' as the entityInstance parameter to include it in the userData
+      this.bodyId = createPhysicsBody("coin", this.x, this.y, false, this);
+      console.log("Coin physics body created with instance reference");
+    } catch (error) {
+      console.error("Error creating coin physics body:", error);
+      this.bodyId = null;
+    }
 
-    if (!bodyId) {
+    if (!this.bodyId) {
       console.error("Failed to create coin physics body!");
       return;
     }
 
-    // Define the shape
-    const shapeDef = {
-      ...b2DefaultShapeDef(),
-      isSensor: true,
-      enableContactEvents: true,
-      density: 0,
-      friction: 0,
-      restitution: 0,
-      userData: { type: "coin", coinInstance: this },
-    };
-
-    // Create box geometry with proper scaling for Box2D (in meters)
-    const scaleX = this.scaleX;
-    const scaleY = this.scaleY;
-    const halfWidth = (this.width * scaleX) / (2 * PHYSICS.SCALE);
-    const halfHeight = (this.height * scaleY) / (2 * PHYSICS.SCALE);
-
-    const box = b2MakeBox(halfWidth, halfHeight);
-
-    b2CreatePolygonShape(bodyId, shapeDef, box);
-
     // Link the sprite to the body for rendering updates
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    AddSpriteToWorld(gameState.worldId as any, this, { bodyId: this.bodyId });
+    AddSpriteToWorld(gameState.worldId, this, { bodyId: this.bodyId });
 
     // Enable sleep for this coin's body
     if (this.bodyId) {
@@ -98,6 +86,53 @@ export default class Coin extends Phaser.GameObjects.Sprite {
         "Failed to register coin in bodyIdToSpriteMap. BodyId invalid."
       );
     }
+
+    console.log("Coin physics body created successfully");
+  }
+
+  /**
+   * Creates a fallback physics body if the XML data isn't available
+   * Uses the same values as before for compatibility
+   */
+  createFallbackPhysicsBody() {
+    const bodyDef = {
+      ...b2DefaultBodyDef(),
+      type: STATIC,
+      position: new b2Vec2(this.x / PHYSICS.SCALE, -this.y / PHYSICS.SCALE),
+      userData: { type: "coin" },
+      allowSleep: true,
+    };
+
+    this.bodyId = b2CreateBody(gameState.worldId, bodyDef);
+
+    if (!this.bodyId) {
+      console.error("Failed to create fallback coin physics body!");
+      return;
+    }
+
+    const shapeDef = {
+      ...b2DefaultShapeDef(),
+      isSensor: true,
+      enableContactEvents: true,
+      density: 0,
+      friction: 0,
+      restitution: 0,
+      userData: { type: "coin", coinInstance: this },
+    };
+
+    const radius = 12.0 / PHYSICS.SCALE; // Default radius from physics.xml
+
+    // Create a properly formatted circle shape that Box2D can work with
+    // The center must be a b2Vec2, not a plain object
+    const circleShape = {
+      center: new b2Vec2(0, 0),
+      radius,
+    };
+
+    b2CreateCircleShape(this.bodyId, shapeDef, circleShape);
+    AddSpriteToWorld(gameState.worldId, this, { bodyId: this.bodyId });
+
+    console.log("Created fallback coin physics body");
   }
 
   /**
