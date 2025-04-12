@@ -30,6 +30,12 @@ import {
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
 
+// Define collision categories - add these constants
+const CATEGORY_DEFAULT = 0x0001;
+const CATEGORY_ENEMY = 0x0002;
+const CATEGORY_CRATE = 0x0004;
+const CATEGORY_PLAYER = 0x0008;
+
 /**
  * Enemy class representing the patrolling character
  */
@@ -117,6 +123,12 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
       friction: ASSETS.ENEMY.FRICTION,
       restitution: ASSETS.ENEMY.RESTITUTION,
       userData: { type: "enemy" }, // Add user data for collision identification
+      // Set up collision filtering to collide with crates
+      filter: {
+        categoryBits: CATEGORY_ENEMY,
+        maskBits: CATEGORY_DEFAULT | CATEGORY_CRATE | CATEGORY_PLAYER,
+        groupIndex: 0,
+      },
     };
 
     console.log(

@@ -795,6 +795,12 @@ export default class GameScene extends Phaser.Scene {
   }
 
   startGame() {
+    if (gameState.isGameOver) {
+      // If restarting from game over, do a full restart
+      this.restart();
+      return; // Exit early after restarting
+    }
+
     if (gameState.isReady) {
       if (this.player && this.player.bodyId) {
         // Enable gravity when game starts (this is what makes the player start falling)
@@ -851,7 +857,7 @@ export default class GameScene extends Phaser.Scene {
     gameState.restartGame(); // Reset game state to READY
     this.gameOverOverlay.hide();
     this.startScreen.show(); // Show start screen to initiate playing again
-    this.coinCounter.updateCount(); // Reflects the reset coin count (0)
+    this.coinCounter.updateCount(); // Update coin counter display to show 0
 
     console.log("Game logic restart complete.");
   }

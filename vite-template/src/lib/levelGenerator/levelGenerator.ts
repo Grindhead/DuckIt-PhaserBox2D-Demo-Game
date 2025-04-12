@@ -4,7 +4,8 @@
  */
 import * as Phaser from "phaser";
 
-import { WORLD, PHYSICS } from "@constants";
+import { WORLD, PHYSICS, ASSETS } from "@constants";
+import Coin from "@entities/Coin"; // Import Coin class
 import Enemy from "@entities/Enemy"; // Import Enemy type
 import Platform from "@entities/Platform"; // Import Platform class
 import GameScene from "@scenes/GameScene"; // Import GameScene for type hinting
@@ -82,6 +83,14 @@ interface LevelGenerationConfig {
   minGapWidthTiles: number;
   maxGapWidthTiles: number;
   edgePadding: number;
+}
+
+/**
+ * Interface for tracking crate positions to avoid overlap with coins
+ */
+interface CratePosition {
+  startX: number;
+  endX: number;
 }
 
 /**
@@ -245,18 +254,10 @@ export function generateLevel(
 
       // --- Generate Entities on Platforms --- //
       segments.forEach((segment, segmentIndex) => {
-        // --- Generate Coins --- //
-        const coinConfig: CoinConfig = {
-          scene: config.scene,
-          coinsGroup: config.coinsGroup,
-          platformStartX: segment.startX,
-          platformY: config.platformY,
-          totalTiles: segment.totalTiles,
-          tileWidth: config.tileWidth,
-        };
-        generateCoins(coinConfig);
+        // Array to track crate positions for avoiding coin overlap
+        const cratePositions: CratePosition[] = [];
 
-        // --- Generate Crates (Probabilistic) --- //
+        // --- Generate Crates FIRST (Before coins) --- //
         if (platformIndex === 1 && segmentIndex === 0) {
           // Force spawn both crates on the second platform
           generateCratesForPlatform({
@@ -266,15 +267,94 @@ export function generateLevel(
             platformY: config.platformY,
             forceSpawnBoth: true, // Force spawn!
           });
+
+          // Calculate crate positions to avoid coin placement
+          // For forced spawn we know exact positions - small and big crate side-by-side
+          const smallCrateWidth = ASSETS.CRATE.SMALL.WIDTH;
+          const bigCrateWidth = ASSETS.CRATE.BIG.WIDTH;
+          const totalCrateWidth = smallCrateWidth + bigCrateWidth;
+          const spacing = 10; // Pixels between crates
+
+          const platformPixelWidth =
+            (segment.physicsMaxX - segment.physicsMinX) * PHYSICS.SCALE;
+          const platformPixelCenterX =
+            segment.physicsMinX * PHYSICS.SCALE + platformPixelWidth / 2;
+
+          // Small crate position
+          const smallCrateX =
+            platformPixelCenterX - bigCrateWidth / 2 - spacing / 2;
+          cratePositions.push({
+            startX: smallCrateX - smallCrateWidth / 2,
+            endX: smallCrateX + smallCrateWidth / 2,
+          });
+
+          // Big crate position
+          const bigCrateX =
+            platformPixelCenterX + smallCrateWidth / 2 + spacing / 2;
+          cratePositions.push({
+            startX: bigCrateX - bigCrateWidth / 2,
+            endX: bigCrateX + bigCrateWidth / 2,
+          });
         } else if (platformIndex > 1) {
           // Use probabilistic generation for subsequent platforms
-          generateCratesForPlatform({
-            scene: config.scene,
-            platformPhysicsMinX: segment.physicsMinX,
-            platformPhysicsMaxX: segment.physicsMaxX,
-            platformY: config.platformY,
-            // Use default probability from crateGenerator.ts
-          });
+          // We need to pre-calculate if a crate will be generated
+          const cratePlacementProbability = 0.25; // Same as default in crateGenerator
+          if (Math.random() <= cratePlacementProbability) {
+            // A crate will be generated
+            const size = Math.random() < 0.5 ? "BIG" : "SMALL";
+            const crateWidth = ASSETS.CRATE[size].WIDTH;
+
+            const platformPixelWidth =
+              (segment.physicsMaxX - segment.physicsMinX) * PHYSICS.SCALE;
+            const platformPixelCenterX =
+              segment.physicsMinX * PHYSICS.SCALE + platformPixelWidth / 2;
+
+            // Calculate spawn position similar to crateGenerator logic
+            const spawnX =
+              platformPixelCenterX +
+              Phaser.Math.Between(
+                -platformPixelWidth * 0.1,
+                platformPixelWidth * 0.1
+              );
+
+            // Record crate position for coin avoidance
+            cratePositions.push({
+              startX: spawnX - crateWidth / 2,
+              endX: spawnX + crateWidth / 2,
+            });
+
+            // Generate the crate
+            generateCratesForPlatform({
+              scene: config.scene,
+              platformPhysicsMinX: segment.physicsMinX,
+              platformPhysicsMaxX: segment.physicsMaxX,
+              platformY: config.platformY,
+              // Use default probability from crateGenerator.ts
+            });
+          }
+        }
+
+        // --- Generate Coins AFTER crates, avoiding crate positions --- //
+        const coinY = config.platformY - 40; // Place coins slightly above the platform
+        const tileWidth = config.tileWidth;
+
+        // Place coins based on number of tiles but skip positions where crates are placed
+        for (let i = 0; i < segment.totalTiles; i++) {
+          const coinX = segment.startX + tileWidth / 2 + i * tileWidth;
+          // Add a small random horizontal offset
+          const offsetX = Phaser.Math.Between(-5, 5);
+          const finalCoinX = coinX + offsetX;
+
+          // Check if this coin would overlap with a crate
+          const coinOverlapsCrate = cratePositions.some(
+            (crate) => finalCoinX > crate.startX && finalCoinX < crate.endX
+          );
+
+          // Only create coin if it doesn't overlap with a crate
+          if (!coinOverlapsCrate) {
+            const coin = new Coin(config.scene, finalCoinX, coinY);
+            config.coinsGroup.add(coin);
+          }
         }
 
         // --- Generate Enemies (Probabilistic) --- //

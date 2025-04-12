@@ -29,6 +29,12 @@ import {
 } from "@PhaserBox2D";
 import GameScene from "@scenes/GameScene";
 
+// Define collision categories - these must match those in Enemy.ts
+const CATEGORY_DEFAULT = 0x0001;
+const CATEGORY_ENEMY = 0x0002;
+const CATEGORY_CRATE = 0x0004;
+const CATEGORY_PLAYER = 0x0008;
+
 /**
  * The size type of a crate: big or small
  */
@@ -108,6 +114,13 @@ export default class Crate extends Phaser.GameObjects.Sprite {
     shapeDef.friction = ASSETS.CRATE[this.size].FRICTION;
     shapeDef.restitution = ASSETS.CRATE[this.size].RESTITUTION;
     shapeDef.userData = { type: "crate", crateInstance: this, size: this.size };
+    // Set collision filtering to interact with enemies and players
+    shapeDef.filter = {
+      categoryBits: CATEGORY_CRATE,
+      maskBits:
+        CATEGORY_DEFAULT | CATEGORY_ENEMY | CATEGORY_PLAYER | CATEGORY_CRATE,
+      groupIndex: 0,
+    };
     // Invalid properties like isSensor are not set
 
     // Define the shape
