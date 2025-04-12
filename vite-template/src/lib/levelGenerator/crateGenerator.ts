@@ -59,11 +59,21 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
     const smallCrateX = platformPixelCenterX - bigCrateWidth / 2 - spacing / 2;
     const bigCrateX = platformPixelCenterX + smallCrateWidth / 2 + spacing / 2;
 
-    // Calculate Y positions (place them *on top* of the platform)
+    // Calculate Y positions (place them ON the platform)
+    // Using the physics body definition from physics.xml:
+    // - Small crate polygon height: 36px (from -15 to 21 vertices)
+    // - Big crate polygon height: 53px (from -23 to 30 vertices)
     const smallCrateHeight = ASSETS.CRATE.SMALL.HEIGHT;
     const bigCrateHeight = ASSETS.CRATE.BIG.HEIGHT;
-    const smallCrateY = platformY - smallCrateHeight / 2 - 5; // Place slightly above surface
-    const bigCrateY = platformY - bigCrateHeight / 2 - 5; // Place slightly above surface
+
+    // Adjust positions to align the physics bodies with the platform top surface
+    // The physics vertex Y values are relative to center point
+    const smallCratePhysicsBottom = 15; // Based on physics.xml definition
+    const bigCratePhysicsBottom = 23; // Based on physics.xml definition
+
+    // Position crates so their physics bodies rest exactly on the platform
+    const smallCrateY = platformY - smallCratePhysicsBottom;
+    const bigCrateY = platformY - bigCratePhysicsBottom;
 
     // Create SMALL crate instance
     new Crate(
@@ -113,7 +123,11 @@ export function generateCratesForPlatform(config: CrateGenerationConfig): void {
     const spawnX =
       platformPixelCenterX +
       Phaser.Math.Between(-platformPixelWidth * 0.1, platformPixelWidth * 0.1);
-    const spawnY = platformY - crateHeight / 2 - 5; // Place slightly above surface
+
+    // Position crate so its physics body rests exactly on the platform
+    // The physics vertex Y values are relative to center point
+    const physicsBottom = size === "BIG" ? 23 : 15; // Based on physics.xml definition
+    const spawnY = platformY - physicsBottom;
 
     // Create the single crate instance
     new Crate(
