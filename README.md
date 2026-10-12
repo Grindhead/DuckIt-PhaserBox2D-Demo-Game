@@ -39,3 +39,9 @@ Jay Max Armstrong for assets:
 Both from
 
 [MassiveMonster](https://massivemonster.com/)
+
+## DuckIt dashboard verification
+
+The Vite demo merges touch and keyboard controls into boolean player input. Supporting contact pairs persist across Box2D frames, use begin manifold/hit normal fields in either shape order, and are removed by end IDs. Physics runs at1/60 seconds with four substeps and at most four catch-up steps per rendered frame.
+
+Run `pnpm --dir vite-template test`, `pnpm --dir vite-template exec tsc --noEmit`, and `pnpm --dir vite-template build`. Local Chromium/Firefox tests cover actual landing, touch-only movement, jumping and relanding. Representative mobile timing and high-speed tunneling acceptance remain required; no performance gain is claimed.
