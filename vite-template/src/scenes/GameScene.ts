@@ -34,7 +34,7 @@ import MobileControls from "@ui/MobileControls";
 
 import { generateLevel } from "../lib/levelGenerator";
 
-import { FixedStepClock, GroundContacts, mergePlayerInput } from "../lib/gameplay";
+import { FixedStepClock, GroundContacts, PlayerInputBuffer, mergePlayerInput } from "../lib/gameplay";
 import type { ContactEvent } from "../lib/gameplay";
 
 type b2WorldIdInstance = InstanceType<typeof b2WorldId>;
@@ -56,6 +56,7 @@ export default class GameScene extends Phaser.Scene {
   coins!: Phaser.GameObjects.Group;
 
   private physicsClock = new FixedStepClock();
+  private playerInput = new PlayerInputBuffer();
   private groundContacts = new GroundContacts();
 
   bodyIdToSpriteMap = new Map<number, MappedSprite>();
@@ -66,6 +67,7 @@ export default class GameScene extends Phaser.Scene {
 
   create() {
     this.physicsClock.reset();
+    this.playerInput.reset();
     this.groundContacts.reset();
     b2CreateWorldArray();
     const worldDef = b2DefaultWorldDef();
@@ -140,7 +142,15 @@ export default class GameScene extends Phaser.Scene {
     const { worldId } = gameState;
     if (!worldId) return;
 
+    if (gameState.isPlaying && this.player) {
+      this.playerInput.sample(mergePlayerInput(this.controls, this.mobileControls.getState()));
+    }
+
     this.physicsClock.advance(delta, () => {
+      if (gameState.isPlaying && this.player) {
+        // Apply movement and jump impulses at the same cadence as the solver.
+        this.player.update(this.playerInput.consume());
+      }
       b2World_Step(worldId, 1 / 60, 4);
       if (gameState.isPlaying) this.processPhysicsEvents(worldId);
     });
@@ -149,8 +159,6 @@ export default class GameScene extends Phaser.Scene {
 
     if (gameState.isPlaying) {
       if (this.player) {
-        this.player.update(mergePlayerInput(this.controls, this.mobileControls.getState()));
-
         // Ensure camera is properly following the player every frame
         this.cameras.main.scrollX = Phaser.Math.Linear(
           this.cameras.main.scrollX,
@@ -296,6 +304,7 @@ export default class GameScene extends Phaser.Scene {
    */
   restart() {
     this.physicsClock.reset();
+    this.playerInput.reset();
     this.groundContacts.reset();
     console.log("Restarting game logic (persistent world)...");
     gameState.restartGame(); // Reset game state to READY

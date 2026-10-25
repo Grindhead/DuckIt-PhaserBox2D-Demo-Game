@@ -2,6 +2,28 @@ export type PlayerInput = { left: boolean; right: boolean; up: boolean };
 export function mergePlayerInput(keys: {left?: {isDown: boolean}; right?: {isDown: boolean}; up?: {isDown: boolean}} | null, touch: PlayerInput): PlayerInput {
   return {left: Boolean(keys?.left?.isDown || touch.left), right: Boolean(keys?.right?.isDown || touch.right), up: Boolean(keys?.up?.isDown || touch.up)};
 }
+/** Samples held controls once per render and retains a short jump until a physics tick. */
+export class PlayerInputBuffer {
+  private held: PlayerInput = { left: false, right: false, up: false };
+  private queuedJump = false;
+
+  sample(input: PlayerInput): void {
+    this.queuedJump ||= input.up && !this.held.up;
+    this.held = { ...input };
+  }
+
+  consume(): PlayerInput {
+    const input = { ...this.held, up: this.held.up || this.queuedJump };
+    this.queuedJump = false;
+    return input;
+  }
+
+  reset(): void {
+    this.held = { left: false, right: false, up: false };
+    this.queuedJump = false;
+  }
+}
+
 export class FixedStepClock {
   private pending = 0;
   advance(milliseconds: number, step: () => void): number {
