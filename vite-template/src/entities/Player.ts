@@ -1,3 +1,4 @@
+import type { PlayerInput } from "../lib/gameplay";
 /**
  * @file Player.ts
  * @description Represents the player character (duck) in the game.
@@ -421,7 +422,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
     }
   }
 
-  update(controls: Phaser.Types.Input.Keyboard.CursorKeys) {
+  update(controls: PlayerInput) {
     if (!this.bodyId || gameState.isGameOver) return;
 
     const currentVelocity = b2Body_GetLinearVelocity(this.bodyId);
@@ -429,11 +430,11 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     let targetVelX = 0;
 
-    if (controls.left?.isDown) {
+    if (controls.left) {
       // Convert from pixels/second to meters/second for Box2D
       targetVelX = -PHYSICS.PLAYER.SPEED / PHYSICS.SCALE;
       this.setFlipX(true);
-    } else if (controls.right?.isDown) {
+    } else if (controls.right) {
       // Convert from pixels/second to meters/second for Box2D
       targetVelX = PHYSICS.PLAYER.SPEED / PHYSICS.SCALE;
       this.setFlipX(false);
@@ -452,7 +453,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
     const canJump = this.playerState.isGrounded;
 
     // Handle jump input
-    if (canJump && controls.up?.isDown) {
+    if (canJump && controls.up) {
       this.jump();
     }
 

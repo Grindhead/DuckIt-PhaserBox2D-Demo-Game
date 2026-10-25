@@ -39,3 +39,9 @@ Jay Max Armstrong for assets:
 Both from
 
 [MassiveMonster](https://massivemonster.com/)
+
+## DuckIt dashboard verification
+
+The Vite demo merges touch and keyboard controls into boolean player input. Supporting contact pairs persist across Box2D frames, use begin manifold/hit normal fields in either shape order, and are removed by end IDs. Physics runs at1/60 seconds with four substeps and at most four catch-up steps per rendered frame.
+
+Run `pnpm --dir vite-template test`, `pnpm --dir vite-template exec tsc --noEmit`, and `pnpm --dir vite-template build`. Movement and jump impulses run on each fixed physics tick. A sampled short jump is retained through a render with no physics tick, while held controls retain their existing behavior. Silent Chromium/Firefox checks at 390 and 1280 pixels cover matching 30/60/120 Hz movement, jump/relanding, the four-step pause cap, and high-speed landings. Representative physical mobile step-duration comparisons remain required; no performance gain is claimed. See [the scoped fixed-step evidence](docs/evidence/fixed-step-2026-10-25.md).

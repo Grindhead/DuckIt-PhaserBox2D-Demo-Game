@@ -1,0 +1,1654 @@
+{
+  "checkedAt": "2026-10-25T21:41:27.825085+00:00",
+  "baseRevision": "993764ae97062fd45290028d77029ff6dcf141db",
+  "scope": "Exact copied application source and pinned runtime. Browser source probes add only game exposure and step-call observation. Separate production smoke uses unmodified bundled bytes. Desktop browsers use 390/1280 CSS viewports; no physical mobile timing claim.",
+  "runtime": {
+    "phaser": "3.88.2",
+    "vite": "6.2.5",
+    "typescript": "5.8.3",
+    "playwright": "1.61.0",
+    "box2dSourceSha256": "e5e3afdd959fa870ed083692a044dfa1e5975b5d89553ec803fe323a4ea0e2e3"
+  },
+  "before": {
+    "scope": "Isolated copied source with observation-only game/step seams, actual pinned Box2D and Phaser. Desktop browsers at mobile/desktop viewports; no physical-mobile timing or performance gain claim.",
+    "tag": "baseline",
+    "cases": [
+      {
+        "engine": "chromium",
+        "width": 390,
+        "hz": 30,
+        "movement": {
+          "x": 127.55908087418683,
+          "steps": 60,
+          "maximumCallsPerFrame": 2,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.60331214808512,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8883068450874994,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.520653684654192,
+            "bottom": 6.720653684654192,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.4693823651182
+          }
+        ]
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "hz": 60,
+        "movement": {
+          "x": 141.9714395476316,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8883068450874994,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.520653684654192,
+            "bottom": 6.720653684654192,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.4693823651182
+          }
+        ]
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "hz": 120,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8883068450874994,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.520653684654192,
+            "bottom": 6.720653684654192,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.4693823651182
+          }
+        ]
+      },
+      {
+        "engine": "chromium",
+        "width": 1280,
+        "hz": 30,
+        "movement": {
+          "x": 127.55908087418683,
+          "steps": 60,
+          "maximumCallsPerFrame": 2,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.60331214808512,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8883068450874994,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.520653684654192,
+            "bottom": 6.720653684654192,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.4693823651182
+          }
+        ]
+      },
+      {
+        "engine": "chromium",
+        "width": 1280,
+        "hz": 60,
+        "movement": {
+          "x": 141.9714395476316,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8883068450874994,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.520653684654192,
+            "bottom": 6.720653684654192,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.4693823651182
+          }
+        ]
+      },
+      {
+        "engine": "chromium",
+        "width": 1280,
+        "hz": 120,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8883068450874994,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.520653684654192,
+            "bottom": 6.720653684654192,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.4693823651182
+          }
+        ]
+      }
+    ],
+    "silentBeforeNavigation": true,
+    "equivalence": [
+      {
+        "group": "chromium-390",
+        "movementSpread": 16.81865425899784,
+        "jumpSpread": 0.051389983630784286
+      },
+      {
+        "group": "chromium-1280",
+        "movementSpread": 16.81865425899784,
+        "jumpSpread": 0.051389983630784286
+      }
+    ],
+    "passed": false
+  },
+  "after": {
+    "scope": "Isolated copied source with observation-only game/step seams, actual pinned Box2D and Phaser. Desktop browsers at mobile/desktop viewports; no physical-mobile timing or performance gain claim.",
+    "tag": "final",
+    "cases": [
+      {
+        "engine": "chromium",
+        "width": 390,
+        "hz": 30,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 2,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.60331214808512,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "hz": 60,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "hz": 120,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "chromium",
+        "width": 1280,
+        "hz": 30,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 2,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.60331214808512,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "chromium",
+        "width": 1280,
+        "hz": 60,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "chromium",
+        "width": 1280,
+        "hz": 120,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "firefox",
+        "width": 390,
+        "hz": 30,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 2,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.60331214808512,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "firefox",
+        "width": 390,
+        "hz": 60,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "firefox",
+        "width": 390,
+        "hz": 120,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "firefox",
+        "width": 1280,
+        "hz": 30,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 2,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.60331214808512,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "firefox",
+        "width": 1280,
+        "hz": 60,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      },
+      {
+        "engine": "firefox",
+        "width": 1280,
+        "hz": 120,
+        "movement": {
+          "x": 144.37773513318467,
+          "steps": 60,
+          "maximumCallsPerFrame": 1,
+          "allStepsFixed": true,
+          "grounded": true
+        },
+        "jump": {
+          "height": 82.65470213171591,
+          "takeoff": true,
+          "landed": true,
+          "finalY": 1.1198240951672875
+        },
+        "tunneling": [
+          {
+            "speed": 100,
+            "y": 1.079996079657322,
+            "bottom": 0.1999960796573219,
+            "steps": 4,
+            "grounded": true,
+            "velocity": 9.976438347649722
+          },
+          {
+            "speed": 500,
+            "y": 2.6883068450874994,
+            "bottom": 1.8083068450874993,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 47.17019850853307
+          },
+          {
+            "speed": 2000,
+            "y": 7.600692744711965,
+            "bottom": 6.7206927447119655,
+            "steps": 4,
+            "grounded": false,
+            "velocity": 193.47048988345563
+          }
+        ],
+        "jumpEdges": [
+          {
+            "input": "touch",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "touch",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "zero-tick",
+            "zeroSteps": 0,
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 1
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 5
+            }
+          },
+          {
+            "input": "keyboard",
+            "mode": "catch-up",
+            "first": {
+              "successfulJumps": 1,
+              "attempts": 1,
+              "steps": 4
+            },
+            "after": {
+              "successfulJumps": 1,
+              "steps": 8
+            }
+          }
+        ]
+      }
+    ],
+    "silentBeforeNavigation": true,
+    "equivalence": [
+      {
+        "group": "chromium-390",
+        "movementSpread": 0,
+        "jumpSpread": 0.051389983630784286
+      },
+      {
+        "group": "chromium-1280",
+        "movementSpread": 0,
+        "jumpSpread": 0.051389983630784286
+      },
+      {
+        "group": "firefox-390",
+        "movementSpread": 0,
+        "jumpSpread": 0.051389983630784286
+      },
+      {
+        "group": "firefox-1280",
+        "movementSpread": 0,
+        "jumpSpread": 0.051389983630784286
+      }
+    ],
+    "passed": true
+  },
+  "production": {
+    "scope": "Unmodified production artifact, no game or physics injection. Muted/browser media guards installed before navigation.",
+    "cases": [
+      {
+        "engine": "chromium",
+        "width": 390,
+        "canvas": {
+          "width": 390,
+          "height": 271.015625
+        },
+        "productionEntryLoaded": true,
+        "startControlWorks": true,
+        "browserExceptions": [],
+        "audioRequests": 0
+      },
+      {
+        "engine": "chromium",
+        "width": 1280,
+        "canvas": {
+          "width": 1214.53125,
+          "height": 844
+        },
+        "productionEntryLoaded": true,
+        "startControlWorks": true,
+        "browserExceptions": [],
+        "audioRequests": 0
+      },
+      {
+        "engine": "firefox",
+        "width": 390,
+        "canvas": {
+          "width": 390,
+          "height": 271.01666259765625
+        },
+        "productionEntryLoaded": true,
+        "startControlWorks": true,
+        "browserExceptions": [],
+        "audioRequests": 0
+      },
+      {
+        "engine": "firefox",
+        "width": 1280,
+        "canvas": {
+          "width": 1214.5332679748535,
+          "height": 844
+        },
+        "productionEntryLoaded": true,
+        "startControlWorks": true,
+        "browserExceptions": [],
+        "audioRequests": 0
+      }
+    ]
+  },
+  "sourceFiles": [
+    {
+      "file": "vite-template/src/lib/gameplay.ts",
+      "sha256": "f4dcd6a3b9f25155502f1445f120c41200f3bbbe79a37757475bff8028ebab9f"
+    },
+    {
+      "file": "vite-template/src/scenes/GameScene.ts",
+      "sha256": "a9de5dbd67540437c516f17a98a156748f1cacb2e5f15d732dc9490a1af4eb29"
+    },
+    {
+      "file": "vite-template/tests/gameplay.test.mjs",
+      "sha256": "38512d0c97c85986ffc2668a0d0e48ca9fed36447542f8da36d1b25bb64b8548"
+    },
+    {
+      "file": "vite-template/src/entities/Player.ts",
+      "sha256": "77c64a6f08365a1ad21172587e7eacf395d5b1722b158e1f724c1f50f32d8c80"
+    },
+    {
+      "file": "vite-template/src/ui/MobileControls.ts",
+      "sha256": "f1fd7fba89226f5f8252c9aedfc9b40fb75938f0d36ee81fa22c4b4def1d20ee"
+    },
+    {
+      "file": "vite-template/src/lib/PhaserBox2D.js",
+      "sha256": "e5e3afdd959fa870ed083692a044dfa1e5975b5d89553ec803fe323a4ea0e2e3"
+    },
+    {
+      "file": "vite-template/pnpm-lock.yaml",
+      "sha256": "51ae0e21ddcf5ee9a38b8f5223349890568532585073e498c72c12fbfb7a0c55"
+    }
+  ],
+  "artifactFiles": [
+    {
+      "file": "assets/index-B3N_pou_.css",
+      "sha256": "1c672645b853dbc401145a0a06ee6906416ca09e317cdc46471100d04df05441"
+    },
+    {
+      "file": "assets/index-DUf5f8yR.js",
+      "sha256": "a1cd295022cbbdb319812388285b910fdf85781b11cbff2c91c74467726a4f31"
+    },
+    {
+      "file": "assets.json",
+      "sha256": "1777630c835e16b4df563a101351b7d21f98dcdbdd284ebb746a7b4f83f983a8"
+    },
+    {
+      "file": "assets.png",
+      "sha256": "9636847943c84b9e1f9c0799ba3c7f832592898f046126a349df0f8ade9c2adf"
+    },
+    {
+      "file": "background.png",
+      "sha256": "34e8caa099ad6963dd3e585577a8664b428c34545b748ec2634218da388f5134"
+    },
+    {
+      "file": "index.html",
+      "sha256": "d115be36c3a5e59dc9637cbd8bc74d4bf09e47aef3a83c259706fa7225b323ff"
+    }
+  ],
+  "logs": [
+    {
+      "file": "unit-tests.log",
+      "sha256": "2d011697b1639511c3ba66b7931f7b0e4b8b80d0982d396c4c39f044ab059156"
+    },
+    {
+      "file": "types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "build.log",
+      "sha256": "f096d4815b8cfa7fdaf1789c2bb19bed0638da31eb0e690df0ca419de6007fdb"
+    }
+  ],
+  "remainingAcceptance": [
+    "Before/after physics-step duration on a representative physical mobile device."
+  ],
+  "published": false,
+  "merged": false
+}

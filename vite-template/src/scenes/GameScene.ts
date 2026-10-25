@@ -14,7 +14,6 @@ import DeathSensor from "@entities/DeathSensor";
 import Player from "@entities/Player";
 import { gameState } from "@gameState";
 import {
-  b2Body_GetLinearVelocity,
   b2CreateWorld,
   b2CreateWorldArray,
   b2DefaultWorldDef,
@@ -27,7 +26,6 @@ import {
   UpdateWorldSprites,
   b2WorldId,
   b2Body_SetGravityScale,
-  b2Body_ApplyLinearImpulseToCenter,
 } from "@PhaserBox2D";
 import CoinCounter from "@ui/CoinCounter";
 import GameOverOverlay from "@ui/GameOverOverlay";
@@ -35,6 +33,9 @@ import GameStartScreen from "@ui/GameStartScreen";
 import MobileControls from "@ui/MobileControls";
 
 import { generateLevel } from "../lib/levelGenerator";
+
+import { FixedStepClock, GroundContacts, PlayerInputBuffer, mergePlayerInput } from "../lib/gameplay";
+import type { ContactEvent } from "../lib/gameplay";
 
 type b2WorldIdInstance = InstanceType<typeof b2WorldId>;
 type MappedSprite = Phaser.GameObjects.Sprite;
@@ -54,6 +55,10 @@ export default class GameScene extends Phaser.Scene {
   mobileControls!: MobileControls;
   coins!: Phaser.GameObjects.Group;
 
+  private physicsClock = new FixedStepClock();
+  private playerInput = new PlayerInputBuffer();
+  private groundContacts = new GroundContacts();
+
   bodyIdToSpriteMap = new Map<number, MappedSprite>();
 
   constructor() {
@@ -61,6 +66,9 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
+    this.physicsClock.reset();
+    this.playerInput.reset();
+    this.groundContacts.reset();
     b2CreateWorldArray();
     const worldDef = b2DefaultWorldDef();
     worldDef.gravity = new b2Vec2(0, PHYSICS.GRAVITY.y);
@@ -134,16 +142,23 @@ export default class GameScene extends Phaser.Scene {
     const { worldId } = gameState;
     if (!worldId) return;
 
-    b2World_Step(worldId, delta / 1000, 60);
+    if (gameState.isPlaying && this.player) {
+      this.playerInput.sample(mergePlayerInput(this.controls, this.mobileControls.getState()));
+    }
+
+    this.physicsClock.advance(delta, () => {
+      if (gameState.isPlaying && this.player) {
+        // Apply movement and jump impulses at the same cadence as the solver.
+        this.player.update(this.playerInput.consume());
+      }
+      b2World_Step(worldId, 1 / 60, 4);
+      if (gameState.isPlaying) this.processPhysicsEvents(worldId);
+    });
 
     UpdateWorldSprites(worldId);
 
     if (gameState.isPlaying) {
-      this.processPhysicsEvents(worldId);
-
-      if (this.player && this.controls) {
-        this.player.update(this.controls);
-
+      if (this.player) {
         // Ensure camera is properly following the player every frame
         this.cameras.main.scrollX = Phaser.Math.Linear(
           this.cameras.main.scrollX,
@@ -157,7 +172,6 @@ export default class GameScene extends Phaser.Scene {
         );
       }
 
-      this.mobileControls.getState();
       this.coinCounter.updateCount();
     }
 
@@ -241,111 +255,24 @@ export default class GameScene extends Phaser.Scene {
    * @param isBeginningContact Whether this is a beginning/continuing contact (true) or ending contact (false)
    */
   private processContactEvent(
-    event: {
-      shapeIdA: unknown;
-      shapeIdB: unknown;
-      normal?: { x: number; y: number };
-    },
+    event: ContactEvent,
     isBeginningContact: boolean
   ) {
     if (!this.player || !this.player.bodyId) return;
-
-    const shapeIdA = event.shapeIdA;
-    const shapeIdB = event.shapeIdB;
-    const userDataA = b2Shape_GetUserData(shapeIdA) as ShapeUserData;
-    const userDataB = b2Shape_GetUserData(shapeIdB) as ShapeUserData;
-    const isSensorA = b2Shape_IsSensor(shapeIdA);
-    const isSensorB = b2Shape_IsSensor(shapeIdB);
-
-    // Only check solid collisions (not sensors)
-    if (!isSensorA && !isSensorB) {
-      // Check for player-platform contact
-      if (
-        (userDataA?.type === "player" && userDataB?.type === "platform") ||
-        (userDataB?.type === "player" && userDataA?.type === "platform")
-      ) {
-        // Determine if player is above the platform
-        // For Box2D, we need to look at the contact normal
-        const velocity = b2Body_GetLinearVelocity(this.player.bodyId);
-
-        // Contact normal check - in Box2D a positive y normal means contact from above
-        let isBottomContact = false;
-        if (event.normal) {
-          // Check if the player feet are contacting platform (y normal > 0)
-          const normalY = event.normal.y;
-          // More tolerant bottom contact detection
-          isBottomContact = normalY > 0.1;
-        }
-
-        // If this is a new contact and player is contacting platform from bottom/feet
-        if (isBeginningContact) {
-          // Beginning or continuing contact with platform
-          // More tolerant vertical velocity check (0.1 → 0.2)
-          if (isBottomContact || Math.abs(velocity.y) < 0.2) {
-            this.player.setGrounded(true);
-
-            // Apply a small additional downward impulse to stabilize on platform
-            if (this.player.bodyId) {
-              const stabilizeImpulse = new b2Vec2(0, -0.1);
-              b2Body_ApplyLinearImpulseToCenter(
-                this.player.bodyId,
-                stabilizeImpulse,
-                true
-              );
-            }
-
-            console.log(
-              "Player grounded from bottom contact or no vertical movement"
-            );
-          }
-        } else {
-          // Only set ungrounded if it was specifically this platform contact that ended
-          // and the player was previously grounded
-          if (this.player.playerState.isGrounded && isBottomContact) {
-            // Check if there are any other platform contacts still active
-            let hasOtherPlatformContacts = false;
-
-            // Look through current begin/hit events to see if there are other platforms
-            for (const otherEvent of [
-              ...(b2World_GetContactEvents(gameState.worldId).beginEvents ||
-                []),
-              ...(b2World_GetContactEvents(gameState.worldId).hitEvents || []),
-            ]) {
-              // Skip if it's the same event
-              if (otherEvent === event) continue;
-
-              const otherShapeIdA = otherEvent.shapeIdA;
-              const otherShapeIdB = otherEvent.shapeIdB;
-              const otherUserDataA = b2Shape_GetUserData(
-                otherShapeIdA
-              ) as ShapeUserData;
-              const otherUserDataB = b2Shape_GetUserData(
-                otherShapeIdB
-              ) as ShapeUserData;
-
-              // Check if this is another platform contact
-              if (
-                !b2Shape_IsSensor(otherShapeIdA) &&
-                !b2Shape_IsSensor(otherShapeIdB) &&
-                ((otherUserDataA?.type === "player" &&
-                  otherUserDataB?.type === "platform") ||
-                  (otherUserDataB?.type === "player" &&
-                    otherUserDataA?.type === "platform"))
-              ) {
-                hasOtherPlatformContacts = true;
-                break;
-              }
-            }
-
-            // Only set ungrounded if there are no other platform contacts
-            if (!hasOtherPlatformContacts) {
-              this.player.setGrounded(false);
-              console.log("Player ungrounded from end contact");
-            }
-          }
-        }
-      }
+    if (!isBeginningContact) {
+      this.groundContacts.update(event, false, false);
+      this.player.setGrounded(this.groundContacts.grounded);
+      return;
     }
+    const shapeType = (value: unknown): string | undefined => value && typeof value === "object" && "type" in value && typeof value.type === "string" ? value.type : undefined;
+    const typeA = shapeType(b2Shape_GetUserData(event.shapeIdA));
+    const typeB = shapeType(b2Shape_GetUserData(event.shapeIdB));
+    if (b2Shape_IsSensor(event.shapeIdA) || b2Shape_IsSensor(event.shapeIdB)) return;
+    const playerIsA = typeA === "player" && typeB === "platform";
+    const playerIsB = typeB === "player" && typeA === "platform";
+    if (!playerIsA && !playerIsB) return;
+    this.groundContacts.update(event, true, playerIsA);
+    this.player.setGrounded(this.groundContacts.grounded);
   }
 
   killPlayer() {
@@ -376,6 +303,9 @@ export default class GameScene extends Phaser.Scene {
    * Resets player position, state, collected coins, and UI elements.
    */
   restart() {
+    this.physicsClock.reset();
+    this.playerInput.reset();
+    this.groundContacts.reset();
     console.log("Restarting game logic (persistent world)...");
     gameState.restartGame(); // Reset game state to READY
 
